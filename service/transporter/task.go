@@ -2,7 +2,6 @@ package transporter
 
 import (
 	"errors"
-	"log"
 	"sync"
 	"time"
 )
@@ -34,6 +33,7 @@ func (taskType TaskType) String() string {
 const (
 	CREATING TaskState = 1
 	WAITING  TaskState = 2
+	FINISH   TaskState = 3
 )
 
 type Task struct {
@@ -41,7 +41,7 @@ type Task struct {
 	taskType        TaskType
 	state           TaskState
 	startTime       time.Time
-	sid             int
+	sid             string
 	sourcePath      string
 	destinationPath string
 }
@@ -52,37 +52,6 @@ type TaskStorage interface {
 	GetTaskList(n int) (t []Task)
 	SetTaskState(tid int, state TaskState) (err error)
 	DelTask(tid int) (err error)
-}
-
-type TaskProcessor struct {
-	taskStorage TaskStorage
-}
-
-func (processer *TaskProcessor) SetTaskStorage(storage TaskStorage) {
-	processer.taskStorage = storage
-}
-
-// 创建任务
-func (processor *TaskProcessor) CreateTask(taskType TaskType, sid int, sourcePath string, destinationPath string) {
-	task := Task{tid: 0, taskType: taskType, state: CREATING, startTime: time.Now(), sid: sid, sourcePath: sourcePath, destinationPath: destinationPath}
-	_, err := processor.taskStorage.AddTask(task)
-	if err != nil {
-		log.Panicf("Create Task ERROR: %v", err)
-	}
-}
-
-// 处理任务
-func (processor *TaskProcessor) ProcessTasks() {
-	tasks := processor.taskStorage.GetTaskList(0)
-	for _, task := range tasks {
-		switch task.taskType {
-		case USER_UPLOAD_SIMPLE:
-			//todo
-			log.Printf("start simple upload task")
-		default:
-			log.Fatalf("ERROR: Process TaskType: %s not implement", task.taskType)
-		}
-	}
 }
 
 type InMemoryTaskStorage struct {

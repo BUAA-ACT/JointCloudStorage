@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-
 func TestConnection(t *testing.T) {
 	ctx := context.Background()
 	endpoint := "oss-cn-beijing.aliyuncs.com"
@@ -28,9 +27,9 @@ func TestConnection(t *testing.T) {
 			t.Errorf("%v not exist", bucketName)
 		}
 	})
-	t.Run ("test update", func(t *testing.T) {
+	t.Run("test update", func(t *testing.T) {
 		objectName := "test.txt"
-		filePath := "/tmp/test.txt"
+		filePath := "./test.txt"
 		contentType := "text/plain"
 		n, err := client.FPutObject(ctx, bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: contentType})
 		if err != nil {
@@ -41,13 +40,13 @@ func TestConnection(t *testing.T) {
 	t.Run("test presigned get object", func(t *testing.T) {
 		reqParams := make(url.Values)
 		reqParams.Set("response-content-disposition", "attachment; filename=\"your-filename.txt\"")
-		objects := client.ListObjects(ctx, bucketName,minio.ListObjectsOptions{Recursive:true})
-		object := <- objects
+		objects := client.ListObjects(ctx, bucketName, minio.ListObjectsOptions{Recursive: true})
+		object := <-objects
 		t.Logf("%v", object)
 		res, err := client.PresignedGetObject(ctx, bucketName, object.Key, time.Minute*5, reqParams)
 		if err != nil {
 			t.Errorf("Presigned Get Object fail: %v", err)
-		}else{
+		} else {
 			t.Logf("Successfully generated presigned URL: %v", res)
 		}
 	})

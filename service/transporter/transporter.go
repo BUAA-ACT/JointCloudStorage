@@ -1,24 +1,12 @@
 package transporter
 
 import (
-"context"
-"log"
+	"context"
+	"log"
 
-"github.com/minio/minio-go/v7"
-"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
-
-
-func GetMinioClient (endpoint, accessKeyID, secretAccessKey string)  (*minio.Client, error){
-	//ctx := context.Background()
-	useSSL := true
-
-	minioClient, err := minio.New(endpoint, &minio.Options{
-		Creds: credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
-		Secure: useSSL,
-	})
-	return minioClient, err
-}
 
 func main() {
 	ctx := context.Background()
