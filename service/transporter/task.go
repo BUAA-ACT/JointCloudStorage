@@ -70,16 +70,17 @@ func NewInMemoryTaskStorage() *InMemoryTaskStorage {
 
 func (s *InMemoryTaskStorage) AddTask(t Task) (tid int, err error) {
 	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	t.tid = s.maxTid + 1
 	s.maxTid += 1
 	t.state = WAITING
 	s.taskList = append(s.taskList, t)
-	s.mutex.Unlock()
 	return t.tid, nil
 }
 
 func (s *InMemoryTaskStorage) GetTaskList(n int) (t []Task) {
 	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	for _, task := range s.taskList {
 		if task.state == WAITING {
 			t = append(t, task)

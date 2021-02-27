@@ -1,6 +1,7 @@
 package transporter
 
 import (
+	"context"
 	"errors"
 	"log"
 	"time"
@@ -28,6 +29,21 @@ func (processor *TaskProcessor) CreateTask(taskType TaskType, sid string, source
 	}
 }
 
+func (processor *TaskProcessor) StartProcessTasks(ctx context.Context) {
+	go func() {
+		for true {
+			select {
+			case <-ctx.Done():
+				log.Fatal("Processor stop")
+				return
+			default:
+			}
+			processor.ProcessTasks()
+			time.Sleep(time.Second)
+		}
+	}()
+}
+
 // 处理任务
 func (processor *TaskProcessor) ProcessTasks() {
 	tasks := processor.taskStorage.GetTaskList(0)
@@ -45,6 +61,7 @@ func (processor *TaskProcessor) ProcessTasks() {
 	}
 }
 
+// 处理用户上传
 func (processor *TaskProcessor) ProcessUserUploadSimple(t Task) (err error) {
 	if t.taskType != USER_UPLOAD_SIMPLE {
 		return errors.New("wrong task type")
@@ -52,7 +69,9 @@ func (processor *TaskProcessor) ProcessUserUploadSimple(t Task) (err error) {
 	if t.state == FINISH {
 		return errors.New("task already finish")
 	}
+	// 先获取当前用户上传路径对应的存储客户端
 	storageClient := processor.storageDatabase.GetStorageClient(t.sid, t.destinationPath)
+	// 存储客户端上传文件
 	err = storageClient.Upload(t.sourcePath, t.destinationPath)
 	return
 }

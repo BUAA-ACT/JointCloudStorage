@@ -6,6 +6,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
+// 存储客户端接口，提供基础的对象存储文件管理接口
 type StorageClient interface {
 	Upload(localPath string, remotePath string) (err error)
 	download(remotePath string, localPath string) (err error)

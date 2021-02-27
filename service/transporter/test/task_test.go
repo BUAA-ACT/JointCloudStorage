@@ -9,9 +9,11 @@ import (
 )
 
 func TestTask(t *testing.T) {
+	// 初始化任务数据库
 	storage := transporter.NewInMemoryTaskStorage()
 	processor := transporter.TaskProcessor{}
 	processor.SetTaskStorage(storage)
+	// 初始化存储数据库
 	processor.SetStorageDatabase(transporter.NewSimpleInMemoryStorageDatabase())
 	t.Run("add user upload task", func(t *testing.T) {
 		fileName := time.Now().Format("2006-01-02-15-04-05-UserUploadTest.txt")

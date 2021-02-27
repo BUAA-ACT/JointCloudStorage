@@ -5,20 +5,25 @@ import (
 	"log"
 )
 
+// S3 客户端结构
 type S3Client struct {
 	endpoint    string
 	ak          string
-	minioClient *minio.Client
+	minioClient *minio.Client // 已经连接好的 minio 客户端
 }
 
+// Storage 数据库
 type StorageDatabase interface {
+	// 通过用户的 session id 和访问路径，获取对应的 S3 客户端
 	GetStorageClient(sid string, path string) StorageClient
 }
 
+// 一个简单的内存 Storage 数据库
 type SimpleInMemoryStorageDatabase struct {
 	s3ClientMap map[string]S3Client
 }
 
+// 构造内存 Storage 数据库
 func NewSimpleInMemoryStorageDatabase() *SimpleInMemoryStorageDatabase {
 	endpoint := "oss-cn-beijing.aliyuncs.com"
 	accessKeyID := "LTAI4G3PCfrg7aXQ6EvuDo25"
