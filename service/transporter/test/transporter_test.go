@@ -10,6 +10,12 @@ import (
 	"time"
 )
 
+func TestServe(t *testing.T) {
+	transporter.StartServe()
+	t.Logf("Transporter Already Started...")
+	time.Sleep(time.Minute * 2)
+}
+
 func TestConnection(t *testing.T) {
 	ctx := context.Background()
 	endpoint := "oss-cn-beijing.aliyuncs.com"

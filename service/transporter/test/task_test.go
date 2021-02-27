@@ -15,6 +15,7 @@ func TestTask(t *testing.T) {
 	processor.SetStorageDatabase(transporter.NewSimpleInMemoryStorageDatabase())
 	t.Run("add user upload task", func(t *testing.T) {
 		fileName := time.Now().Format("2006-01-02-15-04-05-UserUploadTest.txt")
+		os.MkdirAll("./tmp", os.ModePerm)
 		filePath := "./tmp/" + fileName
 		f, err := os.Create(filePath)
 		defer f.Close()
