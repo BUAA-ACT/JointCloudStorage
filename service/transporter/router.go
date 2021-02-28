@@ -3,8 +3,11 @@ package transporter
 import (
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"io"
 	"log"
+	"math/rand"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -29,13 +32,36 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func (router *Router) AddUploadTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	destinationPath := ps.ByName("path")
+	destinationPath := ps.ByName("path")[1:]
 	log.Printf("upload to :%v", destinationPath)
 	sidCookie, err := r.Cookie("sid")
 	if err != nil {
 		log.Printf("Get sid from cookie Fail: %v", err)
 	}
-	sourcePath := ""
+	// todo: 文件较小时，不落盘，直接内存上传
+	r.ParseMultipartForm(32 << 20)
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer file.Close()
+	// todo: 自定义临时路径
+	randStr := genRandomString(10)
+	filePath := "./tmp/" + handler.Filename + randStr
+	if !isDir("./tmp/") {
+		os.MkdirAll("./tmp/", os.ModePerm)
+	}
+	// 创建文件，且文件必须不存在
+	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0666) // 此处假设当前目录下已存在test目录
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer f.Close()
+	io.Copy(f, file)
+
+	sourcePath := filePath
 	router.processor.CreateTask(USER_UPLOAD_SIMPLE, sidCookie.Value, sourcePath, destinationPath)
 }
 
@@ -54,4 +80,29 @@ func testSetCookie(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 	}
 	http.SetCookie(w, &cookie)
 	fmt.Fprint(w, "Cookie Already Set")
+}
+
+func genRandomString(n int) string {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	const (
+		letterIdxBits = 6                    // 6 bits to represent a letter index
+		letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
+	)
+	b := make([]byte, n)
+	for i := 0; i < n; {
+		if idx := int(rand.Int63() & letterIdxMask); idx < len(letterBytes) {
+			b[i] = letterBytes[idx]
+			i++
+		}
+	}
+	return string(b)
+}
+
+// 判断所给路径是否为文件夹
+func isDir(path string) bool {
+	s, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return s.IsDir()
 }
