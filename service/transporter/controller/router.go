@@ -26,12 +26,26 @@ func NewRouter(processor TaskProcessor) *Router {
 	router.GET("/", Index)
 	router.POST("/upload/*path", router.AddUploadTask)
 	router.GET("/jcspan/*path", router.GetFile)
+	router.GET("/index/*path", router.FileIndex)
 	rand.Seed(time.Now().Unix())
 	return &router
 }
 
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Fprint(w, "JcsPan Transporter")
+}
+
+func (router *Router) FileIndex(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	path := ps.ByName("path")[1:]
+	log.Printf("Index path :%v", path)
+	sidCookie, err := r.Cookie("sid")
+	if err != nil {
+		log.Printf("Get sid from cookie Fail: %v", err)
+	}
+	task := model.NewTask(0, model.INDEX, time.Now(), sidCookie.Value, path, "")
+	for obj := range router.processor.ProcessPathIndex(task) {
+		fmt.Fprintf(w, "%s\n", obj.Key)
+	}
 }
 
 func (router *Router) AddUploadTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

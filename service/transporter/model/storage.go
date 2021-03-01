@@ -13,6 +13,7 @@ type StorageClient interface {
 	Upload(localPath string, remotePath string) (err error)
 	Download(remotePath string, localPath string) (err error)
 	Remove(remotePath string) (err error)
+	Index(remotePath string) <-chan ObjectInfo
 	GetTmpDownloadUrl(remotePath string, validTime time.Duration) (url string, err error)
 }
 
@@ -62,6 +63,26 @@ func (client *S3BucketStorageClient) Download(remotePath string, localPath strin
 func (client *S3BucketStorageClient) Remove(remotePath string) (err error) {
 	//todo
 	return nil
+}
+
+func (client *S3BucketStorageClient) Index(remotePath string) <-chan ObjectInfo {
+	ctx := context.Background()
+	ObjectCh := make(chan ObjectInfo, 1)
+	go func(ObjectCh chan ObjectInfo) {
+		defer close(ObjectCh)
+		for obj := range client.minioClient.ListObjects(ctx, client.bucketName, minio.ListObjectsOptions{
+			Prefix:    remotePath,
+			Recursive: false,
+		}) {
+			ObjectCh <- ObjectInfo{
+				Key:          obj.Key,
+				Size:         obj.Size,
+				LastModified: obj.LastModified,
+				ContentType:  obj.ContentType,
+			}
+		}
+	}(ObjectCh)
+	return ObjectCh
 }
 
 func (client *S3BucketStorageClient) GetTmpDownloadUrl(remotePath string, validTime time.Duration) (url string, err error) {

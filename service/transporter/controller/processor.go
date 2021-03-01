@@ -102,6 +102,17 @@ func (processor *TaskProcessor) ProcessUserUploadSimple(t *model.Task) (err erro
 	return
 }
 
+// 获取用户目录信息
+func (processor *TaskProcessor) ProcessPathIndex(t *model.Task) <-chan model.ObjectInfo {
+	err := processor.CheckTaskType(t, model.INDEX)
+	if err != nil {
+		return nil
+	}
+	storageClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetSourcePath())
+
+	return storageClient.Index(t.GetSourcePath())
+}
+
 func (processor *TaskProcessor) CheckTaskType(t *model.Task, taskType model.TaskType) (err error) {
 	if t.GetTaskType() != taskType {
 		return errors.New("wrong task type")

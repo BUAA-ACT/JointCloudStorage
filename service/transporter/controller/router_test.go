@@ -80,6 +80,13 @@ func TestNewRouter(t *testing.T) {
 		t.Logf("UnAuth download url: %v", recorder.Body)
 	})
 
+	t.Run("index path", func(t *testing.T) {
+		req, _ = http.NewRequest("GET", "/index/path/to/", nil)
+		req.AddCookie(cookies[0])
+		recorder = httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		t.Logf("index: %v", recorder.Body)
+	})
 }
 
 func postFile(filename string, filepath string, target_url string) (*http.Request, error) {
