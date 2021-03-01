@@ -72,6 +72,17 @@ func (processor *TaskProcessor) ProcessTasks() {
 	}
 }
 
+// 处理获取临时下载 url 请求
+func (processor *TaskProcessor) ProcessGetTmpDownloadUrl(t *model.Task) (url string, err error) {
+	err = processor.CheckTaskType(t, model.USER_DOWNLOAD_SIMPLE)
+	if err != nil {
+		return "", err
+	}
+	storageClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetSourcePath())
+	url, err = storageClient.GetTmpDownloadUrl(t.GetSourcePath(), time.Minute*30)
+	return url, err
+}
+
 // 处理用户上传
 func (processor *TaskProcessor) ProcessUserUploadSimple(t *model.Task) (err error) {
 	if t.GetTaskType() != model.USER_UPLOAD_SIMPLE {
@@ -89,4 +100,11 @@ func (processor *TaskProcessor) ProcessUserUploadSimple(t *model.Task) (err erro
 	}
 	processor.taskStorage.SetTaskState(t.GetTid(), model.FINISH)
 	return
+}
+
+func (processor *TaskProcessor) CheckTaskType(t *model.Task, taskType model.TaskType) (err error) {
+	if t.GetTaskType() != taskType {
+		return errors.New("wrong task type")
+	}
+	return nil
 }

@@ -1,7 +1,7 @@
 package transporter
 
 import (
-	"act.buaa.edu.cn/jcspan/transporter"
+	Transporter "act.buaa.edu.cn/jcspan/transporter"
 	"act.buaa.edu.cn/jcspan/transporter/model"
 	"context"
 	"github.com/minio/minio-go/v7"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestServe(t *testing.T) {
-	transporter.StartServe()
+	Transporter.StartServe()
 	t.Logf("Transporter Already Started...")
 	time.Sleep(time.Minute * 2)
 }

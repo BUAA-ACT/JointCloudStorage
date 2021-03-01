@@ -25,6 +25,7 @@ func NewRouter(processor TaskProcessor) *Router {
 	}
 	router.GET("/", Index)
 	router.POST("/upload/*path", router.AddUploadTask)
+	router.GET("/jcspan/*path", router.GetFile)
 	rand.Seed(time.Now().Unix())
 	return &router
 }
@@ -65,6 +66,27 @@ func (router *Router) AddUploadTask(w http.ResponseWriter, r *http.Request, ps h
 
 	sourcePath := filePath
 	router.processor.CreateTask(model.USER_UPLOAD_SIMPLE, sidCookie.Value, sourcePath, destinationPath)
+}
+
+// 获取网盘文件临时下载链接
+func (router *Router) GetFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	filePath := ps.ByName("path")[1:]
+	log.Printf("get tmp download url: %v", filePath)
+	sidCookie, err := r.Cookie("sid")
+	if err != nil {
+		log.Printf("Get sid from cookie File: %v", err)
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprintln(w, "Auth Fail")
+		return
+	}
+	task := model.NewTask(0, model.USER_DOWNLOAD_SIMPLE, time.Now(), sidCookie.Value, filePath, "")
+	url, err := router.processor.ProcessGetTmpDownloadUrl(task)
+	if err != nil {
+		log.Printf("Get tmp download url fail: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "500 ERROR")
+	}
+	fmt.Fprintln(w, url)
 }
 
 func NewTestRouter(processor TaskProcessor) *Router {

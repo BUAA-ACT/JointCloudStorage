@@ -1,4 +1,4 @@
-package main
+package Transporter
 
 import (
 	"act.buaa.edu.cn/jcspan/transporter/controller"

@@ -58,6 +58,28 @@ func TestNewRouter(t *testing.T) {
 		router.ServeHTTP(recorder, req)
 		time.Sleep(time.Second * 5)
 	})
+
+	t.Run("simple download", func(t *testing.T) {
+		req, _ = http.NewRequest("GET", "/jcspan/path/to/jcspantest.txt", nil)
+		req.AddCookie(cookies[0])
+		recorder = httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		if recorder.Code != http.StatusOK {
+			t.Errorf("except code %v, get %v", http.StatusOK, recorder.Code)
+		}
+		t.Logf("download url: %v", recorder.Body)
+	})
+
+	t.Run("simple download without auth", func(t *testing.T) {
+		req, _ = http.NewRequest("GET", "/jcspan/path/to/jcspantest.txt", nil)
+		recorder = httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		if recorder.Code != http.StatusUnauthorized {
+			t.Errorf("except code %v, get %v", http.StatusOK, recorder.Code)
+		}
+		t.Logf("UnAuth download url: %v", recorder.Body)
+	})
+
 }
 
 func postFile(filename string, filepath string, target_url string) (*http.Request, error) {

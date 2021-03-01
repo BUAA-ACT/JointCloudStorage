@@ -10,10 +10,11 @@ type TaskType int32
 type TaskState int32
 
 const (
-	USER_UPLOAD_SIMPLE  TaskType = 1
-	USER_UPLOAD_ERASURE TaskType = 2
-	SYNC_SIMPLE         TaskType = 3
-	SYNC_ERASURE        TaskType = 4
+	USER_UPLOAD_SIMPLE   TaskType = 1
+	USER_UPLOAD_ERASURE  TaskType = 2
+	SYNC_SIMPLE          TaskType = 3
+	SYNC_ERASURE         TaskType = 4
+	USER_DOWNLOAD_SIMPLE TaskType = 5
 )
 
 func (taskType TaskType) String() string {
