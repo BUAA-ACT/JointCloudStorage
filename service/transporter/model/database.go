@@ -1,4 +1,4 @@
-package transporter
+package model
 
 import (
 	"github.com/minio/minio-go/v7"

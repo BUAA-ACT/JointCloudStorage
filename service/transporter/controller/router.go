@@ -1,6 +1,7 @@
-package transporter
+package controller
 
 import (
+	"act.buaa.edu.cn/jcspan/transporter/model"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"io"
@@ -24,6 +25,7 @@ func NewRouter(processor TaskProcessor) *Router {
 	}
 	router.GET("/", Index)
 	router.POST("/upload/*path", router.AddUploadTask)
+	rand.Seed(time.Now().Unix())
 	return &router
 }
 
@@ -62,7 +64,7 @@ func (router *Router) AddUploadTask(w http.ResponseWriter, r *http.Request, ps h
 	io.Copy(f, file)
 
 	sourcePath := filePath
-	router.processor.CreateTask(USER_UPLOAD_SIMPLE, sidCookie.Value, sourcePath, destinationPath)
+	router.processor.CreateTask(model.USER_UPLOAD_SIMPLE, sidCookie.Value, sourcePath, destinationPath)
 }
 
 func NewTestRouter(processor TaskProcessor) *Router {

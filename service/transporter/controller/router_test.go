@@ -1,6 +1,7 @@
-package transporter
+package controller
 
 import (
+	"act.buaa.edu.cn/jcspan/transporter/model"
 	"bytes"
 	"context"
 	"fmt"
@@ -15,11 +16,11 @@ import (
 
 func TestNewRouter(t *testing.T) {
 	// 初始化任务数据库
-	storage := NewInMemoryTaskStorage()
+	storage := model.NewInMemoryTaskStorage()
 	processor := TaskProcessor{}
 	processor.SetTaskStorage(storage)
 	// 初始化存储数据库
-	processor.SetStorageDatabase(NewSimpleInMemoryStorageDatabase())
+	processor.SetStorageDatabase(model.NewSimpleInMemoryStorageDatabase())
 	// 初始化路由
 	router := NewTestRouter(processor)
 	// 启动 processor
@@ -42,7 +43,7 @@ func TestNewRouter(t *testing.T) {
 	t.Logf("Cookie: %v", cookies[0])
 
 	t.Run("simple upload", func(t *testing.T) {
-		filename := "./test/tmp/test.txt"
+		filename := "../test/tmp/test.txt"
 		f, err := os.Open(filename)
 		if err != nil {
 			t.Error("Open test file Fail")
@@ -51,7 +52,7 @@ func TestNewRouter(t *testing.T) {
 
 		//req,_ http.Post("/upload/jcspan/path/to/file", "multipart/form-data", body)
 		//	req, _ = http.NewRequest("POST", "/upload/jcspan/path/to/file", body)
-		req, _ = postFile("test.txt", "./test/tmp/test.txt", "/upload/jcspantest.txt")
+		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt")
 		req.AddCookie(cookies[0])
 		recorder = httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)

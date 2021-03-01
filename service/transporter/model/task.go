@@ -1,4 +1,4 @@
-package transporter
+package model
 
 import (
 	"errors"
@@ -31,9 +31,10 @@ func (taskType TaskType) String() string {
 }
 
 const (
-	CREATING TaskState = 1
-	WAITING  TaskState = 2
-	FINISH   TaskState = 3
+	CREATING   TaskState = 1
+	WAITING    TaskState = 2
+	PROCESSING TaskState = 3
+	FINISH     TaskState = 4
 )
 
 type Task struct {
@@ -46,29 +47,65 @@ type Task struct {
 	destinationPath string
 }
 
+func (t *Task) GetTid() int {
+	return t.tid
+}
+
+func (t *Task) GetTaskType() TaskType {
+	return t.taskType
+}
+
+func (t *Task) GetState() TaskState {
+	return t.state
+}
+
+func (t *Task) GetSid() string {
+	return t.sid
+}
+
+func (t *Task) GetSourcePath() string {
+	return t.sourcePath
+}
+
+func (t *Task) GetDestinationPath() string {
+	return t.destinationPath
+}
+
+func NewTask(tid int, taskType TaskType, startTime time.Time, sid string, sourcePath string, destinationPath string) *Task {
+	return &Task{
+		tid:             0,
+		taskType:        taskType,
+		state:           CREATING,
+		startTime:       startTime,
+		sid:             sid,
+		sourcePath:      sourcePath,
+		destinationPath: destinationPath,
+	}
+}
+
 // Task 存储
 type TaskStorage interface {
-	AddTask(t Task) (tid int, err error)
-	GetTaskList(n int) (t []Task)
+	AddTask(t *Task) (tid int, err error)
+	GetTaskList(n int) (t []*Task)
 	SetTaskState(tid int, state TaskState) (err error)
 	DelTask(tid int) (err error)
 }
 
 type InMemoryTaskStorage struct {
-	taskList []Task
+	taskList []*Task
 	maxTid   int
 	mutex    sync.Mutex
 }
 
 func NewInMemoryTaskStorage() *InMemoryTaskStorage {
 	return &InMemoryTaskStorage{
-		taskList: make([]Task, 0),
+		taskList: make([]*Task, 0),
 		maxTid:   0,
 		mutex:    sync.Mutex{},
 	}
 }
 
-func (s *InMemoryTaskStorage) AddTask(t Task) (tid int, err error) {
+func (s *InMemoryTaskStorage) AddTask(t *Task) (tid int, err error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	t.tid = s.maxTid + 1
@@ -78,7 +115,7 @@ func (s *InMemoryTaskStorage) AddTask(t Task) (tid int, err error) {
 	return t.tid, nil
 }
 
-func (s *InMemoryTaskStorage) GetTaskList(n int) (t []Task) {
+func (s *InMemoryTaskStorage) GetTaskList(n int) (t []*Task) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	for _, task := range s.taskList {

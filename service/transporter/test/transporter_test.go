@@ -2,6 +2,7 @@ package transporter
 
 import (
 	"act.buaa.edu.cn/jcspan/transporter"
+	"act.buaa.edu.cn/jcspan/transporter/model"
 	"context"
 	"github.com/minio/minio-go/v7"
 	"log"
@@ -23,7 +24,7 @@ func TestConnection(t *testing.T) {
 	secretAccessKey := "5bmnIvUqvuuAG1j6QuWuhJ73MWAHE0"
 	bucketName := "jcspan-aliyun-bj-test"
 
-	client, err := transporter.GetMinioClient(endpoint, accessKeyID, secretAccessKey)
+	client, err := model.GetMinioClient(endpoint, accessKeyID, secretAccessKey)
 	if err != nil {
 		t.Errorf("get MinioClient error: %v", err)
 	}
@@ -34,8 +35,8 @@ func TestConnection(t *testing.T) {
 		}
 	})
 	t.Run("test update", func(t *testing.T) {
-		objectName := "test.txt"
-		filePath := "./test.txt"
+		objectName := "path/to/test.txt"
+		filePath := "./tmp/test.txt"
 		contentType := "text/plain"
 		n, err := client.FPutObject(ctx, bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: contentType})
 		if err != nil {
