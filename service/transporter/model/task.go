@@ -41,6 +41,7 @@ const (
 	WAITING    TaskState = 2
 	PROCESSING TaskState = 3
 	FINISH     TaskState = 4
+	FAIL       TaskState = 5
 )
 
 type Task struct {

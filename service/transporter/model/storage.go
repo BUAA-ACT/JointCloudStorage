@@ -13,7 +13,10 @@ type StorageClient interface {
 	Upload(localPath string, remotePath string) (err error)
 	Download(remotePath string, localPath string) (err error)
 	Remove(remotePath string) (err error)
+	Copy(srcPath string, dstPath string) (err error)
 	Index(remotePath string) <-chan ObjectInfo
+	// 递归查找
+	RecursiveIndex(remotePath string) <-chan ObjectInfo
 	GetTmpDownloadUrl(remotePath string, validTime time.Duration) (url string, err error)
 }
 
@@ -57,12 +60,26 @@ func (client *S3BucketStorageClient) Upload(localPath string, remotePath string)
 }
 
 func (client *S3BucketStorageClient) Download(remotePath string, localPath string) (err error) {
-	//todo
-	return nil
+	ctx := context.Background()
+	err = client.minioClient.FGetObject(ctx, client.bucketName, remotePath, localPath, minio.GetObjectOptions{})
+	return err
 }
 func (client *S3BucketStorageClient) Remove(remotePath string) (err error) {
 	//todo
 	return nil
+}
+func (client *S3BucketStorageClient) Copy(srcPath string, dstPath string) (err error) {
+	ctx := context.Background()
+	dst := minio.CopyDestOptions{
+		Bucket: client.bucketName,
+		Object: dstPath,
+	}
+	src := minio.CopySrcOptions{
+		Bucket: client.bucketName,
+		Object: srcPath,
+	}
+	_, err = client.minioClient.CopyObject(ctx, dst, src)
+	return err
 }
 
 func (client *S3BucketStorageClient) Index(remotePath string) <-chan ObjectInfo {
@@ -73,6 +90,26 @@ func (client *S3BucketStorageClient) Index(remotePath string) <-chan ObjectInfo 
 		for obj := range client.minioClient.ListObjects(ctx, client.bucketName, minio.ListObjectsOptions{
 			Prefix:    remotePath,
 			Recursive: false,
+		}) {
+			ObjectCh <- ObjectInfo{
+				Key:          obj.Key,
+				Size:         obj.Size,
+				LastModified: obj.LastModified,
+				ContentType:  obj.ContentType,
+			}
+		}
+	}(ObjectCh)
+	return ObjectCh
+}
+
+func (client *S3BucketStorageClient) RecursiveIndex(remotePath string) <-chan ObjectInfo {
+	ctx := context.Background()
+	ObjectCh := make(chan ObjectInfo, 1)
+	go func(ObjectCh chan ObjectInfo) {
+		defer close(ObjectCh)
+		for obj := range client.minioClient.ListObjects(ctx, client.bucketName, minio.ListObjectsOptions{
+			Prefix:    remotePath,
+			Recursive: true,
 		}) {
 			ObjectCh <- ObjectInfo{
 				Key:          obj.Key,

@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"log"
+	"path"
+	"reflect"
 	"time"
 )
 
@@ -63,6 +65,18 @@ func (processor *TaskProcessor) ProcessTasks() {
 				finish <- task.GetTid()
 			}(task)
 			log.Printf("start simple upload task")
+		case model.SYNC_SIMPLE:
+			processor.taskStorage.SetTaskState(task.GetTid(), model.PROCESSING)
+			go func(t *model.Task) {
+				err := processor.ProcessSimpleSync(t)
+				if err != nil {
+					log.Panicf("Process Task Fail: %v", err)
+				} else {
+					log.Printf("finish task: %v", t.GetTid())
+				}
+				finish <- task.GetTid()
+			}(task)
+			log.Printf("start simple SYNC task")
 		default:
 			log.Fatalf("ERROR: Process TaskType: %s not implement", task.GetTaskType())
 		}
@@ -96,7 +110,9 @@ func (processor *TaskProcessor) ProcessUserUploadSimple(t *model.Task) (err erro
 	// 存储客户端上传文件
 	err = storageClient.Upload(t.GetSourcePath(), t.GetDestinationPath())
 	if err != nil {
-		log.Panicf("Upload user file Fail: %v", err)
+		processor.taskStorage.SetTaskState(t.GetTid(), model.FAIL)
+		log.Printf("Upload user file Fail: %v", err)
+		return
 	}
 	processor.taskStorage.SetTaskState(t.GetTid(), model.FINISH)
 	return
@@ -111,6 +127,37 @@ func (processor *TaskProcessor) ProcessPathIndex(t *model.Task) <-chan model.Obj
 	storageClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetSourcePath())
 
 	return storageClient.Index(t.GetSourcePath())
+}
+
+// 普通同步任务
+func (processor *TaskProcessor) ProcessSimpleSync(t *model.Task) (err error) {
+	err = processor.CheckTaskType(t, model.SYNC_SIMPLE)
+	if err != nil {
+		return nil
+	}
+	// 获取源路径对应存储客户端
+	storageClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetSourcePath())
+	// 获取目的路径对应存储客户端
+	destClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetDestinationPath())
+	// 列举所有对象 todo: 如果是具有相同前缀的两个文件？
+	objectCh := storageClient.Index(t.GetSourcePath())
+	for obj := range objectCh {
+		fileName := path.Base(obj.Key)
+		// 判断两个客户端是否相同 todo: accesspoint 相同即可
+		if reflect.DeepEqual(storageClient, destClient) {
+			err = storageClient.Copy(obj.Key, t.GetDestinationPath()+fileName)
+		} else {
+			// 下载源文件
+			localPath := "./tmp/" + genRandomString(10)
+			err = storageClient.Download(t.GetSourcePath(), localPath)
+			err = destClient.Upload(localPath, t.GetDestinationPath()+fileName)
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (processor *TaskProcessor) CheckTaskType(t *model.Task, taskType model.TaskType) (err error) {

@@ -27,8 +27,19 @@ func NewRouter(processor TaskProcessor) *Router {
 	router.POST("/upload/*path", router.AddUploadTask)
 	router.GET("/jcspan/*path", router.GetFile)
 	router.GET("/index/*path", router.FileIndex)
+	router.POST("/task/:taskType", router.CreateTask)
 	rand.Seed(time.Now().Unix())
 	return &router
+}
+
+func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	taskTypeStr := ps.ByName("taskType")
+	switch taskTypeStr {
+	case "simplesync":
+		router.SimpleSync(w, r, ps)
+	default:
+		w.WriteHeader(http.StatusNotImplemented)
+	}
 }
 
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -101,6 +112,14 @@ func (router *Router) GetFile(w http.ResponseWriter, r *http.Request, ps httprou
 		fmt.Fprintln(w, "500 ERROR")
 	}
 	fmt.Fprintln(w, url)
+}
+
+func (router *Router) SimpleSync(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	srcPath := r.FormValue("srcpath")
+	dstPath := r.FormValue("dstpath")
+	sid := r.FormValue("sid")
+	router.processor.CreateTask(model.SYNC_SIMPLE, sid, srcPath, dstPath)
+	fmt.Println("task simple sync created success")
 }
 
 func NewTestRouter(processor TaskProcessor) *Router {

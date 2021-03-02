@@ -87,6 +87,27 @@ func TestNewRouter(t *testing.T) {
 		router.ServeHTTP(recorder, req)
 		t.Logf("index: %v", recorder.Body)
 	})
+
+	t.Run("simple sync", func(t *testing.T) {
+		body := new(bytes.Buffer)
+		w := multipart.NewWriter(body)
+		contentType := w.FormDataContentType()
+
+		w.WriteField("srcpath", "path/to/")
+		w.WriteField("dstpath", "dst/to/")
+		w.WriteField("sid", "tttteeeesssstttt")
+		w.Close()
+		req, _ = http.NewRequest("POST", "/task/simplesync", body)
+		req.Header.Set("Content-Type", contentType)
+
+		recorder = httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		if recorder.Code != http.StatusOK {
+			t.Errorf("sync fail")
+		}
+		t.Logf("%v", recorder.Body)
+		time.Sleep(time.Second * 5)
+	})
 }
 
 func postFile(filename string, filepath string, target_url string) (*http.Request, error) {
