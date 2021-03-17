@@ -142,7 +142,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	if t.TaskOptions != nil {
 		storageModel := t.TaskOptions.DestinationPlan.StorageMode
 		for _, cloudName := range t.TaskOptions.DestinationPlan.Clouds {
-			storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(t.Sid, cloudName))
+			storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(cloudName, t.Sid))
 		}
 		switch storageModel {
 		case "Replica":

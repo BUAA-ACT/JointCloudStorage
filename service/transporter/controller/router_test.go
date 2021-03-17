@@ -121,7 +121,7 @@ func TestNewRouter(t *testing.T) {
       "StorageMode": "Replica",
       "Clouds": [
          {
-            "ID": "txyun-chongqing"
+            "ID": "aliyun-beijing"
          },
          {
             "ID": "aliyun-beijing"
