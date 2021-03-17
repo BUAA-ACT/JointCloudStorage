@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"github.com/jinzhu/copier"
 	"sync"
 	"time"
 )
@@ -15,7 +16,8 @@ const (
 	SYNC_SIMPLE          TaskType = 3
 	SYNC_ERASURE         TaskType = 4
 	USER_DOWNLOAD_SIMPLE TaskType = 5
-	INDEX                TaskType = 6
+	UPLOAD               TaskType = 6
+	INDEX                TaskType = 7
 )
 
 func (taskType TaskType) String() string {
@@ -42,51 +44,63 @@ const (
 	PROCESSING TaskState = 3
 	FINISH     TaskState = 4
 	FAIL       TaskState = 5
+	BLOCKED    TaskState = 6
 )
 
 type Task struct {
-	tid             int
-	taskType        TaskType
-	state           TaskState
-	startTime       time.Time
-	sid             string
-	sourcePath      string
-	destinationPath string
+	Tid             int
+	TaskType        TaskType
+	State           TaskState
+	StartTime       time.Time
+	Sid             string
+	SourcePath      string
+	DestinationPath string
+	TaskOptions     *TaskOptions
+}
+
+type TaskOptions struct {
+	SourceStoragePlan *StoragePlan
+	DestinationPlan   *StoragePlan
+}
+
+type StoragePlan struct {
+	StorageMode string
+	Clouds      []string
 }
 
 func (t *Task) GetTid() int {
-	return t.tid
+	return t.Tid
 }
 
 func (t *Task) GetTaskType() TaskType {
-	return t.taskType
+	return t.TaskType
 }
 
 func (t *Task) GetState() TaskState {
-	return t.state
+	return t.State
 }
 
 func (t *Task) GetSid() string {
-	return t.sid
+	return t.Sid
 }
 
 func (t *Task) GetSourcePath() string {
-	return t.sourcePath
+	return t.SourcePath
 }
 
 func (t *Task) GetDestinationPath() string {
-	return t.destinationPath
+	return t.DestinationPath
 }
 
 func NewTask(tid int, taskType TaskType, startTime time.Time, sid string, sourcePath string, destinationPath string) *Task {
 	return &Task{
-		tid:             0,
-		taskType:        taskType,
-		state:           CREATING,
-		startTime:       startTime,
-		sid:             sid,
-		sourcePath:      sourcePath,
-		destinationPath: destinationPath,
+		Tid:             0,
+		TaskType:        taskType,
+		State:           CREATING,
+		StartTime:       startTime,
+		Sid:             sid,
+		SourcePath:      sourcePath,
+		DestinationPath: destinationPath,
 	}
 }
 
@@ -94,7 +108,9 @@ func NewTask(tid int, taskType TaskType, startTime time.Time, sid string, source
 type TaskStorage interface {
 	AddTask(t *Task) (tid int, err error)
 	GetTaskList(n int) (t []*Task)
+	GetTask(tid int) (t *Task, err error)
 	SetTaskState(tid int, state TaskState) (err error)
+	SetTask(tid int, t *Task) (err error)
 	DelTask(tid int) (err error)
 }
 
@@ -112,21 +128,44 @@ func NewInMemoryTaskStorage() *InMemoryTaskStorage {
 	}
 }
 
+func (s *InMemoryTaskStorage) GetTask(tid int) (t *Task, err error) {
+	for _, task := range s.taskList {
+		if task.Tid == tid {
+			return task, nil
+		}
+	}
+	return nil, errors.New("task not found")
+}
+
+func (s *InMemoryTaskStorage) SetTask(tid int, t *Task) (err error) {
+	for i, task := range s.taskList {
+		if task.Tid == tid {
+			newTask := Task{}
+			copier.Copy(&newTask, t)
+			s.taskList[i] = &newTask
+			return nil
+		}
+	}
+	return errors.New("task not found")
+}
+
 func (s *InMemoryTaskStorage) AddTask(t *Task) (tid int, err error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	t.tid = s.maxTid + 1
+	t.Tid = s.maxTid + 1
 	s.maxTid += 1
-	t.state = WAITING
+	if t.State != BLOCKED {
+		t.State = WAITING
+	}
 	s.taskList = append(s.taskList, t)
-	return t.tid, nil
+	return t.Tid, nil
 }
 
 func (s *InMemoryTaskStorage) GetTaskList(n int) (t []*Task) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	for _, task := range s.taskList {
-		if task.state == WAITING {
+		if task.State == WAITING {
 			t = append(t, task)
 		}
 	}
@@ -134,8 +173,8 @@ func (s *InMemoryTaskStorage) GetTaskList(n int) (t []*Task) {
 }
 func (s *InMemoryTaskStorage) SetTaskState(tid int, state TaskState) (err error) {
 	for i, task := range s.taskList {
-		if task.tid == tid {
-			s.taskList[i].state = state
+		if task.Tid == tid {
+			s.taskList[i].State = state
 			return nil
 		}
 	}
@@ -143,7 +182,7 @@ func (s *InMemoryTaskStorage) SetTaskState(tid int, state TaskState) (err error)
 }
 func (s *InMemoryTaskStorage) DelTask(tid int) (err error) {
 	for i, task := range s.taskList {
-		if task.tid == tid {
+		if task.Tid == tid {
 			s.taskList = append(s.taskList[:i], s.taskList[i+1:]...)
 			return nil
 		}

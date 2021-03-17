@@ -77,6 +77,18 @@ func (processor *TaskProcessor) ProcessTasks() {
 				finish <- task.GetTid()
 			}(task)
 			log.Printf("start simple SYNC task")
+		case model.UPLOAD:
+			processor.taskStorage.SetTaskState(task.GetTid(), model.PROCESSING)
+			go func(t *model.Task) {
+				err := processor.ProcessUpload(t)
+				if err != nil {
+					log.Panicf("Process Task Fail: %v", err)
+				} else {
+					log.Printf("finish task: %v", t.GetTid())
+				}
+				finish <- task.GetTid()
+			}(task)
+			log.Printf("start upload task")
 		default:
 			log.Fatalf("ERROR: Process TaskType: %s not implement", task.GetTaskType())
 		}
@@ -105,6 +117,44 @@ func (processor *TaskProcessor) ProcessUserUploadSimple(t *model.Task) (err erro
 	if t.GetState() == model.FINISH {
 		return errors.New("task already finish")
 	}
+	// 先获取当前用户上传路径对应的存储客户端
+	storageClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetDestinationPath())
+	// 存储客户端上传文件
+	err = storageClient.Upload(t.GetSourcePath(), t.GetDestinationPath())
+	if err != nil {
+		processor.taskStorage.SetTaskState(t.GetTid(), model.FAIL)
+		log.Printf("Upload user file Fail: %v", err)
+		return
+	}
+	processor.taskStorage.SetTaskState(t.GetTid(), model.FINISH)
+	return
+}
+
+func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
+	if t.GetTaskType() != model.UPLOAD {
+		return errors.New("wrong task type")
+	}
+	if t.GetState() == model.FINISH {
+		return errors.New("task already finish")
+	}
+	// 判断上传方式
+	var storageClients []model.StorageClient
+	if t.TaskOptions != nil {
+		storageModel := t.TaskOptions.DestinationPlan.StorageMode
+		for _, cloudName := range t.TaskOptions.DestinationPlan.Clouds {
+			storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(t.Sid, cloudName))
+		}
+		switch storageModel {
+		case "Replica":
+			for _, client := range storageClients {
+				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath())
+			}
+		default:
+			return errors.New("storage model not implement")
+		}
+		return
+	}
+
 	// 先获取当前用户上传路径对应的存储客户端
 	storageClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetDestinationPath())
 	// 存储客户端上传文件

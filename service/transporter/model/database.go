@@ -7,6 +7,7 @@ import (
 
 // S3 客户端结构
 type S3Client struct {
+	name        string
 	endpoint    string
 	ak          string
 	minioClient *minio.Client // 已经连接好的 minio 客户端
@@ -16,6 +17,7 @@ type S3Client struct {
 type StorageDatabase interface {
 	// 通过用户的 session id 和访问路径，获取对应的 S3 客户端
 	GetStorageClient(sid string, path string) StorageClient
+	GetStorageClientFromName(sid string, name string) StorageClient
 }
 
 // 一个简单的内存 Storage 数据库
@@ -35,13 +37,14 @@ func NewSimpleInMemoryStorageDatabase() *SimpleInMemoryStorageDatabase {
 		return nil
 	}
 	s3 := S3Client{
+		name:        "aliyun-beijing",
 		endpoint:    endpoint,
 		ak:          accessKeyID,
 		minioClient: minioClient,
 	}
 	return &SimpleInMemoryStorageDatabase{
 		s3ClientMap: map[string]S3Client{
-			endpoint: s3,
+			"aliyun-beijing": s3,
 		},
 	}
 }
@@ -51,6 +54,13 @@ func (database *SimpleInMemoryStorageDatabase) GetStorageClient(sid string, path
 	bucketName := "jcspan-aliyun-bj-test"
 	return &S3BucketStorageClient{
 		minioClient: database.s3ClientMap[s3Name].minioClient,
+		bucketName:  bucketName,
+	}
+}
+func (database *SimpleInMemoryStorageDatabase) GetStorageClientFromName(name string, sid string) StorageClient {
+	bucketName := "jcspan-aliyun-bj-test"
+	return &S3BucketStorageClient{
+		minioClient: database.s3ClientMap[name].minioClient,
 		bucketName:  bucketName,
 	}
 }

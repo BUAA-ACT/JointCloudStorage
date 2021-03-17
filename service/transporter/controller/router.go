@@ -2,6 +2,7 @@ package controller
 
 import (
 	"act.buaa.edu.cn/jcspan/transporter/model"
+	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"io"
@@ -9,12 +10,30 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
 type Router struct {
 	*httprouter.Router
 	processor TaskProcessor
+}
+
+type RequestTask struct {
+	TaskType        string `json:"TaskType"`
+	Uid             string `json:"Uid"`
+	Sid             string `json:"Sid"`
+	DestinationPath string `json:"DestinationPath"`
+	StoragePlan     RequestStoragePlan
+}
+
+type RequestStoragePlan struct {
+	StorageMode string         `json:"StorageMode"`
+	Clouds      []RequestCloud `json:"Clouds"`
+}
+
+type RequestCloud struct {
+	ID string `json:"ID"`
 }
 
 func NewRouter(processor TaskProcessor) *Router {
@@ -27,18 +46,50 @@ func NewRouter(processor TaskProcessor) *Router {
 	router.POST("/upload/*path", router.AddUploadTask)
 	router.GET("/jcspan/*path", router.GetFile)
 	router.GET("/index/*path", router.FileIndex)
-	router.POST("/task/:taskType", router.CreateTask)
+	router.POST("/task", router.CreateTask)
 	rand.Seed(time.Now().Unix())
 	return &router
 }
 
 func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	taskTypeStr := ps.ByName("taskType")
-	switch taskTypeStr {
-	case "simplesync":
-		router.SimpleSync(w, r, ps)
+	var reqTask RequestTask
+
+	err := json.NewDecoder(r.Body).Decode(&reqTask)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	switch reqTask.TaskType {
+	case "Upload":
+		var cloudsID []string
+		for _, cloud := range reqTask.StoragePlan.Clouds {
+			cloudsID = append(cloudsID, cloud.ID)
+		}
+		task := model.Task{
+			Tid:             0,
+			TaskType:        model.UPLOAD,
+			State:           model.BLOCKED,
+			StartTime:       time.Time{},
+			Sid:             reqTask.Sid,
+			SourcePath:      "",
+			DestinationPath: reqTask.DestinationPath,
+			TaskOptions: &model.TaskOptions{
+				SourceStoragePlan: nil,
+				DestinationPlan: &model.StoragePlan{
+					StorageMode: reqTask.StoragePlan.StorageMode,
+					Clouds:      cloudsID,
+				},
+			},
+		}
+		tid, err := router.processor.taskStorage.AddTask(&task)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+		}
+		fmt.Fprintf(w, "%v", tid)
+
 	default:
-		w.WriteHeader(http.StatusNotImplemented)
+		http.Error(w, "wrong task type", http.StatusNotImplemented)
 	}
 }
 
@@ -68,6 +119,22 @@ func (router *Router) AddUploadTask(w http.ResponseWriter, r *http.Request, ps h
 	}
 	// todo: 文件较小时，不落盘，直接内存上传
 	r.ParseMultipartForm(32 << 20)
+	tid := r.FormValue("tid")
+	fmt.Println(tid)
+	taskid, _ := strconv.Atoi(tid)
+	task, err := router.processor.taskStorage.GetTask(taskid)
+	if err != nil {
+		log.Printf("Get task fail: %v", err)
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	// 鉴权
+	if sidCookie.Value != task.Sid {
+		log.Printf("wrong sid")
+		http.Error(w, "wrong sid", http.StatusBadGateway)
+		return
+	}
+
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		fmt.Println(err)
@@ -90,7 +157,12 @@ func (router *Router) AddUploadTask(w http.ResponseWriter, r *http.Request, ps h
 	io.Copy(f, file)
 
 	sourcePath := filePath
-	router.processor.CreateTask(model.USER_UPLOAD_SIMPLE, sidCookie.Value, sourcePath, destinationPath)
+
+	task.SourcePath = sourcePath
+	task.DestinationPath = destinationPath
+	task.State = model.WAITING
+
+	router.processor.taskStorage.SetTask(task.Tid, task)
 }
 
 // 获取网盘文件临时下载链接
@@ -120,6 +192,10 @@ func (router *Router) SimpleSync(w http.ResponseWriter, r *http.Request, ps http
 	sid := r.FormValue("sid")
 	router.processor.CreateTask(model.SYNC_SIMPLE, sid, srcPath, dstPath)
 	fmt.Println("task simple sync created success")
+}
+
+func (router *Router) SimpleUpload(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
 }
 
 func NewTestRouter(processor TaskProcessor) *Router {

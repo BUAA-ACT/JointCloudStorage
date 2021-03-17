@@ -52,10 +52,12 @@ func TestNewRouter(t *testing.T) {
 
 		//req,_ http.Post("/upload/jcspan/path/to/file", "multipart/form-data", body)
 		//	req, _ = http.NewRequest("POST", "/upload/jcspan/path/to/file", body)
-		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt")
+		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", "1")
 		req.AddCookie(cookies[0])
 		recorder = httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
+		fmt.Print(req.Header)
+		fmt.Print(req.Body)
 		time.Sleep(time.Second * 5)
 	})
 
@@ -108,13 +110,57 @@ func TestNewRouter(t *testing.T) {
 		t.Logf("%v", recorder.Body)
 		time.Sleep(time.Second * 5)
 	})
+
+	t.Run("Create Upload Task and process", func(t *testing.T) {
+		jsonStr := []byte(`{
+  "TaskType": "Upload",
+   "Uid": "12",
+   "Sid": "tttteeeesssstttt",
+   "DestinationPath":"/path/to/upload/",
+   "StoragePlan":{
+      "StorageMode": "Replica",
+      "Clouds": [
+         {
+            "ID": "txyun-chongqing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         }
+      ]
+   }
+}`)
+		req, _ = http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
+		recorder = httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+
+		tid := recorder.Body.String()
+
+		filename := "../test/tmp/test.txt"
+		f, err := os.Open(filename)
+		if err != nil {
+			t.Error("Open test file Fail")
+		}
+		defer f.Close()
+
+		//req,_ http.Post("/upload/jcspan/path/to/file", "multipart/form-data", body)
+		//	req, _ = http.NewRequest("POST", "/upload/jcspan/path/to/file", body)
+		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", tid)
+		req.AddCookie(cookies[0])
+		recorder = httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		fmt.Print(req.Header)
+		fmt.Print(req.Body)
+		time.Sleep(time.Second * 50)
+	})
 }
 
-func postFile(filename string, filepath string, target_url string) (*http.Request, error) {
+func postFile(filename string, filepath string, target_url string, tid string) (*http.Request, error) {
 	body_buf := bytes.NewBufferString("")
 	body_writer := multipart.NewWriter(body_buf)
 
 	// use the body_writer to write the Part headers to the buffer
+	writer, _ := body_writer.CreateFormField("tid")
+	writer.Write([]byte(tid))
 	_, err := body_writer.CreateFormFile("file", filename)
 	if err != nil {
 		fmt.Println("error writing to buffer")
