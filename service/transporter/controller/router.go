@@ -30,6 +30,8 @@ type RequestTask struct {
 type RequestStoragePlan struct {
 	StorageMode string         `json:"StorageMode"`
 	Clouds      []RequestCloud `json:"Clouds"`
+	N           int            `json:"N"`
+	K           int            `json:"K"`
 }
 
 type RequestCloud struct {
@@ -79,6 +81,8 @@ func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps http
 				DestinationPlan: &model.StoragePlan{
 					StorageMode: reqTask.StoragePlan.StorageMode,
 					Clouds:      cloudsID,
+					N:           reqTask.StoragePlan.N,
+					K:           reqTask.StoragePlan.K,
 				},
 			},
 		}

@@ -46,7 +46,7 @@ const (
 )
 
 type Task struct {
-	Tid 			primitive.ObjectID		`bson:"_id,omitempty"`
+	Tid             primitive.ObjectID `bson:"_id,omitempty"`
 	TaskType        TaskType
 	State           TaskState
 	StartTime       time.Time
@@ -64,6 +64,8 @@ type TaskOptions struct {
 type StoragePlan struct {
 	StorageMode string
 	Clouds      []string
+	N           int
+	K           int
 }
 
 func (t *Task) GetTid() primitive.ObjectID {
@@ -90,7 +92,7 @@ func (t *Task) GetDestinationPath() string {
 	return t.DestinationPath
 }
 
-func NewTask( taskType TaskType, startTime time.Time, sid string, sourcePath string, destinationPath string) *Task {
+func NewTask(taskType TaskType, startTime time.Time, sid string, sourcePath string, destinationPath string) *Task {
 
 	return &Task{
 		Tid:             primitive.NewObjectID(),
@@ -102,7 +104,3 @@ func NewTask( taskType TaskType, startTime time.Time, sid string, sourcePath str
 		DestinationPath: destinationPath,
 	}
 }
-
-
-
-

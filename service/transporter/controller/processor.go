@@ -4,10 +4,13 @@ import (
 	"act.buaa.edu.cn/jcspan/transporter/model"
 	"context"
 	"errors"
+	"fmt"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"path"
 	"reflect"
+	"strconv"
 	"time"
 )
 
@@ -149,6 +152,27 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 		case "Replica":
 			for _, client := range storageClients {
 				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath())
+			}
+		case "EC": // 纠删码模式
+			N := t.TaskOptions.DestinationPlan.N
+			K := t.TaskOptions.DestinationPlan.K
+			if N < 1 || K < 1 || N+K != len(storageClients) {
+				return errors.New("EC storage num wrong")
+			}
+			shards := make([]string, N+K)
+			for i := range shards {
+				// 设置临时分块存储路径
+				shards[i] = t.GetSourcePath() + fmt.Sprintf(".%d", i)
+			}
+			// 开始分块
+			err := Encode(t.GetSourcePath(), shards, N, K)
+			if err != nil {
+				logrus.Errorf("Encode file %s failed.", t.GetSourcePath())
+				return err
+			}
+			// 开始上传
+			for i, client := range storageClients {
+				err = client.Upload(shards[i], t.GetDestinationPath()+"."+strconv.Itoa(i))
 			}
 		default:
 			return errors.New("storage model not implement")
