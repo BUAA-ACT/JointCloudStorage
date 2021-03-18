@@ -1,9 +1,7 @@
 package model
 
 import (
-	"errors"
-	"github.com/jinzhu/copier"
-	"sync"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
@@ -48,7 +46,7 @@ const (
 )
 
 type Task struct {
-	Tid             int
+	Tid 			primitive.ObjectID		`bson:"_id,omitempty"`
 	TaskType        TaskType
 	State           TaskState
 	StartTime       time.Time
@@ -68,7 +66,7 @@ type StoragePlan struct {
 	Clouds      []string
 }
 
-func (t *Task) GetTid() int {
+func (t *Task) GetTid() primitive.ObjectID {
 	return t.Tid
 }
 
@@ -92,9 +90,10 @@ func (t *Task) GetDestinationPath() string {
 	return t.DestinationPath
 }
 
-func NewTask(tid int, taskType TaskType, startTime time.Time, sid string, sourcePath string, destinationPath string) *Task {
+func NewTask( taskType TaskType, startTime time.Time, sid string, sourcePath string, destinationPath string) *Task {
+
 	return &Task{
-		Tid:             0,
+		Tid:             primitive.NewObjectID(),
 		TaskType:        taskType,
 		State:           CREATING,
 		StartTime:       startTime,
@@ -104,88 +103,6 @@ func NewTask(tid int, taskType TaskType, startTime time.Time, sid string, source
 	}
 }
 
-// Task 存储
-type TaskStorage interface {
-	AddTask(t *Task) (tid int, err error)
-	GetTaskList(n int) (t []*Task)
-	GetTask(tid int) (t *Task, err error)
-	SetTaskState(tid int, state TaskState) (err error)
-	SetTask(tid int, t *Task) (err error)
-	DelTask(tid int) (err error)
-}
 
-type InMemoryTaskStorage struct {
-	taskList []*Task
-	maxTid   int
-	mutex    sync.Mutex
-}
 
-func NewInMemoryTaskStorage() *InMemoryTaskStorage {
-	return &InMemoryTaskStorage{
-		taskList: make([]*Task, 0),
-		maxTid:   0,
-		mutex:    sync.Mutex{},
-	}
-}
 
-func (s *InMemoryTaskStorage) GetTask(tid int) (t *Task, err error) {
-	for _, task := range s.taskList {
-		if task.Tid == tid {
-			return task, nil
-		}
-	}
-	return nil, errors.New("task not found")
-}
-
-func (s *InMemoryTaskStorage) SetTask(tid int, t *Task) (err error) {
-	for i, task := range s.taskList {
-		if task.Tid == tid {
-			newTask := Task{}
-			copier.Copy(&newTask, t)
-			s.taskList[i] = &newTask
-			return nil
-		}
-	}
-	return errors.New("task not found")
-}
-
-func (s *InMemoryTaskStorage) AddTask(t *Task) (tid int, err error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	t.Tid = s.maxTid + 1
-	s.maxTid += 1
-	if t.State != BLOCKED {
-		t.State = WAITING
-	}
-	s.taskList = append(s.taskList, t)
-	return t.Tid, nil
-}
-
-func (s *InMemoryTaskStorage) GetTaskList(n int) (t []*Task) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	for _, task := range s.taskList {
-		if task.State == WAITING {
-			t = append(t, task)
-		}
-	}
-	return
-}
-func (s *InMemoryTaskStorage) SetTaskState(tid int, state TaskState) (err error) {
-	for i, task := range s.taskList {
-		if task.Tid == tid {
-			s.taskList[i].State = state
-			return nil
-		}
-	}
-	return errors.New("task not found")
-}
-func (s *InMemoryTaskStorage) DelTask(tid int) (err error) {
-	for i, task := range s.taskList {
-		if task.Tid == tid {
-			s.taskList = append(s.taskList[:i], s.taskList[i+1:]...)
-			return nil
-		}
-	}
-	return errors.New("task not found")
-}

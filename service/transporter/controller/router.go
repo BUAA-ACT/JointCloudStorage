@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -67,7 +67,7 @@ func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps http
 			cloudsID = append(cloudsID, cloud.ID)
 		}
 		task := model.Task{
-			Tid:             0,
+			Tid:             primitive.NewObjectID(),
 			TaskType:        model.UPLOAD,
 			State:           model.BLOCKED,
 			StartTime:       time.Time{},
@@ -104,7 +104,7 @@ func (router *Router) FileIndex(w http.ResponseWriter, r *http.Request, ps httpr
 	if err != nil {
 		log.Printf("Get sid from cookie Fail: %v", err)
 	}
-	task := model.NewTask(0, model.INDEX, time.Now(), sidCookie.Value, path, "")
+	task := model.NewTask( model.INDEX, time.Now(), sidCookie.Value, path, "")
 	for obj := range router.processor.ProcessPathIndex(task) {
 		fmt.Fprintf(w, "%s\n", obj.Key)
 	}
@@ -121,7 +121,7 @@ func (router *Router) AddUploadTask(w http.ResponseWriter, r *http.Request, ps h
 	r.ParseMultipartForm(32 << 20)
 	tid := r.FormValue("tid")
 	fmt.Println(tid)
-	taskid, _ := strconv.Atoi(tid)
+	taskid,err:=primitive.ObjectIDFromHex(tid)
 	task, err := router.processor.taskStorage.GetTask(taskid)
 	if err != nil {
 		log.Printf("Get task fail: %v", err)
@@ -176,7 +176,7 @@ func (router *Router) GetFile(w http.ResponseWriter, r *http.Request, ps httprou
 		fmt.Fprintln(w, "Auth Fail")
 		return
 	}
-	task := model.NewTask(0, model.USER_DOWNLOAD_SIMPLE, time.Now(), sidCookie.Value, filePath, "")
+	task := model.NewTask( model.USER_DOWNLOAD_SIMPLE, time.Now(), sidCookie.Value, filePath, "")
 	url, err := router.processor.ProcessGetTmpDownloadUrl(task)
 	if err != nil {
 		log.Printf("Get tmp download url fail: %v", err)
