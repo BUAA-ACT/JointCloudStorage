@@ -4,6 +4,7 @@ import (
 	"act.buaa.edu.cn/jcspan/transporter/model"
 	"context"
 	"errors"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"path"
 	"reflect"
@@ -25,7 +26,7 @@ func (processor *TaskProcessor) SetStorageDatabase(database model.StorageDatabas
 
 // 创建任务
 func (processor *TaskProcessor) CreateTask(taskType model.TaskType, sid string, sourcePath string, destinationPath string) {
-	task := model.NewTask(0, taskType, time.Now(), sid, sourcePath, destinationPath)
+	task := model.NewTask(taskType, time.Now(), sid, sourcePath, destinationPath)
 	_, err := processor.taskStorage.AddTask(task)
 	if err != nil {
 		log.Panicf("Create Task ERROR: %v", err)
@@ -50,7 +51,7 @@ func (processor *TaskProcessor) StartProcessTasks(ctx context.Context) {
 // 处理任务
 func (processor *TaskProcessor) ProcessTasks() {
 	tasks := processor.taskStorage.GetTaskList(0)
-	var finish chan int
+	var finish chan primitive.ObjectID
 	for _, task := range tasks {
 		switch task.GetTaskType() {
 		case model.USER_UPLOAD_SIMPLE:
