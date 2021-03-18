@@ -104,7 +104,7 @@ func (processor *TaskProcessor) ProcessTasks() {
 
 // 处理获取临时下载 url 请求
 func (processor *TaskProcessor) ProcessGetTmpDownloadUrl(t *model.Task) (url string, err error) {
-	err = processor.CheckTaskType(t, model.USER_DOWNLOAD_SIMPLE)
+	err = processor.CheckTaskType(t, model.DOWNLOAD_EC)
 	if err != nil {
 		return "", err
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io"
 	"log"
@@ -20,11 +21,13 @@ type Router struct {
 }
 
 type RequestTask struct {
-	TaskType        string `json:"TaskType"`
-	Uid             string `json:"Uid"`
-	Sid             string `json:"Sid"`
-	DestinationPath string `json:"DestinationPath"`
-	StoragePlan     RequestStoragePlan
+	TaskType               string             `json:"TaskType"`
+	Uid                    string             `json:"Uid"`
+	Sid                    string             `json:"Sid"`
+	DestinationPath        string             `json:"DestinationPath"`
+	SourcePath             string             `json:"SourcePath"`
+	SourceStoragePlan      RequestStoragePlan `json:"SourceStoragePlan"`
+	DestinationStoragePlan RequestStoragePlan `json:"DestinationStoragePlan"`
 }
 
 type RequestStoragePlan struct {
@@ -65,7 +68,7 @@ func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps http
 	switch reqTask.TaskType {
 	case "Upload":
 		var cloudsID []string
-		for _, cloud := range reqTask.StoragePlan.Clouds {
+		for _, cloud := range reqTask.DestinationStoragePlan.Clouds {
 			cloudsID = append(cloudsID, cloud.ID)
 		}
 		task := model.Task{
@@ -79,10 +82,10 @@ func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps http
 			TaskOptions: &model.TaskOptions{
 				SourceStoragePlan: nil,
 				DestinationPlan: &model.StoragePlan{
-					StorageMode: reqTask.StoragePlan.StorageMode,
+					StorageMode: reqTask.DestinationStoragePlan.StorageMode,
 					Clouds:      cloudsID,
-					N:           reqTask.StoragePlan.N,
-					K:           reqTask.StoragePlan.K,
+					N:           reqTask.DestinationStoragePlan.N,
+					K:           reqTask.DestinationStoragePlan.K,
 				},
 			},
 		}
@@ -92,6 +95,55 @@ func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps http
 		}
 		tidStr := tid.Hex()
 		fmt.Fprintf(w, "%v", tidStr)
+	case "Download":
+		// req Task 转换为 model Task
+		var cloudsID []string
+		for _, cloud := range reqTask.SourceStoragePlan.Clouds {
+			cloudsID = append(cloudsID, cloud.ID)
+		}
+		var taskType model.TaskType
+		if reqTask.DestinationStoragePlan.StorageMode == "EC" {
+			taskType = model.DOWNLOAD_EC
+		} else if reqTask.DestinationStoragePlan.StorageMode == "Replica" {
+			taskType = model.DOWNLOAD_REPLICA
+		} else {
+			logrus.Warn("wrong storageMode")
+			http.Error(w, "wrong storage mode", http.StatusBadRequest)
+		}
+
+		task := model.Task{
+			Tid:             primitive.NewObjectID(),
+			TaskType:        taskType,
+			State:           model.CREATING,
+			StartTime:       time.Time{},
+			Sid:             reqTask.Sid,
+			SourcePath:      reqTask.SourcePath,
+			DestinationPath: "",
+			TaskOptions: &model.TaskOptions{
+				SourceStoragePlan: &model.StoragePlan{
+					StorageMode: reqTask.SourceStoragePlan.StorageMode,
+					Clouds:      cloudsID,
+					N:           reqTask.SourceStoragePlan.N,
+					K:           reqTask.SourceStoragePlan.K,
+				},
+				DestinationPlan: nil,
+			},
+		}
+		if task.TaskType == model.DOWNLOAD_REPLICA {
+			url, err := router.processor.ProcessGetTmpDownloadUrl(&task)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadGateway)
+				return
+			}
+			fmt.Fprintln(w, url)
+		} else {
+			tid, err := router.processor.taskStorage.AddTask(&task)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadGateway)
+				return
+			}
+			fmt.Fprintln(w, tid)
+		}
 
 	default:
 		http.Error(w, "wrong task type", http.StatusNotImplemented)
@@ -181,7 +233,7 @@ func (router *Router) GetFile(w http.ResponseWriter, r *http.Request, ps httprou
 		fmt.Fprintln(w, "Auth Fail")
 		return
 	}
-	task := model.NewTask(model.USER_DOWNLOAD_SIMPLE, time.Now(), sidCookie.Value, filePath, "")
+	task := model.NewTask(model.DOWNLOAD_EC, time.Now(), sidCookie.Value, filePath, "")
 	url, err := router.processor.ProcessGetTmpDownloadUrl(task)
 	if err != nil {
 		log.Printf("Get tmp download url fail: %v", err)
