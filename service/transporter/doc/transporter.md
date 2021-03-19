@@ -26,31 +26,10 @@
 
 ## 接口文档
 
-```json
-{
-  "TaskType": "Upload",
-   "Uid": "12",
-   "Sid": "sdjfsdjfsadjkf21",
-   "DestinationPath":"/path/to/upload/",
-   "StoragePlan":{
-      "StorageMode": "Replica",
-      "Clouds": [
-         {
-            "ID": "txyun-chongqing"
-         },
-         {
-            "ID": "aliyun-beijing"
-         }
-      ]
-   }
-}
-```
-
 ### 1. Upload
 
 - 用户文件上传接口，用于通过 HTML 表单上传的方式将文件上传到用户网盘
-
-- Upload 操作通过验证请求头中 cookies session id 来判断操作的合法性
+- Upload 操作通过验证请求头中 cookies session id 、**以及 tid，来判断操作的合法性**
 
 请求语法：
 
@@ -65,6 +44,10 @@ Content-Disposition: form-data; name="file"; filename="MyFilename.jpg"
 Content-Type: image/jpeg
 file_content
 --9431149156168
+Content-Disposition: form-data; name="tid"
+
+60541be644143f595a1cad13
+--9431149156168
 ```
 
 参数说明:
@@ -76,6 +59,7 @@ file_content
 | 名称 | 类型   | 是否必选 | 描述                                                         |
 | ---- | ------ | -------- | ------------------------------------------------------------ |
 | file | 字符串 | 必选     | 文件或文本内容。浏览器会自动根据文件类型来设置Content-Type，一次只能上传一个文件 |
+| tid  | 字符串 | 必选     | Taskid， 如 ：60541be644143f595a1cad13 该id通过创建上传task获得 |
 
 返回示例：
 
@@ -84,18 +68,12 @@ HTTP/1.1 200 OK
 Connection: keep-alive
 Content-Length: 0  
 Server: JcsPanTransporter
-x-transporter-task-id: 5C2CBC8655718B5911EF4535
 ```
-
-响应头：
-
-| 名称                  | 类型   | 示例值                   | 描述                                              |
-| --------------------- | ------ | ------------------------ | ------------------------------------------------- |
-| x-transporter-task-id | 字符串 | 5C2CBC8655718B5911EF4535 | 上传的文件同步到云存储的任务 id，用于跟踪任务进度 |
 
 ### 2. GetFileTmpUrl
 
 - 用户获取文件临时下载链接接口
+- **该接口准备弃用，下载文件前端请与 httpserver 请求，由 httpserver 通过创建task的方式获取下载链接**
 
 请求语法：
 
@@ -121,60 +99,170 @@ https://jcspan-aliyun-bj-test.oss-cn-beijing.aliyuncs.com/Path/to/MyFilename.jpg
 
 ### 3. CreateTask
 
-- 任务创建接口，供其他后端服务调用
+- 任务创建接口，供其他后端服务调用 **前端不应调用此接口**
 
 请求语法：
 
 ```
-POST /task/taskType HTTP/1.1
+POST /task HTTP/1.1
 Host: transporter.host
 Content-Length：ContentLength
-Content-Type: multipart/form-data; boundary=9431149156168
---9431149156168
-Content-Disposition: form-data; name="srcpath"
 
-path/to/
---9431149156168
-Content-Disposition: form-data; name="dstpath"
-
-dst/to/
---9431149156168
-Content-Disposition: form-data; name="sid"
-
-user-session-id
---9431149156168--
+{
+  "TaskType": "Upload",
+   "Uid": "12",
+   "Sid": "sdjfsdjfsadjkf21",
+   "DestinationPath":"/path/to/upload/",
+   "StoragePlan":{
+      "StorageMode": "Replica",
+      "Clouds": [
+         {
+            "ID": "txyun-chongqing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         }
+      ]
+   }
+}
 ```
 
 参数说明：
 
-> CreateTask 的消息实体通过多重表单格式（multipart/form-data）编码，在 Upload 操作中，参数通过消息体中的表单域传递
+> ~~CreateTask 的消息实体通过多重表单格式（multipart/form-data）编码，在 Upload 操作中，参数通过消息体中的表单域传递~~
 >
-> 创建的任务流行径直接通过 POST 的请求路径指定，如创建类型为 `taskType` 的任务，则请求路径应该为 `/task/taskType`
+> ~~创建的任务类型直接通过 POST 的请求路径指定，如创建类型为 `taskType` 的任务，则请求路径应该为 `/task/taskType`~~
+>
+> **所有参数直接通过 Json 结构体传递**
 
-| 名称     | 类型   | 是否必选 | 描述                                                         |
-| -------- | ------ | -------- | ------------------------------------------------------------ |
-| srcpath  | string | 必选     | 任务的作用路径，创建的任务对 srcpath 路径下的文件进行处理    |
-| dstpath  | string | 可选     | 任务的目的路径，任务完成后，生成的目标文件在网盘中的存储位置 |
-| sid      | string | 必选     | 用户 session id，用于用户身份认证                            |
-| taskType | string | 必选     | 该参数通过 POST 请求的路径传入，目前已经实现的 taskType 有： `simplesync` |
+- Task Json 格式
 
-返回示例：
+  ```json
+  {
+    "TaskType": "Task 类型",
+     "Uid": "用户 id",
+     "Sid": "用户鉴权 sid",
+     "SourcePath":"任务作用路径",
+     "DestinationPath":"任务目的路径",
+     "SourceStoragePlan":{},
+     "DestinationStoragePlan":{}
+  }
+  ```
 
-```
-HTTP/1.1 200 OK
-Connection: keep-alive
-Content-Length: 0  
-Server: JcsPanTransporter
-x-transporter-task-id: 5C2CBC8655718B5911EF4535
-```
+  | 名称                   | 值                     | 是否必选 | 描述                                                         |
+  | ---------------------- | ---------------------- | -------- | ------------------------------------------------------------ |
+  | TaskType               | "Upload" \| "Download" | 必选     | 任务类型，当前实现的任务类型有 Upload、Download。即将实现：Sync、Delete |
+  | SourcePath             | string                 | 可选     | 任务的作用路径，创建的任务对 SourcePath 路径下的文件进行处理 |
+  | DestinationPath        | string                 | 可选     | 任务的目的路径，任务完成后，生成的目标文件在网盘中的存储位置 |
+  | Sid                    | string                 | 必选     | 用户 session id，用于用户身份认证                            |
+  | Uid                    | string                 | 必选     | 用户 user id，用户指定特定的用户                             |
+  | SourceStoragePlan      | storagePlanStruct      | 可选     | 任务作用路径的存储方案                                       |
+  | DestinationStoragePlan | storagePlanStruct      | 可选     | 任务路径的存储方案                                           |
 
-响应头：
+- storagePlanStruct：
 
-| 名称                  | 类型   | 示例值                   | 描述                            |
-| --------------------- | ------ | ------------------------ | ------------------------------- |
-| x-transporter-task-id | 字符串 | 5C2CBC8655718B5911EF4535 | 生成的Task id，用于跟踪任务进度 |
+  ```json
+  {
+      "StorageMode": "EC",
+      "Clouds": [],
+      "N": 3,
+      "K": 1,
+  }
+  ```
+
+  | 名称        | 值                | 是否必选 | 描述                                      |
+  | ----------- | ----------------- | -------- | ----------------------------------------- |
+  | StorageMode | "Replica" \| "EC" | 必选     | 存储方案类型  多副本：Replica、纠删吗：EC |
+  | Clouds      | [] cloudStruct    | 必选     | 存储方案云服务提供商                      |
+  | N           | int               | 可选     | 文件数据块分块数量                        |
+  | K           | int               | 可选     | 文件校验块数量                            |
+
+- cloudStruct：
+
+  ```json
+  {
+  	"ID": "txyun-chongqing"	
+  }
+  ```
+
+  | 名称 | 值     | 是否必选 | 描述          |
+  | ---- | ------ | -------- | ------------- |
+  | ID   | string | 必选     | 存储提供商 ID |
 
 
+
+**请求示例：**
+
+- 请求创建上传文件 Task (多副本模式）：
+
+  ```json
+  {
+    "TaskType": "Upload",
+     "Uid": "12",
+     "Sid": "tttteeeesssstttt",
+     "DestinationPath":"/path/to/upload/",
+     "StoragePlan":{
+        "StorageMode": "Replica",
+        "Clouds": [
+           {
+              "ID": "aliyun-beijing"
+           },
+           {
+              "ID": "aliyun-shanghai"
+           }
+        ]
+     }
+  }
+  ```
+
+- 请求创建上传文件 Task (纠删码模式）：
+
+  ```json
+  {
+    "TaskType": "Upload",
+     "Uid": "12",
+     "Sid": "tttteeeesssstttt",
+     "DestinationPath":"/path/to/upload/",
+     "StoragePlan":{
+        "StorageMode": "EC",
+        "Clouds": [
+           {
+              "ID": "aliyun-beijing"
+           },
+           {
+              "ID": "aliyun-shanghai"
+           },
+           {
+              "ID": "txyun-beijing"
+           }
+        ],
+        "N": 2,
+        "K": 1
+     }
+  }
+  ```
+
+  请注意，纠删码模式下，云服务提供商数量必须等于 N+K，且按照云服务商在 Clouds 中出现的顺序，依次存储数据分块以及校验分块
+
+**返回值示例：**
+
+- 异步任务：如上传文件 task、Download task (EC 模式)
+
+  ```
+  60541be644143f595a1cad13
+  ```
+
+  唯一标识的 task id，用于返回给前端，前端上传文件时鉴权用
+
+- 同步任务：如 Download （Replica 模式）
+
+  ```
+  https://jcspan-aliyun-bj-test.oss-cn-beijing.aliyuncs.com/Path/to/MyFilename.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=LTAI4G3PCfrg7aXQ6EvuDo25%2F20210305%2Foss-cn-beijing%2Fs3%2Faws4_request&X-Amz-Date=20210305T022014Z&X-Amz-Expires=1800&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22your-filename.txt%22&X-Amz-Signature=c705a726732e9dd650986cdd56e78226996d43df3872ee225e9424b2d0fbdebb
+  ```
+
+  直接返回任务执行结果
+
+  
 
 ## 数据表设计
 
