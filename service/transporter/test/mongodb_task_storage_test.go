@@ -1,6 +1,7 @@
-package model
+package transporter
 
 import (
+	"act.buaa.edu.cn/jcspan/transporter/model"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"testing"
@@ -8,18 +9,18 @@ import (
 )
 
 func TestMongoTaskStorage_AddTask(t *testing.T) {
-	mongots,err:=NewMongoTaskStorage()
+	mongots,err:= model.NewMongoTaskStorage()
 	if err!=nil{
 		t.Error("can't connect to the mongodb")
 	}
 	var tid primitive.ObjectID
-	task:=NewTask(1,time.Now(),"asdf","asdfasdf","asdfasdf")
-	task.TaskOptions=&TaskOptions{
-		SourceStoragePlan: &StoragePlan{
+	task:= model.NewTask(1,time.Now(),"asdf","asdfasdf","asdfasdf")
+	task.TaskOptions=&model.TaskOptions{
+		SourceStoragePlan: &model.StoragePlan{
 			StorageMode: "asdfasd",
 			Clouds: []string{"asdfasd","asdfasdfa"},
 		},
-		DestinationPlan: &StoragePlan{
+		DestinationPlan: &model.StoragePlan{
 			StorageMode: "asdfasdfasdf",
 			Clouds: nil,
 		},
@@ -39,7 +40,7 @@ func TestMongoTaskStorage_AddTask(t *testing.T) {
 		fmt.Println(*task)
 	})
 	t.Run("test the setState",func(t *testing.T){
-		err=mongots.SetTaskState(tid,WAITING)
+		err=mongots.SetTaskState(tid, model.WAITING)
 		if err!=nil{
 			t.Error(err)
 		}
