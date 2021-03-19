@@ -84,7 +84,7 @@ func Encode(filename string, shards []string, n, k int) error {
 	return nil
 }
 
-func decode(filename string, size int64, shards []string, n, k int) error {
+func Decode(filename string, size int64, shards []string, n, k int) error {
 	log.Debugf("filename: %s, shards: %v, n: %d, k: %d", filename, shards, n, k)
 
 	// read shards
