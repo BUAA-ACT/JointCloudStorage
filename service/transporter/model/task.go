@@ -9,13 +9,14 @@ type TaskType int32
 type TaskState int32
 
 const (
-	USER_UPLOAD_SIMPLE   TaskType = 1
-	USER_UPLOAD_ERASURE  TaskType = 2
-	SYNC_SIMPLE          TaskType = 3
-	SYNC_ERASURE         TaskType = 4
-	USER_DOWNLOAD_SIMPLE TaskType = 5
-	UPLOAD               TaskType = 6
-	INDEX                TaskType = 7
+	USER_UPLOAD_SIMPLE  TaskType = 1
+	USER_UPLOAD_ERASURE TaskType = 2
+	SYNC_SIMPLE         TaskType = 3
+	SYNC_ERASURE        TaskType = 4
+	DOWNLOAD_EC         TaskType = 5
+	DOWNLOAD_REPLICA    TaskType = 6
+	UPLOAD              TaskType = 7
+	INDEX               TaskType = 8
 )
 
 func (taskType TaskType) String() string {
@@ -28,8 +29,8 @@ func (taskType TaskType) String() string {
 		return "SYNC_SIMPLE"
 	case SYNC_ERASURE:
 		return "SYNC_ERASURE"
-	case USER_DOWNLOAD_SIMPLE:
-		return "USER_DOWNLOAD_SIMPLE"
+	case DOWNLOAD_EC:
+		return "DOWNLOAD_EC"
 	case INDEX:
 		return "INDEX"
 	}
@@ -46,7 +47,7 @@ const (
 )
 
 type Task struct {
-	Tid 			primitive.ObjectID		`bson:"_id,omitempty"`
+	Tid             primitive.ObjectID `bson:"_id,omitempty"`
 	TaskType        TaskType
 	State           TaskState
 	StartTime       time.Time
@@ -64,6 +65,8 @@ type TaskOptions struct {
 type StoragePlan struct {
 	StorageMode string
 	Clouds      []string
+	N           int
+	K           int
 }
 
 func (t *Task) GetTid() primitive.ObjectID {
@@ -90,7 +93,7 @@ func (t *Task) GetDestinationPath() string {
 	return t.DestinationPath
 }
 
-func NewTask( taskType TaskType, startTime time.Time, sid string, sourcePath string, destinationPath string) *Task {
+func NewTask(taskType TaskType, startTime time.Time, sid string, sourcePath string, destinationPath string) *Task {
 
 	return &Task{
 		Tid:             primitive.NewObjectID(),
@@ -102,7 +105,3 @@ func NewTask( taskType TaskType, startTime time.Time, sid string, sourcePath str
 		DestinationPath: destinationPath,
 	}
 }
-
-
-
-

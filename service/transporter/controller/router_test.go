@@ -152,6 +152,53 @@ func TestNewRouter(t *testing.T) {
 		fmt.Print(req.Body)
 		time.Sleep(time.Second * 50)
 	})
+
+	t.Run("Create EC Upload Task and process", func(t *testing.T) {
+		jsonStr := []byte(`{
+  "TaskType": "Upload",
+   "Uid": "12",
+   "Sid": "tttteeeesssstttt",
+   "DestinationPath":"/path/to/upload/",
+   "StoragePlan":{
+      "StorageMode": "EC",
+      "Clouds": [
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         }
+      ],
+      "N": 2,
+      "K": 1
+   }
+}`)
+		req, _ = http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
+		recorder = httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+
+		tid := recorder.Body.String()
+
+		filename := "../test/tmp/test.txt"
+		f, err := os.Open(filename)
+		if err != nil {
+			t.Error("Open test file Fail")
+		}
+		defer f.Close()
+
+		//req,_ http.Post("/upload/jcspan/path/to/file", "multipart/form-data", body)
+		//	req, _ = http.NewRequest("POST", "/upload/jcspan/path/to/file", body)
+		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", tid)
+		req.AddCookie(cookies[0])
+		recorder = httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		fmt.Print(req.Header)
+		fmt.Print(req.Body)
+		time.Sleep(time.Second * 50)
+	})
 }
 
 func postFile(filename string, filepath string, target_url string, tid string) (*http.Request, error) {

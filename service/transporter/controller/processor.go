@@ -4,10 +4,14 @@ import (
 	"act.buaa.edu.cn/jcspan/transporter/model"
 	"context"
 	"errors"
+	"fmt"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"path"
+	"path/filepath"
 	"reflect"
+	"strconv"
 	"time"
 )
 
@@ -75,7 +79,7 @@ func (processor *TaskProcessor) ProcessTasks() {
 				} else {
 					log.Printf("finish task: %v", t.GetTid())
 				}
-				finish <- task.GetTid()
+				finish <- t.GetTid()
 			}(task)
 			log.Printf("start simple SYNC task")
 		case model.UPLOAD:
@@ -87,9 +91,20 @@ func (processor *TaskProcessor) ProcessTasks() {
 				} else {
 					log.Printf("finish task: %v", t.GetTid())
 				}
-				finish <- task.GetTid()
+				finish <- t.Tid
 			}(task)
 			log.Printf("start upload task")
+		case model.DOWNLOAD_EC:
+			processor.taskStorage.SetTaskState(task.Tid, model.PROCESSING)
+			go func(t *model.Task) {
+				_, err := processor.RebuildFileToDisk(t)
+				if err != nil {
+					log.Panicf("Process Task Fail: %v", err)
+				} else {
+					log.Printf("finish task: %v", t.GetTid())
+				}
+				finish <- t.Tid
+			}(task)
 		default:
 			log.Fatalf("ERROR: Process TaskType: %s not implement", task.GetTaskType())
 		}
@@ -99,9 +114,47 @@ func (processor *TaskProcessor) ProcessTasks() {
 	}
 }
 
+func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, err error) {
+	err = processor.CheckTaskType(t, model.DOWNLOAD_EC)
+	if err != nil {
+		return "", err
+	}
+	var storageClients []model.StorageClient
+	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
+	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
+		storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(cloudName, t.Sid))
+	}
+	switch storageModel {
+	case "EC":
+		N := t.TaskOptions.SourceStoragePlan.N
+		K := t.TaskOptions.SourceStoragePlan.K
+		if N < 1 || K < 1 || N+K != len(storageClients) {
+			return "", errors.New("EC storage num wrong")
+		}
+		rebuildPath := "./tmp/" + filepath.Base(t.SourcePath) // todo 自定义 tmp 目录
+		shards := make([]string, N+K)
+		for i := range shards {
+			// 设置临时分块存储路径
+			shards[i] = rebuildPath + fmt.Sprintf(".%d", i)
+			err := storageClients[i].Download(t.SourcePath+"."+strconv.Itoa(i), shards[i])
+			if err != nil {
+				logrus.Errorf("Download EC block %v from %v fail: %v", shards[i], storageClients[i], err)
+			}
+		}
+		err = Decode(rebuildPath, 0, shards, N, K) // todo 文件大小
+		if err != nil {
+			logrus.Errorf("Rebuild File %v fail: %v", rebuildPath, err)
+			return "", err
+		}
+		return rebuildPath, nil
+	default:
+		return "", errors.New("storageModel not support")
+	}
+}
+
 // 处理获取临时下载 url 请求
 func (processor *TaskProcessor) ProcessGetTmpDownloadUrl(t *model.Task) (url string, err error) {
-	err = processor.CheckTaskType(t, model.USER_DOWNLOAD_SIMPLE)
+	err = processor.CheckTaskType(t, model.DOWNLOAD_REPLICA)
 	if err != nil {
 		return "", err
 	}
@@ -149,6 +202,27 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 		case "Replica":
 			for _, client := range storageClients {
 				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath())
+			}
+		case "EC": // 纠删码模式
+			N := t.TaskOptions.DestinationPlan.N
+			K := t.TaskOptions.DestinationPlan.K
+			if N < 1 || K < 1 || N+K != len(storageClients) {
+				return errors.New("EC storage num wrong")
+			}
+			shards := make([]string, N+K)
+			for i := range shards {
+				// 设置临时分块存储路径
+				shards[i] = t.GetSourcePath() + fmt.Sprintf(".%d", i)
+			}
+			// 开始分块
+			err := Encode(t.GetSourcePath(), shards, N, K)
+			if err != nil {
+				logrus.Errorf("Encode file %s failed.", t.GetSourcePath())
+				return err
+			}
+			// 开始上传
+			for i, client := range storageClients {
+				err = client.Upload(shards[i], t.GetDestinationPath()+"."+strconv.Itoa(i))
 			}
 		default:
 			return errors.New("storage model not implement")
