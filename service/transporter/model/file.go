@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"os"
 	"time"
 )
 
@@ -26,6 +27,31 @@ type FileDatabase interface {
 
 type InMemoryFileDatabase struct {
 	db map[string]File
+}
+
+func NewInMemoryFileDatabase() *InMemoryFileDatabase {
+	return &InMemoryFileDatabase{db: make(map[string]File)}
+}
+
+func NewFileInfoFromPath(path string, uid string, fileName string) (file *File, err error) {
+	fi, err := os.Stat(path)
+	if fileName[0] != '/' {
+		fileName = "/" + fileName
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &File{
+		Id:                uid + fileName,
+		Filename:          fileName,
+		Owner:             uid,
+		Size:              fi.Size(),
+		LastChange:        time.Now(),
+		SyncStatus:        "",
+		ReconstructStatus: "",
+		DownloadUrl:       "",
+		ReconstructTime:   time.Time{},
+	}, nil
 }
 
 func (fd *InMemoryFileDatabase) CreateFileInfo(file *File) (err error) {

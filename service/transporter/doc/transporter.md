@@ -201,7 +201,7 @@ Content-Length：ContentLength
      "Uid": "12",
      "Sid": "tttteeeesssstttt",
      "DestinationPath":"/path/to/upload/",
-     "StoragePlan":{
+     "DestinationStoragePlan":{
         "StorageMode": "Replica",
         "Clouds": [
            {
@@ -223,7 +223,34 @@ Content-Length：ContentLength
      "Uid": "12",
      "Sid": "tttteeeesssstttt",
      "DestinationPath":"/path/to/upload/",
-     "StoragePlan":{
+     "DestinationStoragePlan":{
+        "StorageMode": "EC",
+        "Clouds": [
+           {
+              "ID": "aliyun-beijing"
+           },
+           {
+              "ID": "aliyun-shanghai"
+           },
+           {
+              "ID": "txyun-beijing"
+           }
+        ],
+        "N": 2,
+        "K": 1
+     }
+  }
+  ```
+
+- 请求创建下载文件 Task (纠删码模式）：
+
+  ```json
+  {
+    "TaskType": "Download",
+     "Uid": "tester",
+     "Sid": "tttteeeesssstttt",
+     "SourcePath":"/path/to/jcspantest.txt",
+     "SourceStoragePlan":{
         "StorageMode": "EC",
         "Clouds": [
            {

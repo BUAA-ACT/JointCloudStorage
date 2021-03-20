@@ -18,6 +18,7 @@ import (
 type TaskProcessor struct {
 	taskStorage     model.TaskStorage
 	storageDatabase model.StorageDatabase
+	fileDatabase    model.FileDatabase
 }
 
 func (processor *TaskProcessor) SetTaskStorage(storage model.TaskStorage) {
@@ -122,7 +123,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 	var storageClients []model.StorageClient
 	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
 	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
-		storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(cloudName, t.Sid))
+		storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(cloudName, t.Uid))
 	}
 	switch storageModel {
 	case "EC":
@@ -131,7 +132,11 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		if N < 1 || K < 1 || N+K != len(storageClients) {
 			return "", errors.New("EC storage num wrong")
 		}
-		rebuildPath := "./tmp/" + filepath.Base(t.SourcePath) // todo 自定义 tmp 目录
+		fileInfo, err := processor.fileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
+		if err != nil {
+			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
+		}
+		rebuildPath := "./tmp/download/" + filepath.Base(t.SourcePath) // todo 自定义 tmp 目录
 		shards := make([]string, N+K)
 		for i := range shards {
 			// 设置临时分块存储路径
@@ -141,7 +146,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 				logrus.Errorf("Download EC block %v from %v fail: %v", shards[i], storageClients[i], err)
 			}
 		}
-		err = Decode(rebuildPath, 0, shards, N, K) // todo 文件大小
+		err = Decode(rebuildPath, fileInfo.Size, shards, N, K) // todo 文件大小
 		if err != nil {
 			logrus.Errorf("Rebuild File %v fail: %v", rebuildPath, err)
 			return "", err
@@ -196,13 +201,19 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	if t.TaskOptions != nil {
 		storageModel := t.TaskOptions.DestinationPlan.StorageMode
 		for _, cloudName := range t.TaskOptions.DestinationPlan.Clouds {
-			storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(cloudName, t.Sid))
+			storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(cloudName, t.Uid))
 		}
 		switch storageModel {
 		case "Replica":
 			for _, client := range storageClients {
 				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath())
 			}
+			fileInfo, err := model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
+			if CheckErr(err, "New File Info") {
+				return err
+			}
+			err = processor.fileDatabase.CreateFileInfo(fileInfo)
+			CheckErr(err, "Create File Info")
 		case "EC": // 纠删码模式
 			N := t.TaskOptions.DestinationPlan.N
 			K := t.TaskOptions.DestinationPlan.K
@@ -224,6 +235,15 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			for i, client := range storageClients {
 				err = client.Upload(shards[i], t.GetDestinationPath()+"."+strconv.Itoa(i))
 			}
+			if CheckErr(err, "Upload EC block") {
+				return err
+			}
+			fileInfo, err := model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
+			if CheckErr(err, "New File Info") {
+				return err
+			}
+			err = processor.fileDatabase.CreateFileInfo(fileInfo)
+			CheckErr(err, "Create File Info")
 		default:
 			return errors.New("storage model not implement")
 		}

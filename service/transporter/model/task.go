@@ -51,7 +51,7 @@ type Task struct {
 	TaskType        TaskType
 	State           TaskState
 	StartTime       time.Time
-	Sid             string
+	Uid             string
 	SourcePath      string
 	DestinationPath string
 	TaskOptions     *TaskOptions
@@ -82,7 +82,7 @@ func (t *Task) GetState() TaskState {
 }
 
 func (t *Task) GetSid() string {
-	return t.Sid
+	return t.Uid
 }
 
 func (t *Task) GetSourcePath() string {
@@ -93,14 +93,14 @@ func (t *Task) GetDestinationPath() string {
 	return t.DestinationPath
 }
 
-func NewTask(taskType TaskType, startTime time.Time, sid string, sourcePath string, destinationPath string) *Task {
+func NewTask(taskType TaskType, startTime time.Time, uid string, sourcePath string, destinationPath string) *Task {
 
 	return &Task{
 		Tid:             primitive.NewObjectID(),
 		TaskType:        taskType,
 		State:           CREATING,
 		StartTime:       startTime,
-		Sid:             sid,
+		Uid:             uid,
 		SourcePath:      sourcePath,
 		DestinationPath: destinationPath,
 	}

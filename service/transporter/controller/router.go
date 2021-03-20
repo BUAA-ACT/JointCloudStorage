@@ -76,7 +76,7 @@ func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps http
 			TaskType:        model.UPLOAD,
 			State:           model.BLOCKED,
 			StartTime:       time.Time{},
-			Sid:             reqTask.Sid,
+			Uid:             reqTask.Uid,
 			SourcePath:      "",
 			DestinationPath: reqTask.DestinationPath,
 			TaskOptions: &model.TaskOptions{
@@ -102,13 +102,14 @@ func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps http
 			cloudsID = append(cloudsID, cloud.ID)
 		}
 		var taskType model.TaskType
-		if reqTask.DestinationStoragePlan.StorageMode == "EC" {
+		if reqTask.SourceStoragePlan.StorageMode == "EC" {
 			taskType = model.DOWNLOAD_EC
-		} else if reqTask.DestinationStoragePlan.StorageMode == "Replica" {
+		} else if reqTask.SourceStoragePlan.StorageMode == "Replica" {
 			taskType = model.DOWNLOAD_REPLICA
 		} else {
 			logrus.Warn("wrong storageMode")
 			http.Error(w, "wrong storage mode", http.StatusBadRequest)
+
 		}
 
 		task := model.Task{
@@ -116,7 +117,7 @@ func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps http
 			TaskType:        taskType,
 			State:           model.CREATING,
 			StartTime:       time.Time{},
-			Sid:             reqTask.Sid,
+			Uid:             reqTask.Uid,
 			SourcePath:      reqTask.SourcePath,
 			DestinationPath: "",
 			TaskOptions: &model.TaskOptions{
@@ -177,7 +178,6 @@ func (router *Router) AddUploadTask(w http.ResponseWriter, r *http.Request, ps h
 	// todo: 文件较小时，不落盘，直接内存上传
 	r.ParseMultipartForm(32 << 20)
 	tid := r.FormValue("tid")
-	fmt.Println(tid)
 	taskid, err := primitive.ObjectIDFromHex(tid)
 	task, err := router.processor.taskStorage.GetTask(taskid)
 	if err != nil {
@@ -186,7 +186,8 @@ func (router *Router) AddUploadTask(w http.ResponseWriter, r *http.Request, ps h
 		return
 	}
 	// 鉴权
-	if sidCookie.Value != task.Sid {
+	user, err := model.Authenticate(sidCookie.Value)
+	if err != nil || user.Id != task.Uid {
 		log.Printf("wrong sid")
 		http.Error(w, "wrong sid", http.StatusBadGateway)
 		return
@@ -233,7 +234,7 @@ func (router *Router) GetFile(w http.ResponseWriter, r *http.Request, ps httprou
 		fmt.Fprintln(w, "Auth Fail")
 		return
 	}
-	task := model.NewTask(model.DOWNLOAD_EC, time.Now(), sidCookie.Value, filePath, "")
+	task := model.NewTask(model.DOWNLOAD_REPLICA, time.Now(), sidCookie.Value, filePath, "")
 	url, err := router.processor.ProcessGetTmpDownloadUrl(task)
 	if err != nil {
 		log.Printf("Get tmp download url fail: %v", err)

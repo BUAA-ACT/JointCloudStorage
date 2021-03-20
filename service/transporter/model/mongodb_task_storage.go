@@ -8,12 +8,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 )
+
 //type baseTask struct {
 //	Id 				primitive.ObjectID			`bson:"_id,omitempty"`
 //	TaskType        TaskType
 //	State           TaskState
 //	StartTime       time.Time
-//	Sid             string
+//	Uid             string
 //	SourcePath      string
 //	DestinationPath string
 //	TaskOptions     *TaskOptions
@@ -26,7 +27,7 @@ import (
 //		TaskType: 		task.TaskType,
 //		State:			task.State,
 //		StartTime: 		task.StartTime,
-//		Sid: 			task.Sid,
+//		Uid: 			task.Uid,
 //		SourcePath: 	task.SourcePath,
 //		DestinationPath: task.DestinationPath,
 //		TaskOptions: 	task.TaskOptions,
@@ -40,13 +41,12 @@ import (
 //		TaskType: 		task.TaskType,
 //		State:			task.State,
 //		StartTime: 		task.StartTime,
-//		Sid: 			task.Sid,
+//		Uid: 			task.Uid,
 //		SourcePath: 	task.SourcePath,
 //		DestinationPath: task.DestinationPath,
 //		TaskOptions: 	task.TaskOptions,
 //	}
 //}
-
 
 type MongoTaskStorage struct {
 	client *mongo.Client
@@ -55,76 +55,76 @@ type MongoTaskStorage struct {
 
 //func NewMongoTaskStorage() *MongoTaskStorage
 //create a struct MongoTaskStorage
-func NewMongoTaskStorage() (*MongoTaskStorage,error){
-	clientOptions:=options.Client().ApplyURI("mongodb://192.168.105.8:20100")
-	client,err:=mongo.Connect(context.TODO(),clientOptions)
-	if err!=nil{
+func NewMongoTaskStorage() (*MongoTaskStorage, error) {
+	clientOptions := options.Client().ApplyURI("mongodb://192.168.105.8:20100")
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+	if err != nil {
 		log.Print(err)
-		return nil,err
+		return nil, err
 	}
 	return &MongoTaskStorage{
 		client: client,
-		maxTid:0,
-	},nil
+		maxTid: 0,
+	}, nil
 }
 
 //func (task *MongoTaskStorage)AddTask(t *baseTask)(tid int,err error)
 //insert a task into the table
-func (task * MongoTaskStorage)AddTask(t *Task)(tid primitive.ObjectID,err error){
+func (task *MongoTaskStorage) AddTask(t *Task) (tid primitive.ObjectID, err error) {
 	//check the connection
-	err=task.client.Ping(context.TODO(),nil)
-	if err!=nil{
+	err = task.client.Ping(context.TODO(), nil)
+	if err != nil {
 		log.Print(err)
-		clientOptions:=options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client,err=mongo.Connect(context.TODO(),clientOptions)
-		if err!=nil{
-			return primitive.NewObjectID(),err
+		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		task.client, err = mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
+			return primitive.NewObjectID(), err
 		}
 	}
 
 	//get the collection and insert the bson
-	collection:=task.client.Database("transporterTasks").Collection("Tasks")
-	insertResult,err:=collection.InsertOne(context.TODO(),*t)
-	objectID:=insertResult.InsertedID.(primitive.ObjectID)
+	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	insertResult, err := collection.InsertOne(context.TODO(), *t)
+	objectID := insertResult.InsertedID.(primitive.ObjectID)
 
-	return objectID,nil
+	return objectID, nil
 }
 
 //get at most n tasks with state WAITTING
-func (task *MongoTaskStorage)GetTaskList(n int) (t []*Task) {
+func (task *MongoTaskStorage) GetTaskList(n int) (t []*Task) {
 	//check the connection
-	err:=task.client.Ping(context.TODO(),nil)
-	if err!=nil{
+	err := task.client.Ping(context.TODO(), nil)
+	if err != nil {
 		log.Print(err)
-		clientOptions:=options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client,err=mongo.Connect(context.TODO(),clientOptions)
-		if err!=nil{
+		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		task.client, err = mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
 			return nil
 		}
 	}
 
 	//find the table
-	collection:=task.client.Database("transporterTasks").Collection("Tasks")
-	findOptions:=options.Find()
+	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	findOptions := options.Find()
 	findOptions.SetLimit(int64(n))
-	cur,err:=collection.Find(context.TODO(),bson.D{{"State",WAITING}},findOptions)
+	cur, err := collection.Find(context.TODO(), bson.D{{"State", WAITING}}, findOptions)
 
-	if err!=nil{
+	if err != nil {
 		log.Print(err)
 		return nil
 	}
 
 	//change the result
-	for cur.Next(context.TODO()){
+	for cur.Next(context.TODO()) {
 		var elem Task
-		err:=cur.Decode(&elem)
-		if err!=nil{
+		err := cur.Decode(&elem)
+		if err != nil {
 			log.Fatal(err)
 		}
 
-		t= append(t, &elem)
+		t = append(t, &elem)
 	}
-	if err:=cur.Err();err!=nil{
+	if err := cur.Err(); err != nil {
 		log.Print(err)
 		return nil
 	}
@@ -135,113 +135,113 @@ func (task *MongoTaskStorage)GetTaskList(n int) (t []*Task) {
 }
 
 //get one task by _id
-func (task *MongoTaskStorage) GetTask(tid primitive.ObjectID) (*Task, error){
+func (task *MongoTaskStorage) GetTask(tid primitive.ObjectID) (*Task, error) {
 	//check the connection
-	err:=task.client.Ping(context.TODO(),nil)
-	if err!=nil{
+	err := task.client.Ping(context.TODO(), nil)
+	if err != nil {
 		log.Print(err)
-		clientOptions:=options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client,err=mongo.Connect(context.TODO(),clientOptions)
-		if err!=nil{
-			return nil,err
+		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		task.client, err = mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	var result Task
 
 	//get the collection and find by _id
-	collection:=task.client.Database("transporterTasks").Collection("Tasks")
-	err=collection.FindOne(context.TODO(),bson.D{{"_id",tid}}).Decode(&result)
-	if err!=nil{
+	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	err = collection.FindOne(context.TODO(), bson.D{{"_id", tid}}).Decode(&result)
+	if err != nil {
 		log.Print(err)
-		return nil,err
+		return nil, err
 	}
-	return &result,err
+	return &result, err
 }
 
 //set the state to task tid to TaskState
-func (task *MongoTaskStorage) SetTaskState(tid primitive.ObjectID, state TaskState) error{
-	err:=task.client.Ping(context.TODO(),nil)
-	if err!=nil{
+func (task *MongoTaskStorage) SetTaskState(tid primitive.ObjectID, state TaskState) error {
+	err := task.client.Ping(context.TODO(), nil)
+	if err != nil {
 		log.Print(err)
-		clientOptions:=options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client,err=mongo.Connect(context.TODO(),clientOptions)
-		if err!=nil{
+		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		task.client, err = mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
 			return err
 		}
 	}
 
-	filter:=bson.D{{"_id",tid}}
-	update:=bson.D{
-		{"$set",bson.D{
-			{"State",state},
+	filter := bson.D{{"_id", tid}}
+	update := bson.D{
+		{"$set", bson.D{
+			{"State", state},
 		}},
 	}
-	collection:=task.client.Database("transporterTasks").Collection("Tasks")
-	_,err=collection.UpdateOne(context.TODO(),filter,update)
-	if err!=nil{
+	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	_, err = collection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
 		return err
 	}
 	return nil
 }
 
 //set the task by _id
-func (task *MongoTaskStorage) SetTask(tid primitive.ObjectID, t *Task) error{
-	err:=task.client.Ping(context.TODO(),nil)
-	if err!=nil{
+func (task *MongoTaskStorage) SetTask(tid primitive.ObjectID, t *Task) error {
+	err := task.client.Ping(context.TODO(), nil)
+	if err != nil {
 		log.Print(err)
-		clientOptions:=options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client,err=mongo.Connect(context.TODO(),clientOptions)
-		if err!=nil{
+		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		task.client, err = mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
 			return err
 		}
 	}
 
-	update:=bson.D{
-		{"$set",bson.D{
-			{"TaskType",t.TaskType},
-			{"State",t.State},
-			{"StartTime",t.StartTime},
-			{"Sid",t.Sid},
-			{"SourcePath",t.SourcePath},
-			{"DestinationPath",t.DestinationPath},
-			{"TaskOptions",t.TaskOptions},
+	update := bson.D{
+		{"$set", bson.D{
+			{"TaskType", t.TaskType},
+			{"State", t.State},
+			{"StartTime", t.StartTime},
+			{"Uid", t.Uid},
+			{"SourcePath", t.SourcePath},
+			{"DestinationPath", t.DestinationPath},
+			{"TaskOptions", t.TaskOptions},
 		}},
 	}
-	collection:=task.client.Database("transporterTasks").Collection("Tasks")
-	_,err=collection.UpdateByID(context.TODO(),tid,update)
-	if err!=nil{
+	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	_, err = collection.UpdateByID(context.TODO(), tid, update)
+	if err != nil {
 		return err
 	}
 	return nil
 }
 
 //delete the task
-func (task *MongoTaskStorage) DelTask(tid primitive.ObjectID) error{
-	err:=task.client.Ping(context.TODO(),nil)
-	if err!=nil{
+func (task *MongoTaskStorage) DelTask(tid primitive.ObjectID) error {
+	err := task.client.Ping(context.TODO(), nil)
+	if err != nil {
 		log.Print(err)
-		clientOptions:=options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client,err=mongo.Connect(context.TODO(),clientOptions)
-		if err!=nil{
+		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		task.client, err = mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
 			return err
 		}
 	}
 
-	collection:=task.client.Database("transporterTasks").Collection("Tasks")
-	_,err=collection.DeleteOne(context.TODO(),bson.D{{"id",tid}})
-	if err!=nil{
+	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	_, err = collection.DeleteOne(context.TODO(), bson.D{{"id", tid}})
+	if err != nil {
 		return nil
 	}
 	return nil
 }
 
-func (task *MongoTaskStorage)UpdateClient()error{
-	err:=task.client.Ping(context.TODO(),nil)
-	if err!=nil{
-		clientOptions:=options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client,err=mongo.Connect(context.TODO(),clientOptions)
-		if err!=nil{
+func (task *MongoTaskStorage) UpdateClient() error {
+	err := task.client.Ping(context.TODO(), nil)
+	if err != nil {
+		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		task.client, err = mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
 			return err
 		}
 	}
