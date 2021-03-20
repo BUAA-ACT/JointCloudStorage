@@ -3,6 +3,8 @@ module act.buaa.edu.cn/jcspan/transporter
 go 1.15
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/gin-gonic/gin v1.6.3
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/jinzhu/copier v0.2.8
 	github.com/julienschmidt/httprouter v1.3.0

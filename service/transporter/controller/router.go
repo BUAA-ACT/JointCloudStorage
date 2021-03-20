@@ -4,7 +4,7 @@ import (
 	"act.buaa.edu.cn/jcspan/transporter/model"
 	"encoding/json"
 	"fmt"
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io"
@@ -16,7 +16,7 @@ import (
 )
 
 type Router struct {
-	*httprouter.Router
+	*gin.Engine
 	processor TaskProcessor
 }
 
@@ -44,7 +44,7 @@ type RequestCloud struct {
 func NewRouter(processor TaskProcessor) *Router {
 	var router Router
 	router = Router{
-		Router:    httprouter.New(),
+		Engine:    gin.Default(),
 		processor: processor,
 	}
 	router.GET("/", Index)
@@ -56,12 +56,12 @@ func NewRouter(processor TaskProcessor) *Router {
 	return &router
 }
 
-func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (router *Router) CreateTask(c *gin.Context) {
 	var reqTask RequestTask
 
-	err := json.NewDecoder(r.Body).Decode(&reqTask)
+	err := json.NewDecoder(c.Request.Body).Decode(&reqTask)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(c.Writer, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -91,10 +91,10 @@ func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps http
 		}
 		tid, err := router.processor.taskStorage.AddTask(&task)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadGateway)
+			http.Error(c.Writer, err.Error(), http.StatusBadGateway)
 		}
 		tidStr := tid.Hex()
-		fmt.Fprintf(w, "%v", tidStr)
+		fmt.Fprintf(c.Writer, "%v", tidStr)
 	case "Download":
 		// req Task 转换为 model Task
 		var cloudsID []string
@@ -108,7 +108,7 @@ func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps http
 			taskType = model.DOWNLOAD_REPLICA
 		} else {
 			logrus.Warn("wrong storageMode")
-			http.Error(w, "wrong storage mode", http.StatusBadRequest)
+			http.Error(c.Writer, "wrong storage mode", http.StatusBadRequest)
 
 		}
 
@@ -133,67 +133,67 @@ func (router *Router) CreateTask(w http.ResponseWriter, r *http.Request, ps http
 		if task.TaskType == model.DOWNLOAD_REPLICA {
 			url, err := router.processor.ProcessGetTmpDownloadUrl(&task)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadGateway)
+				http.Error(c.Writer, err.Error(), http.StatusBadGateway)
 				return
 			}
-			fmt.Fprintln(w, url)
+			fmt.Fprintln(c.Writer, url)
 		} else {
 			tid, err := router.processor.taskStorage.AddTask(&task)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadGateway)
+				http.Error(c.Writer, err.Error(), http.StatusBadGateway)
 				return
 			}
-			fmt.Fprintln(w, tid)
+			fmt.Fprintln(c.Writer, tid)
 		}
 
 	default:
-		http.Error(w, "wrong task type", http.StatusNotImplemented)
+		http.Error(c.Writer, "wrong task type", http.StatusNotImplemented)
 	}
 }
 
-func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	fmt.Fprint(w, "JcsPan Transporter")
+func Index(c *gin.Context) {
+	c.String(http.StatusOK, "JcsPan Transporter")
 }
 
-func (router *Router) FileIndex(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	path := ps.ByName("path")[1:]
+func (router *Router) FileIndex(c *gin.Context) {
+	path := c.Param("path")[1:]
 	log.Printf("Index path :%v", path)
-	sidCookie, err := r.Cookie("sid")
+	sidCookie, err := c.Request.Cookie("sid")
 	if err != nil {
 		log.Printf("Get sid from cookie Fail: %v", err)
 	}
 	task := model.NewTask(model.INDEX, time.Now(), sidCookie.Value, path, "")
 	for obj := range router.processor.ProcessPathIndex(task) {
-		fmt.Fprintf(w, "%s\n", obj.Key)
+		fmt.Fprintf(c.Writer, "%s\n", obj.Key)
 	}
 }
 
-func (router *Router) AddUploadTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	destinationPath := ps.ByName("path")[1:]
+func (router *Router) AddUploadTask(c *gin.Context) {
+	destinationPath := c.Param("path")[1:]
 	log.Printf("upload to :%v", destinationPath)
-	sidCookie, err := r.Cookie("sid")
+	sidCookie, err := c.Request.Cookie("sid")
 	if err != nil {
 		log.Printf("Get sid from cookie Fail: %v", err)
 	}
 	// todo: 文件较小时，不落盘，直接内存上传
-	r.ParseMultipartForm(32 << 20)
-	tid := r.FormValue("tid")
+	c.Request.ParseMultipartForm(32 << 20)
+	tid := c.Request.FormValue("tid")
 	taskid, err := primitive.ObjectIDFromHex(tid)
 	task, err := router.processor.taskStorage.GetTask(taskid)
 	if err != nil {
 		log.Printf("Get task fail: %v", err)
-		http.Error(w, err.Error(), http.StatusBadGateway)
+		http.Error(c.Writer, err.Error(), http.StatusBadGateway)
 		return
 	}
 	// 鉴权
 	user, err := model.Authenticate(sidCookie.Value)
 	if err != nil || user.Id != task.Uid {
 		log.Printf("wrong sid")
-		http.Error(w, "wrong sid", http.StatusBadGateway)
+		http.Error(c.Writer, "wrong sid", http.StatusBadGateway)
 		return
 	}
 
-	file, handler, err := r.FormFile("file")
+	file, handler, err := c.Request.FormFile("file")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -224,36 +224,32 @@ func (router *Router) AddUploadTask(w http.ResponseWriter, r *http.Request, ps h
 }
 
 // 获取网盘文件临时下载链接
-func (router *Router) GetFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	filePath := ps.ByName("path")[1:]
+func (router *Router) GetFile(c *gin.Context) {
+	filePath := c.Param("path")[1:]
 	log.Printf("get tmp download url: %v", filePath)
-	sidCookie, err := r.Cookie("sid")
+	sidCookie, err := c.Request.Cookie("sid")
 	if err != nil {
 		log.Printf("Get sid from cookie File: %v", err)
-		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintln(w, "Auth Fail")
+		c.Writer.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprintln(c.Writer, "Auth Fail")
 		return
 	}
 	task := model.NewTask(model.DOWNLOAD_REPLICA, time.Now(), sidCookie.Value, filePath, "")
 	url, err := router.processor.ProcessGetTmpDownloadUrl(task)
 	if err != nil {
 		log.Printf("Get tmp download url fail: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintln(w, "500 ERROR")
+		c.Writer.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(c.Writer, "500 ERROR")
 	}
-	fmt.Fprintln(w, url)
+	fmt.Fprintln(c.Writer, url)
 }
 
-func (router *Router) SimpleSync(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	srcPath := r.FormValue("srcpath")
-	dstPath := r.FormValue("dstpath")
-	sid := r.FormValue("sid")
+func (router *Router) SimpleSync(c *gin.Context) {
+	srcPath := c.Param("srcpath")
+	dstPath := c.Param("dstpath")
+	sid := c.Request.FormValue("sid")
 	router.processor.CreateTask(model.SYNC_SIMPLE, sid, srcPath, dstPath)
 	fmt.Println("task simple sync created success")
-}
-
-func (router *Router) SimpleUpload(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-
 }
 
 func NewTestRouter(processor TaskProcessor) *Router {
@@ -262,15 +258,15 @@ func NewTestRouter(processor TaskProcessor) *Router {
 	return router
 }
 
-func testSetCookie(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func testSetCookie(c *gin.Context) {
 	expiration := time.Now().AddDate(1, 0, 0)
 	cookie := http.Cookie{
 		Name:    "sid",
 		Value:   "tttteeeesssstttt",
 		Expires: expiration,
 	}
-	http.SetCookie(w, &cookie)
-	fmt.Fprint(w, "Cookie Already Set")
+	http.SetCookie(c.Writer, &cookie)
+	fmt.Fprint(c.Writer, "Cookie Already Set")
 }
 
 func genRandomString(n int) string {
