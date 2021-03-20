@@ -65,7 +65,7 @@ func (fd *InMemoryFileDatabase) DeleteFileInfo(file *File) (err error) {
 }
 
 func (fd *InMemoryFileDatabase) UpdateFileInfo(file *File) (err error) {
-	if _, ok := fd.db[file.Id]; ok {
+	if _, ok := fd.db[file.Id]; !ok {
 		return errors.New("file info not exist")
 	}
 	fd.db[file.Id] = *file

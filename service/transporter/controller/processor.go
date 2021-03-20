@@ -53,66 +53,77 @@ func (processor *TaskProcessor) StartProcessTasks(ctx context.Context) {
 	}()
 }
 
+func (processor *TaskProcessor) SetProcessResult(t *model.Task, err error) {
+	if err != nil {
+		logrus.Errorf("Process Task Fail: %v", err)
+		processor.taskStorage.SetTaskState(t.Tid, model.FAIL)
+	}
+	processor.taskStorage.SetTaskState(t.Tid, model.FINISH)
+}
+
 // 处理任务
 func (processor *TaskProcessor) ProcessTasks() {
 	tasks := processor.taskStorage.GetTaskList(0)
-	var finish chan primitive.ObjectID
+	finish := make(chan primitive.ObjectID)
 	for _, task := range tasks {
+		processor.taskStorage.SetTaskState(task.Tid, model.PROCESSING)
 		switch task.GetTaskType() {
 		case model.USER_UPLOAD_SIMPLE:
-			processor.taskStorage.SetTaskState(task.GetTid(), model.PROCESSING)
 			go func(t *model.Task) {
 				err := processor.ProcessUserUploadSimple(t)
-				if err != nil {
-					log.Panicf("Process Task Fail: %v", err)
-				} else {
-					log.Printf("finish task: %v", t.GetTid())
-				}
+				processor.SetProcessResult(t, err)
 				finish <- task.GetTid()
 			}(task)
 			log.Printf("start simple upload task")
 		case model.SYNC_SIMPLE:
-			processor.taskStorage.SetTaskState(task.GetTid(), model.PROCESSING)
 			go func(t *model.Task) {
 				err := processor.ProcessSimpleSync(t)
-				if err != nil {
-					log.Panicf("Process Task Fail: %v", err)
-				} else {
-					log.Printf("finish task: %v", t.GetTid())
-				}
+				processor.SetProcessResult(t, err)
 				finish <- t.GetTid()
 			}(task)
 			log.Printf("start simple SYNC task")
 		case model.UPLOAD:
-			processor.taskStorage.SetTaskState(task.GetTid(), model.PROCESSING)
 			go func(t *model.Task) {
 				err := processor.ProcessUpload(t)
-				if err != nil {
-					log.Panicf("Process Task Fail: %v", err)
-				} else {
-					log.Printf("finish task: %v", t.GetTid())
-				}
+				processor.SetProcessResult(t, err)
 				finish <- t.Tid
 			}(task)
 			log.Printf("start upload task")
 		case model.DOWNLOAD_EC:
-			processor.taskStorage.SetTaskState(task.Tid, model.PROCESSING)
 			go func(t *model.Task) {
-				_, err := processor.RebuildFileToDisk(t)
-				if err != nil {
-					log.Panicf("Process Task Fail: %v", err)
-				} else {
-					log.Printf("finish task: %v", t.GetTid())
+				filePath, err := processor.RebuildFileToDisk(t)
+				if err == nil {
+					err = processor.WriteDownloadUrlToDB(t, filePath)
 				}
+				processor.SetProcessResult(t, err)
 				finish <- t.Tid
 			}(task)
 		default:
-			log.Fatalf("ERROR: Process TaskType: %s not implement", task.GetTaskType())
+			logrus.Errorf("ERROR: Process TaskType: %s not implement", task.GetTaskType())
+			finish <- task.Tid
 		}
 	}
 	for i := 0; i < len(tasks); i++ {
-		<-finish
+		id := <-finish
+		logrus.Infof("finish task: %v", id.Hex())
 	}
+}
+
+func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string) error {
+	fileInfo, err := processor.fileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
+	if err != nil {
+		logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
+		return err
+	}
+	accessToken, err := GenerateLocalFileAccessToken(path, t.Uid, time.Hour*24)
+	if err != nil {
+		logrus.Warnf("cant gen access token, err: %v", err)
+	}
+	fileInfo.DownloadUrl = "/cache_file?token=" + accessToken
+	fileInfo.ReconstructStatus = "Done"
+	fileInfo.ReconstructTime = time.Now()
+	err = processor.fileDatabase.UpdateFileInfo(fileInfo)
+	return err
 }
 
 func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, err error) {

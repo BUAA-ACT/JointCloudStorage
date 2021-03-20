@@ -42,7 +42,7 @@ func setCookie(req *http.Request) {
 }
 
 func TestECUploadAndDownload(t *testing.T) {
-	router, _ := initRouterAndProcessor()
+	router, processor := initRouterAndProcessor()
 	t.Run("Create EC Upload Task and process", func(t *testing.T) {
 		jsonStr := []byte(`
 {
@@ -82,7 +82,7 @@ func TestECUploadAndDownload(t *testing.T) {
 		setCookie(req)
 		recorder = httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
-		time.Sleep(time.Second * 5)
+		waitUntilAllDone(processor)
 	})
 	t.Run("Create EC Download Task", func(t *testing.T) {
 		jsonStr := []byte(`
@@ -114,7 +114,19 @@ func TestECUploadAndDownload(t *testing.T) {
 		router.ServeHTTP(recorder, req)
 		tid := recorder.Body.String()
 		logrus.Debugf("tid: %v", tid)
-		time.Sleep(time.Second * 50)
+		waitUntilAllDone(processor)
+	})
+	t.Run("Check File DB and get download url", func(t *testing.T) {
+		fileInfo, err := processor.fileDatabase.GetFileInfo("tester/path/to/jcspantest.txt")
+		if err != nil {
+			t.Errorf("get file info err:%v", err)
+		}
+		url := fileInfo.DownloadUrl
+		if url == "" {
+			t.Errorf("get download url err")
+		}
+		t.Logf("download url: %v", url)
+		waitUntilAllDone(processor)
 	})
 }
 
@@ -330,4 +342,13 @@ func multipartUpload(f io.Reader, fields map[string]string) (*bytes.Buffer, erro
 	}
 
 	return body, nil
+}
+
+func waitUntilAllDone(processor *TaskProcessor) {
+	for true {
+		time.Sleep(time.Millisecond * 500)
+		if processor.taskStorage.IsAllDone() {
+			return
+		}
+	}
 }

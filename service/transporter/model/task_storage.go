@@ -10,4 +10,5 @@ type TaskStorage interface {
 	SetTaskState(tid primitive.ObjectID, state TaskState) error
 	SetTask(tid primitive.ObjectID, t *Task) error
 	DelTask(tid primitive.ObjectID) error
+	IsAllDone() bool
 }

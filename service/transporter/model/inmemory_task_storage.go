@@ -82,3 +82,12 @@ func (s *InMemoryTaskStorage) DelTask(tid primitive.ObjectID) (err error) {
 	}
 	return errors.New("task not found")
 }
+
+func (s *InMemoryTaskStorage) IsAllDone() bool {
+	for _, task := range s.taskList {
+		if task.State != FINISH && task.State != FAIL {
+			return false
+		}
+	}
+	return true
+}

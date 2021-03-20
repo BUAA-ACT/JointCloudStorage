@@ -247,3 +247,7 @@ func (task *MongoTaskStorage) UpdateClient() error {
 	}
 	return nil
 }
+
+func (task *MongoTaskStorage) IsAllDone() bool {
+	return false
+}

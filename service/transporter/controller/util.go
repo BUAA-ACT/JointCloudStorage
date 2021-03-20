@@ -26,7 +26,7 @@ type FileAccessClaims struct {
 
 func GenerateLocalFileAccessToken(path string, uid string, expireDuration time.Duration) (string, error) {
 	expire := time.Now().Add(expireDuration)
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, FileAccessClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, FileAccessClaims{
 		path: path,
 		uid:  uid,
 		StandardClaims: jwt.StandardClaims{
@@ -34,5 +34,6 @@ func GenerateLocalFileAccessToken(path string, uid string, expireDuration time.D
 			Issuer:    "transporter",
 		},
 	})
-	return token.SignedString(SECRET)
+	rs, err := token.SignedString([]byte(SECRET))
+	return rs, err
 }
