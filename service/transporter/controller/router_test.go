@@ -128,6 +128,12 @@ func TestECUploadAndDownload(t *testing.T) {
 		t.Logf("download url: %v", url)
 		waitUntilAllDone(processor)
 	})
+	t.Run("Get file", func(t *testing.T) {
+		url := "/cache_file?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MTYzMzAzOTgsImlzcyI6InRyYW5zcG9ydGVyIn0.Klr4shyV2JklhUW7Xw985Z-Yat5wqKI5alMkZbLJYhE"
+		req, _ := http.NewRequest("GET", url, nil)
+		recorder := httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+	})
 }
 
 func TestNewRouter(t *testing.T) {

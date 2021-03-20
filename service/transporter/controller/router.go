@@ -52,8 +52,14 @@ func NewRouter(processor TaskProcessor) *Router {
 	router.GET("/jcspan/*path", router.GetFile)
 	router.GET("/index/*path", router.FileIndex)
 	router.POST("/task", router.CreateTask)
+	router.GET("/cache_file", JWTAuthMiddleware(), router.GetLocalFileByToken)
 	rand.Seed(time.Now().Unix())
 	return &router
+}
+
+func (router *Router) GetLocalFileByToken(c *gin.Context) {
+	filePath := c.MustGet("filePath").(string)
+	fmt.Println(filePath)
 }
 
 func (router *Router) CreateTask(c *gin.Context) {
@@ -267,29 +273,4 @@ func testSetCookie(c *gin.Context) {
 	}
 	http.SetCookie(c.Writer, &cookie)
 	fmt.Fprint(c.Writer, "Cookie Already Set")
-}
-
-func genRandomString(n int) string {
-	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	const (
-		letterIdxBits = 6                    // 6 bits to represent a letter index
-		letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-	)
-	b := make([]byte, n)
-	for i := 0; i < n; {
-		if idx := int(rand.Int63() & letterIdxMask); idx < len(letterBytes) {
-			b[i] = letterBytes[idx]
-			i++
-		}
-	}
-	return string(b)
-}
-
-// 判断所给路径是否为文件夹
-func isDir(path string) bool {
-	s, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return s.IsDir()
 }
