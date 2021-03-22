@@ -146,6 +146,10 @@ func (router *Router) CreateTask(c *gin.Context) {
 				http.Error(c.Writer, err.Error(), http.StatusBadGateway)
 				return
 			}
+			err = router.processor.WriteDownloadUrlToDB(&task, url)
+			if err != nil {
+				logrus.Errorf("write download url to db fail: %v", err)
+			}
 			fmt.Fprintln(c.Writer, url)
 		} else {
 			tid, err := router.processor.taskStorage.AddTask(&task)

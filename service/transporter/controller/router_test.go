@@ -140,6 +140,78 @@ func TestECUploadAndDownload(t *testing.T) {
 	})
 }
 
+func TestReplicaUploadAndDownload(t *testing.T) {
+	router, processor := initRouterAndProcessor()
+	t.Run("Create Replica Upload Task and process", func(t *testing.T) {
+		jsonStr := []byte(`{
+   "TaskType": "Upload",
+   "Uid": "tester",
+   "DestinationPath":"/path/to/upload/",
+   "DestinationStoragePlan":{
+      "StorageMode": "Replica",
+      "Clouds": [
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         }
+      ]
+   }
+}`)
+		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
+		recorder := httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+
+		tid := recorder.Body.String()
+
+		filename := "../test/tmp/test.txt"
+		f, err := os.Open(filename)
+		if err != nil {
+			t.Error("Open test file Fail")
+		}
+		defer f.Close()
+
+		//req,_ http.Post("/upload/jcspan/path/to/file", "multipart/form-data", body)
+		//	req, _ = http.NewRequest("POST", "/upload/jcspan/path/to/file", body)
+		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", tid)
+		setCookie(req)
+		recorder = httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		time.Sleep(time.Second * 5)
+	})
+	t.Run("Create Replica Download Task", func(t *testing.T) {
+		jsonStr := []byte(`
+  {
+    "TaskType": "Download",
+     "Uid": "tester",
+     "Sid": "tttteeeesssstttt",
+     "SourcePath":"path/to/jcspantest.txt",
+     "SourceStoragePlan":{
+        "StorageMode": "Replica",
+        "Clouds": [
+           {
+              "ID": "aliyun-beijing"
+           },
+           {
+              "ID": "aliyun-beijing"
+           },
+           {
+              "ID": "aliyun-beijing"
+           }
+        ]
+     }
+  }
+`)
+		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
+		recorder := httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		downloadUrl := recorder.Body.String()
+		t.Logf("tid: %v", downloadUrl)
+		waitUntilAllDone(processor)
+	})
+}
+
 func TestNewRouter(t *testing.T) {
 	router, _ := initRouterAndProcessor()
 	req, _ := http.NewRequest("GET", "/test/setcookie", nil)
