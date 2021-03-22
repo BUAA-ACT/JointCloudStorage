@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/jinzhu/copier"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
@@ -89,12 +90,18 @@ func (processor *TaskProcessor) ProcessTasks() {
 				finish <- t.Tid
 			}(task)
 			log.Printf("start upload task")
-		case model.DOWNLOAD_EC:
+		case model.DOWNLOAD:
 			go func(t *model.Task) {
 				filePath, err := processor.RebuildFileToDisk(t)
 				if err == nil {
 					err = processor.WriteDownloadUrlToDB(t, filePath)
 				}
+				processor.SetProcessResult(t, err)
+				finish <- t.Tid
+			}(task)
+		case model.SYNC:
+			go func(t *model.Task) {
+				err := processor.ProcessSync(task)
 				processor.SetProcessResult(t, err)
 				finish <- t.Tid
 			}(task)
@@ -127,7 +134,7 @@ func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string)
 }
 
 func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, err error) {
-	err = processor.CheckTaskType(t, model.DOWNLOAD_EC)
+	err = processor.CheckTaskType(t, model.DOWNLOAD)
 	if err != nil {
 		return "", err
 	}
@@ -135,6 +142,9 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
 	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
 		storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(cloudName, t.Uid))
+	}
+	if len(storageClients) == 0 {
+		return "", errors.New("EC storage num wrong")
 	}
 	switch storageModel {
 	case "EC":
@@ -161,6 +171,17 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		if err != nil {
 			logrus.Errorf("Rebuild File %v fail: %v", rebuildPath, err)
 			return "", err
+		}
+		return rebuildPath, nil
+	case "Replica":
+		_, err := processor.fileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
+		if err != nil {
+			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
+		}
+		rebuildPath := "./tmp/download/" + filepath.Base(t.SourcePath) // todo 自定义 tmp 目录
+		err = storageClients[0].Download(t.SourcePath, rebuildPath)
+		if err != nil {
+			logrus.Errorf("Download Replica %v from %v fail: %v", t.SourcePath, storageClients[0], err)
 		}
 		return rebuildPath, nil
 	default:
@@ -283,6 +304,41 @@ func (processor *TaskProcessor) ProcessPathIndex(t *model.Task) <-chan model.Obj
 	storageClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetSourcePath())
 
 	return storageClient.Index(t.GetSourcePath())
+}
+
+// 处理同步任务
+func (processor *TaskProcessor) ProcessSync(t *model.Task) (err error) {
+	subTask := model.Task{}
+	err = copier.Copy(&subTask, t)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// 处理同步任务
+func (processor *TaskProcessor) ProcessSyncSingleFile(t *model.Task) (err error) {
+	// 从源端下载文件到本地
+	subTask := model.Task{}
+	err = copier.Copy(&subTask, t)
+	if err != nil {
+		return err
+	}
+	subTask.TaskType = model.DOWNLOAD
+	filePath, err := processor.RebuildFileToDisk(&subTask)
+	if err != nil {
+		return err
+	}
+	logrus.Debugf("rebuile file finish, path: %v", filePath)
+	subTask.SourcePath = filePath
+	subTask.TaskOptions.SourceStoragePlan = nil
+	subTask.TaskType = model.UPLOAD
+	err = processor.ProcessUpload(&subTask)
+	if err != nil {
+		return err
+	}
+	logrus.Debugf("sync task %v finish", t.Tid.Hex())
+	return nil
 }
 
 // 普通同步任务
