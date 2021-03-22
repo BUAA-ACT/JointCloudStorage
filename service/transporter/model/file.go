@@ -1,7 +1,12 @@
 package model
 
 import (
+	"context"
 	"errors"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
 	"os"
 	"time"
 )
@@ -23,7 +28,113 @@ type FileDatabase interface {
 	DeleteFileInfo(file *File) (err error)
 	UpdateFileInfo(file *File) (err error)
 	GetFileInfo(Id string) (file *File, err error)
+
 }
+
+type MongoFileDatebase struct {
+	client *mongo.Client
+}
+
+func NewMongoFileDatabase() (*MongoFileDatebase, error) {
+	clientOptions := options.Client().ApplyURI("mongodb://192.168.105.8:20100")
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	return &MongoFileDatebase{
+		client: client,
+	}, nil
+}
+
+func (mf *MongoFileDatebase) CreateFileInfo(file *File) (err error){
+	//check the connection
+	err = mf.client.Ping(context.TODO(), nil)
+	if err != nil {
+		log.Print(err)
+		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		mf.client, err = mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
+			return err
+		}
+	}
+
+	//insert the file
+	collection:=mf.client.Database("Cloud").Collection("FileDatabase")
+	_,err=collection.InsertOne(context.TODO(),*file)
+	if err!=nil{
+		return err
+	}
+	return nil
+}
+func (mf *MongoFileDatebase)DeleteFileInfo(file *File) (err error){
+	err = mf.client.Ping(context.TODO(), nil)
+	if err != nil {
+		log.Print(err)
+		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		mf.client, err = mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
+			return err
+		}
+	}
+
+	//delete the file
+	filter:=bson.M{
+		"Id":file.Id,
+	}
+	collection:=mf.client.Database("Cloud").Collection("FileDatabase")
+	_,err=collection.DeleteOne(context.TODO(),filter)
+	if err!=nil{
+		return err
+	}
+	return nil
+}
+func (mf *MongoFileDatebase)UpdateFileInfo(file *File) (err error){
+	err = mf.client.Ping(context.TODO(), nil)
+	if err != nil {
+		log.Print(err)
+		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		mf.client, err = mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
+			return err
+		}
+	}
+
+	//delete the file
+	filter:=bson.M{
+		"Id":file.Id,
+	}
+	collection:=mf.client.Database("Cloud").Collection("FileDatabase")
+	_,err=collection.UpdateOne(context.TODO(),filter,*file)
+	if err!=nil{
+		return err
+	}
+	return nil
+}
+func (mf *MongoFileDatebase)GetFileInfo(Id string) (file *File, err error){
+	err = mf.client.Ping(context.TODO(), nil)
+	if err != nil {
+		log.Print(err)
+		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		mf.client, err = mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
+			return nil,err
+		}
+	}
+
+	//delete the file
+	var result File
+	filter:=bson.M{
+		"Id":file.Id,
+	}
+	collection:=mf.client.Database("Cloud").Collection("FileDatabase")
+	err=collection.FindOne(context.TODO(),filter).Decode(&result)
+	if err!=nil{
+		return nil,err
+	}
+	return &result,nil
+}
+
 
 type InMemoryFileDatabase struct {
 	db map[string]File
