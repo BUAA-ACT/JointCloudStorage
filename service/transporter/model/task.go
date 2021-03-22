@@ -13,10 +13,11 @@ const (
 	USER_UPLOAD_ERASURE TaskType = 2
 	SYNC_SIMPLE         TaskType = 3
 	SYNC_ERASURE        TaskType = 4
-	DOWNLOAD_EC         TaskType = 5
+	DOWNLOAD            TaskType = 5
 	DOWNLOAD_REPLICA    TaskType = 6
 	UPLOAD              TaskType = 7
 	INDEX               TaskType = 8
+	SYNC                TaskType = 9
 )
 
 func (taskType TaskType) String() string {
@@ -29,8 +30,8 @@ func (taskType TaskType) String() string {
 		return "SYNC_SIMPLE"
 	case SYNC_ERASURE:
 		return "SYNC_ERASURE"
-	case DOWNLOAD_EC:
-		return "DOWNLOAD_EC"
+	case DOWNLOAD:
+		return "DOWNLOAD"
 	case INDEX:
 		return "INDEX"
 	}

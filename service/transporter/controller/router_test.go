@@ -28,6 +28,7 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	router := NewTestRouter(processor)
 	// 启动 processor
 	processor.StartProcessTasks(context.Background())
+	logrus.SetLevel(logrus.DebugLevel)
 	return router, &processor
 }
 
@@ -210,6 +211,89 @@ func TestReplicaUploadAndDownload(t *testing.T) {
 		t.Logf("tid: %v", downloadUrl)
 		waitUntilAllDone(processor)
 	})
+}
+
+func TestEC2ReplicaSync(t *testing.T) {
+	router, processor := initRouterAndProcessor()
+	t.Run("Create EC Upload Task and process", func(t *testing.T) {
+		jsonStr := []byte(`
+{
+  "TaskType": "Upload",
+   "Uid": "tester",
+   "DestinationPath":"path/to/upload/",
+   "DestinationStoragePlan":{
+      "StorageMode": "EC",
+      "Clouds": [
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         }
+      ],
+      "N": 2,
+      "K": 1
+   }
+}`)
+		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
+		recorder := httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+
+		tid := recorder.Body.String()
+
+		filename := "../test/tmp/test.txt"
+		f, err := os.Open(filename)
+		if err != nil {
+			t.Error("Open test file Fail")
+		}
+		defer f.Close()
+		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", tid)
+		setCookie(req)
+		recorder = httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		waitUntilAllDone(processor)
+	})
+	jsonStr := []byte(`
+{
+  "TaskType": "Sync",
+   "Uid": "tester",
+   "DestinationPath":"path/to/jcspantest.txt",
+   "SourcePath": "path/to/jcspantest.txt",
+   "SourceStoragePlan":{
+      "StorageMode": "EC",
+      "Clouds": [
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         }
+      ],
+      "N": 2,
+      "K": 1
+   },
+   "DestinationStoragePlan":{
+      "StorageMode": "Replica",
+      "Clouds": [
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         }
+      ]
+   }
+}`)
+	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+	waitUntilAllDone(processor)
 }
 
 func TestNewRouter(t *testing.T) {

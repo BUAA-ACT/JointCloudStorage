@@ -113,7 +113,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 		}
 		var taskType model.TaskType
 		if reqTask.SourceStoragePlan.StorageMode == "EC" {
-			taskType = model.DOWNLOAD_EC
+			taskType = model.DOWNLOAD
 		} else if reqTask.SourceStoragePlan.StorageMode == "Replica" {
 			taskType = model.DOWNLOAD_REPLICA
 		} else {
@@ -159,6 +159,15 @@ func (router *Router) CreateTask(c *gin.Context) {
 			}
 			fmt.Fprintln(c.Writer, tid)
 		}
+	case "Sync":
+		task := RequestTask2Task(&reqTask, model.SYNC, model.CREATING)
+		tid, err := router.processor.taskStorage.AddTask(task)
+		if err != nil {
+			http.Error(c.Writer, err.Error(), http.StatusBadGateway)
+			return
+		}
+		tidStr := tid.Hex()
+		c.String(http.StatusOK, tidStr)
 
 	default:
 		http.Error(c.Writer, "wrong task type", http.StatusNotImplemented)
@@ -281,4 +290,36 @@ func testSetCookie(c *gin.Context) {
 	}
 	http.SetCookie(c.Writer, &cookie)
 	fmt.Fprint(c.Writer, "Cookie Already Set")
+}
+
+func RequestTask2Task(reqTask *RequestTask, taskType model.TaskType, state model.TaskState) *model.Task {
+	var srcCloudsID []string
+	var dstCloudsID []string
+	for _, cloud := range reqTask.SourceStoragePlan.Clouds {
+		srcCloudsID = append(srcCloudsID, cloud.ID)
+	}
+	task := model.Task{
+		Tid:             primitive.NewObjectID(),
+		TaskType:        taskType,
+		State:           state,
+		StartTime:       time.Time{},
+		Uid:             reqTask.Uid,
+		SourcePath:      reqTask.SourcePath,
+		DestinationPath: reqTask.DestinationPath,
+		TaskOptions: &model.TaskOptions{
+			SourceStoragePlan: &model.StoragePlan{
+				StorageMode: reqTask.SourceStoragePlan.StorageMode,
+				Clouds:      srcCloudsID,
+				N:           reqTask.SourceStoragePlan.N,
+				K:           reqTask.SourceStoragePlan.K,
+			},
+			DestinationPlan: &model.StoragePlan{
+				StorageMode: reqTask.DestinationStoragePlan.StorageMode,
+				Clouds:      dstCloudsID,
+				N:           reqTask.DestinationStoragePlan.N,
+				K:           reqTask.DestinationStoragePlan.K,
+			},
+		},
+	}
+	return &task
 }
