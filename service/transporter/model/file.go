@@ -33,10 +33,22 @@ type FileDatabase interface {
 	Index(prefix string) (files []*File, err error)
 }
 
-type MongoFileDatebase struct {
+type MongoFileDatabase struct {
 	client *mongo.Client
 }
-func (mf *MongoFileDatebase) CreateFileInfo(file *File) (err error){
+
+func NewMongoFileDatabase() (*MongoFileDatabase, error) {
+	clientOptions := options.Client().ApplyURI("mongodb://192.168.105.8:20100")
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	return &MongoFileDatabase{
+		client: client,
+	}, nil
+}
+func (mf *MongoFileDatabase) CreateFileInfo(file *File) (err error) {
 	//check the connection
 	err = mf.client.Ping(context.TODO(), nil)
 	if err != nil {
@@ -49,14 +61,14 @@ func (mf *MongoFileDatebase) CreateFileInfo(file *File) (err error){
 	}
 
 	//insert the file
-	collection:=mf.client.Database("Cloud").Collection("FileDatabase")
-	_,err=collection.InsertOne(context.TODO(),*file)
-	if err!=nil{
+	collection := mf.client.Database("Cloud").Collection("FileDatabase")
+	_, err = collection.InsertOne(context.TODO(), *file)
+	if err != nil {
 		return err
 	}
 	return nil
 }
-func (mf *MongoFileDatebase)DeleteFileInfo(file *File) (err error){
+func (mf *MongoFileDatabase) DeleteFileInfo(file *File) (err error) {
 	err = mf.client.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Print(err)
@@ -68,17 +80,17 @@ func (mf *MongoFileDatebase)DeleteFileInfo(file *File) (err error){
 	}
 
 	//delete the file
-	filter:=bson.M{
-		"Id":file.Id,
+	filter := bson.M{
+		"id": file.Id,
 	}
-	collection:=mf.client.Database("Cloud").Collection("FileDatabase")
-	_,err=collection.DeleteOne(context.TODO(),filter)
-	if err!=nil{
+	collection := mf.client.Database("Cloud").Collection("FileDatabase")
+	_, err = collection.DeleteOne(context.TODO(), filter)
+	if err != nil {
 		return err
 	}
 	return nil
 }
-func (mf *MongoFileDatebase)UpdateFileInfo(file *File) (err error){
+func (mf *MongoFileDatabase) UpdateFileInfo(file *File) (err error) {
 	err = mf.client.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Print(err)
@@ -90,74 +102,80 @@ func (mf *MongoFileDatebase)UpdateFileInfo(file *File) (err error){
 	}
 
 	//delete the file
-	filter:=bson.M{
-		"Id":file.Id,
+	filter := bson.M{
+		"id": file.Id,
 	}
-	collection:=mf.client.Database("Cloud").Collection("FileDatabase")
-	_,err=collection.UpdateOne(context.TODO(),filter,*file)
-	if err!=nil{
+	update := bson.D{
+		{"$set", *file},
+	}
+	collection := mf.client.Database("Cloud").Collection("FileDatabase")
+	_, err = collection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
 		return err
 	}
 	return nil
 }
-func (mf *MongoFileDatebase)GetFileInfo(Id string) (file *File, err error){
+
+func (mf *MongoFileDatabase) GetFileInfo(Id string) (file *File, err error) {
 	err = mf.client.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Print(err)
 		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
 		mf.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
-			return nil,err
+			return nil, err
 		}
 	}
 
 	//delete the file
 	var result File
-	filter:=bson.M{
-		"Id":file.Id,
+	filter := bson.D{
+		{"id", Id},
 	}
-	collection:=mf.client.Database("Cloud").Collection("FileDatabase")
-	err=collection.FindOne(context.TODO(),filter).Decode(&result)
-	if err!=nil{
-		return nil,err
+	collection := mf.client.Database("Cloud").Collection("FileDatabase")
+	err = collection.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		return nil, err
 	}
-	return &result,nil
+	return &result, nil
 }
-func (mf *MongoFileDatebase)Index(prefix string) (files []*File, err error){
+
+func (mf *MongoFileDatabase) Index(prefix string) (files []*File, err error) {
 	err = mf.client.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Print(err)
 		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
 		mf.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
-			return nil,err
+			return nil, err
 		}
 	}
 
 	//delete the file
 	var result []*File
-	filter:=bson.M{
-		"Id":prefix+"*",
+	filter := bson.M{
+		"id": bson.M{
+			"$regex": prefix + "*",
+		},
 	}
-	collection:=mf.client.Database("Cloud").Collection("FileDatabase")
-	cur,err:=collection.Find(context.TODO(),filter)
-	if err!=nil{
-		return nil,err
+	collection := mf.client.Database("Cloud").Collection("FileDatabase")
+	cur, err := collection.Find(context.TODO(), filter)
+	if err != nil {
+		return nil, err
 	}
 
 	//decode the result
-	for cur.Next(context.TODO()){
+	for cur.Next(context.TODO()) {
 		var elem File
-		err= cur.Decode(&elem)
-		if err!=nil{
-			return nil,err
+		err = cur.Decode(&elem)
+		if err != nil {
+			return nil, err
 		}
 
-		result= append(result, &elem)
+		result = append(result, &elem)
 	}
-	return result,nil
+	return result, nil
 }
-
 
 type InMemoryFileDatabase struct {
 	db map[string]File
