@@ -4,6 +4,7 @@ import (
 	"act.buaa.edu.cn/jcspan/transporter/model"
 	"encoding/json"
 	"fmt"
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -60,6 +61,9 @@ func NewRouter(processor TaskProcessor) *Router {
 func (router *Router) GetLocalFileByToken(c *gin.Context) {
 	filePath := c.MustGet("filePath").(string)
 	fmt.Println(filePath)
+	mime, _ := mimetype.DetectFile(filePath)
+	c.Header("Content-Type", mime.String())
+	c.File(filePath)
 }
 
 func (router *Router) CreateTask(c *gin.Context) {

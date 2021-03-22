@@ -24,16 +24,16 @@ const (
 )
 
 type FileAccessClaims struct {
-	path string
-	uid  string
+	Path string
+	Uid  string
 	jwt.StandardClaims
 }
 
 func GenerateLocalFileAccessToken(path string, uid string, expireDuration time.Duration) (string, error) {
 	expire := time.Now().Add(expireDuration)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, FileAccessClaims{
-		path: path,
-		uid:  uid,
+		Path: path,
+		Uid:  uid,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expire.Unix(),
 			Issuer:    "transporter",
@@ -103,7 +103,25 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 			return
 		}
 		// 将当前请求的username信息保存到请求的上下文c上
-		c.Set("filePath", mc.path)
+		c.Set("filePath", mc.Path)
 		c.Next() // 后续的处理函数可以用过c.Get("filePath")来获取当前请求的用户信息
 	}
+}
+
+// 获取文件 ContentType
+func GetFileContentType(out *os.File) (string, error) {
+
+	// Only the first 512 bytes are used to sniff the content type.
+	buffer := make([]byte, 512)
+
+	_, err := out.Read(buffer)
+	if err != nil {
+		return "", err
+	}
+
+	// Use the net/http package's handy DectectContentType function. Always returns a valid
+	// content-type by returning "application/octet-stream" if no others seemed to match.
+	contentType := http.DetectContentType(buffer)
+
+	return contentType, nil
 }

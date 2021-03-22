@@ -116,12 +116,13 @@ func TestECUploadAndDownload(t *testing.T) {
 		logrus.Debugf("tid: %v", tid)
 		waitUntilAllDone(processor)
 	})
+	var url string
 	t.Run("Check File DB and get download url", func(t *testing.T) {
 		fileInfo, err := processor.fileDatabase.GetFileInfo("tester/path/to/jcspantest.txt")
 		if err != nil {
 			t.Errorf("get file info err:%v", err)
 		}
-		url := fileInfo.DownloadUrl
+		url = fileInfo.DownloadUrl
 		if url == "" {
 			t.Errorf("get download url err")
 		}
@@ -129,10 +130,13 @@ func TestECUploadAndDownload(t *testing.T) {
 		waitUntilAllDone(processor)
 	})
 	t.Run("Get file", func(t *testing.T) {
-		url := "/cache_file?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MTYzMzAzOTgsImlzcyI6InRyYW5zcG9ydGVyIn0.Klr4shyV2JklhUW7Xw985Z-Yat5wqKI5alMkZbLJYhE"
 		req, _ := http.NewRequest("GET", url, nil)
 		recorder := httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
+		fmt.Println(recorder.Body)
+		if recorder.Code != http.StatusOK {
+			t.Error("Get file fail")
+		}
 	})
 }
 
