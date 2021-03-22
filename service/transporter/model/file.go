@@ -23,6 +23,7 @@ type FileDatabase interface {
 	DeleteFileInfo(file *File) (err error)
 	UpdateFileInfo(file *File) (err error)
 	GetFileInfo(Id string) (file *File, err error)
+	Index(prefix string) (files []*File, err error)
 }
 
 type InMemoryFileDatabase struct {
@@ -78,4 +79,8 @@ func (fd *InMemoryFileDatabase) GetFileInfo(Id string) (file *File, err error) {
 		return &f, nil
 	}
 	return nil, errors.New("file info not exist")
+}
+
+func (fd *InMemoryFileDatabase) Index(prefix string) (files []*File, err error) {
+	return nil, nil
 }

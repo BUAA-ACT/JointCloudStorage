@@ -308,6 +308,16 @@ func (processor *TaskProcessor) ProcessPathIndex(t *model.Task) <-chan model.Obj
 
 // 处理同步任务
 func (processor *TaskProcessor) ProcessSync(t *model.Task) (err error) {
+	subTask := model.Task{}
+	err = copier.Copy(&subTask, t)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// 处理同步任务
+func (processor *TaskProcessor) ProcessSyncSingleFile(t *model.Task) (err error) {
 	// 从源端下载文件到本地
 	subTask := model.Task{}
 	err = copier.Copy(&subTask, t)
