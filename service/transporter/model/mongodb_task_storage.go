@@ -236,7 +236,6 @@ func (task *MongoTaskStorage) DelTask(tid primitive.ObjectID) error {
 	return nil
 }
 
-//if the client is unusable, UpdateClient() can rebuild a connection to mongodb
 func (task *MongoTaskStorage) UpdateClient() error {
 	err := task.client.Ping(context.TODO(), nil)
 	if err != nil {
@@ -249,32 +248,6 @@ func (task *MongoTaskStorage) UpdateClient() error {
 	return nil
 }
 
-//if there are any task whose state isn't Finish or File, return false
 func (task *MongoTaskStorage) IsAllDone() bool {
-	//check the client
-	err := task.client.Ping(context.TODO(), nil)
-	if err != nil {
-		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client, err = mongo.Connect(context.TODO(), clientOptions)
-		if err != nil {
-			log.Println(err)
-			return false
-		}
-	}
-
-	//get the collection and find by _id
-	collection := task.client.Database("transporterTasks").Collection("Tasks")
-	filter:=bson.M{"State":bson.M{
-		"$nin":bson.A{FAIL,FINISH},
-	}}
-	result,err:=collection.Find(context.TODO(), filter)
-	if err != nil {
-		log.Print(err)
-		return false
-	}
-	if result!=nil{
-		return false
-	}
-	return true
+	return false
 }
