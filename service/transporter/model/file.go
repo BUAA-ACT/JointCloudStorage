@@ -137,7 +137,40 @@ func (mf *MongoFileDatebase)GetFileInfo(Id string) (file *File, err error){
 	}
 	return &result,nil
 }
+func (mf *MongoFileDatebase)Index(prefix string) (files []*File, err error){
+	err = mf.client.Ping(context.TODO(), nil)
+	if err != nil {
+		log.Print(err)
+		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		mf.client, err = mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
+			return nil,err
+		}
+	}
 
+	//delete the file
+	var result []*File
+	filter:=bson.M{
+		"Id":prefix+"*",
+	}
+	collection:=mf.client.Database("Cloud").Collection("FileDatabase")
+	cur,err:=collection.Find(context.TODO(),filter)
+	if err!=nil{
+		return nil,err
+	}
+
+	//decode the result
+	for cur.Next(context.TODO()){
+		var elem File
+		err= cur.Decode(&elem)
+		if err!=nil{
+			return nil,err
+		}
+
+		result= append(result, &elem)
+	}
+	return result,nil
+}
 
 type InMemoryFileDatabase struct {
 	db map[string]File
