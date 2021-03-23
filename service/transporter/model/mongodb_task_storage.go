@@ -71,6 +71,9 @@ func NewMongoTaskStorage() (*MongoTaskStorage, error) {
 //func (task *MongoTaskStorage)AddTask(t *baseTask)(tid int,err error)
 //insert a task into the table
 func (task *MongoTaskStorage) AddTask(t *Task) (tid primitive.ObjectID, err error) {
+	if t.State != BLOCKED {
+		t.State = WAITING
+	}
 	//check the connection
 	err = task.client.Ping(context.TODO(), nil)
 	if err != nil {
@@ -272,8 +275,8 @@ func (task *MongoTaskStorage) IsAllDone() bool {
 		return false
 	}
 	for result.Next(context.TODO()) {
-		return true
+		return false
 	}
 	result.Close(context.TODO())
-	return false
+	return true
 }
