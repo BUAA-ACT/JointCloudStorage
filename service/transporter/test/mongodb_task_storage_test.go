@@ -58,4 +58,11 @@ func TestMongoTaskStorage_AddTask(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
+	t.Run("test the isAllDone", func(t *testing.T) {
+		a:= mongots.IsAllDone()
+		if a {
+			fmt.Println("not all done")
+		}
+	})
 }

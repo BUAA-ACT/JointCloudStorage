@@ -174,6 +174,7 @@ func (mf *MongoFileDatabase) Index(prefix string) (files []*File, err error) {
 
 		result = append(result, &elem)
 	}
+	cur.Close(context.TODO())
 	return result, nil
 }
 
