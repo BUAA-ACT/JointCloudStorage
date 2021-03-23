@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -249,5 +250,31 @@ func (task *MongoTaskStorage) UpdateClient() error {
 }
 
 func (task *MongoTaskStorage) IsAllDone() bool {
-	return false
+	//check the client
+	err := task.client.Ping(context.TODO(), nil)
+	if err != nil {
+		log.Print(err)
+		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		task.client, err = mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
+			log.Println(err)
+			return false
+		}
+	}
+
+	//get the collection and find by _id
+	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	filter := bson.M{"State": bson.M{
+		"$nin": bson.A{FAIL, FINISH},
+	}}
+	result, err := collection.Find(context.TODO(), filter)
+	fmt.Println(*result)
+	if err != nil {
+		log.Print(err)
+		return false
+	}
+	if result != nil {
+		return false
+	}
+	return true
 }
