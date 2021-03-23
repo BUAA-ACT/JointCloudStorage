@@ -148,7 +148,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		for i := range shards {
 			// 设置临时分块存储路径
 			shards[i] = rebuildPath + fmt.Sprintf(".%d", i)
-			err := storageClients[i].Download(t.SourcePath+"."+strconv.Itoa(i), shards[i])
+			err := storageClients[i].Download(t.SourcePath+"."+strconv.Itoa(i), shards[i], t.Uid)
 			if err != nil {
 				logrus.Errorf("Download EC block %v from %v fail: %v", shards[i], storageClients[i], err)
 			}
@@ -165,7 +165,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 		}
 		rebuildPath := "./tmp/download/" + filepath.Base(t.SourcePath) // todo 自定义 tmp 目录
-		err = storageClients[0].Download(t.SourcePath, rebuildPath)
+		err = storageClients[0].Download(t.SourcePath, rebuildPath, t.Uid)
 		if err != nil {
 			logrus.Errorf("Download Replica %v from %v fail: %v", t.SourcePath, storageClients[0], err)
 		}
@@ -182,7 +182,7 @@ func (processor *TaskProcessor) ProcessGetTmpDownloadUrl(t *model.Task) (url str
 		return "", err
 	}
 	storageClient := processor.storageDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
-	url, err = storageClient.GetTmpDownloadUrl(t.GetSourcePath(), time.Minute*30)
+	url, err = storageClient.GetTmpDownloadUrl(t.GetSourcePath(), t.Uid, time.Minute*30)
 	return url, err
 }
 
@@ -203,7 +203,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 		switch storageModel {
 		case "Replica":
 			for _, client := range storageClients {
-				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath())
+				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath(), t.Uid)
 			}
 			fileInfo, err := model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
 			if CheckErr(err, "New File Info") {
@@ -230,7 +230,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			}
 			// 开始上传
 			for i, client := range storageClients {
-				err = client.Upload(shards[i], t.GetDestinationPath()+"."+strconv.Itoa(i))
+				err = client.Upload(shards[i], t.GetDestinationPath()+"."+strconv.Itoa(i), t.Uid)
 			}
 			if CheckErr(err, "Upload EC block") {
 				return err
@@ -257,7 +257,7 @@ func (processor *TaskProcessor) ProcessPathIndex(t *model.Task) <-chan model.Obj
 	}
 	storageClient := processor.storageDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
 
-	return storageClient.Index(t.GetSourcePath())
+	return storageClient.Index(t.GetSourcePath(), t.Uid)
 }
 
 // 处理同步任务
