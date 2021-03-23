@@ -15,15 +15,29 @@ import (
 	"time"
 )
 
+const (
+	DB = "Mongo"
+)
+
 func initRouterAndProcessor() (*Router, *TaskProcessor) {
-	// 初始化任务数据库
-	storage := model.NewInMemoryTaskStorage()
+	var storage model.TaskStorage
+	var clientDatabase model.StorageDatabase
+	var fileDatabase model.FileDatabase
+	if DB == "Mongo" {
+		storage, _ = model.NewMongoTaskStorage()
+		clientDatabase, _ = model.NewMongoStorageDatabase()
+		fileDatabase, _ = model.NewMongoFileDatabase()
+	} else {
+		storage = model.NewInMemoryTaskStorage()
+		clientDatabase = model.NewSimpleInMemoryStorageDatabase()
+		fileDatabase = model.NewInMemoryFileDatabase()
+	}
 	processor := TaskProcessor{}
 	processor.SetTaskStorage(storage)
 	// 初始化存储数据库
-	processor.SetStorageDatabase(model.NewSimpleInMemoryStorageDatabase())
+	processor.SetStorageDatabase(clientDatabase)
 	// 初始化 FileInfo 数据库
-	processor.fileDatabase = model.NewInMemoryFileDatabase()
+	processor.fileDatabase = fileDatabase
 	// 初始化路由
 	router := NewTestRouter(processor)
 	// 启动 processor
@@ -215,53 +229,16 @@ func TestReplicaUploadAndDownload(t *testing.T) {
 
 func TestEC2ReplicaSync(t *testing.T) {
 	router, processor := initRouterAndProcessor()
-	t.Run("Create EC Upload Task and process", func(t *testing.T) {
-		jsonStr := []byte(`
-{
-  "TaskType": "Upload",
-   "Uid": "tester",
-   "DestinationPath":"path/to/upload/",
-   "DestinationStoragePlan":{
-      "StorageMode": "EC",
-      "Clouds": [
-         {
-            "ID": "aliyun-beijing"
-         },
-         {
-            "ID": "aliyun-beijing"
-         },
-         {
-            "ID": "aliyun-beijing"
-         }
-      ],
-      "N": 2,
-      "K": 1
-   }
-}`)
-		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
-		recorder := httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
-
-		tid := recorder.Body.String()
-
-		filename := "../test/tmp/test.txt"
-		f, err := os.Open(filename)
-		if err != nil {
-			t.Error("Open test file Fail")
-		}
-		defer f.Close()
-		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", tid)
-		setCookie(req)
-		recorder = httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
-		waitUntilAllDone(processor)
-	})
+	dstPath := "tmp/test/sync/未命名.png"
+	testECUpload(t, router, processor, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	dstPath = "tmp/test/sync/test.txt"
+	testECUpload(t, router, processor, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
 	jsonStr := []byte(`
 {
   "TaskType": "Sync",
    "Uid": "tester",
-   "DestinationPath":"path/to/jcspantest.txt",
-   "SourcePath": "path/to/jcspantest.txt",
+   "DestinationPath":"tmp/test/sync/",
+   "SourcePath": "tmp/test/sync/",
    "SourceStoragePlan":{
       "StorageMode": "EC",
       "Clouds": [
@@ -280,6 +257,52 @@ func TestEC2ReplicaSync(t *testing.T) {
    },
    "DestinationStoragePlan":{
       "StorageMode": "Replica",
+      "Clouds": [
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         }
+      ]
+   }
+}`)
+	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+	waitUntilAllDone(processor)
+}
+
+func TestReplica2ECSync(t *testing.T) {
+	router, processor := initRouterAndProcessor()
+	dstPath := "tmp/test/sync/未命名.png"
+	testReplicaUpload(t, router, processor, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	dstPath = "tmp/test/sync/test.txt"
+	testReplicaUpload(t, router, processor, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	jsonStr := []byte(`
+{
+  "TaskType": "Sync",
+   "Uid": "tester",
+   "DestinationPath":"tmp/test/sync/",
+   "SourcePath": "tmp/test/sync/",
+   "SourceStoragePlan":{
+      "StorageMode": "Replica",
+      "Clouds": [
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         }
+      ],
+      "N": 2,
+      "K": 1
+   },
+   "DestinationStoragePlan":{
+      "StorageMode": "EC",
       "Clouds": [
          {
             "ID": "aliyun-beijing"
@@ -517,4 +540,86 @@ func waitUntilAllDone(processor *TaskProcessor) {
 			return
 		}
 	}
+}
+
+func testECUpload(t *testing.T, router *Router, processor *TaskProcessor, dstPath string, localPath string, cloud string) {
+	t.Run("Create EC Upload Task and process", func(t *testing.T) {
+		jsonStr := fmt.Sprintf(`
+{
+  "TaskType": "Upload",
+   "Uid": "tester",
+   "DestinationPath":"%v",
+   "DestinationStoragePlan":{
+      "StorageMode": "EC",
+      "Clouds": [
+         {
+            "ID": "%v"
+         },
+         {
+            "ID": "%v"
+         },
+         {
+            "ID": "%v"
+         }
+      ],
+      "N": 2,
+      "K": 1
+   }
+}
+`, dstPath, cloud, cloud, cloud)
+		jsonByte := []byte(jsonStr)
+
+		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonByte))
+		recorder := httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+
+		tid := recorder.Body.String()
+		url := fmt.Sprintf("/upload/%v", dstPath)
+
+		req, _ = postFile("test.txt", localPath, url, tid)
+		setCookie(req)
+		recorder = httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		waitUntilAllDone(processor)
+	})
+}
+
+func testReplicaUpload(t *testing.T, router *Router, processor *TaskProcessor, dstPath string, localPath string, cloud string) {
+	t.Run("Create Replica Upload Task and process", func(t *testing.T) {
+		jsonStr := fmt.Sprintf(`
+{
+  "TaskType": "Upload",
+   "Uid": "tester",
+   "DestinationPath":"%v",
+   "DestinationStoragePlan":{
+      "StorageMode": "Replica",
+      "Clouds": [
+         {
+            "ID": "%v"
+         },
+         {
+            "ID": "%v"
+         },
+         {
+            "ID": "%v"
+         }
+      ]
+   }
+}
+`, dstPath, cloud, cloud, cloud)
+		jsonByte := []byte(jsonStr)
+
+		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonByte))
+		recorder := httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+
+		tid := recorder.Body.String()
+		url := fmt.Sprintf("/upload/%v", dstPath)
+
+		req, _ = postFile("test.txt", localPath, url, tid)
+		setCookie(req)
+		recorder = httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		waitUntilAllDone(processor)
+	})
 }

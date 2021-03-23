@@ -24,8 +24,7 @@ type S3Client struct {
 // Storage 数据库
 type StorageDatabase interface {
 	// 通过用户的 session id 和访问路径，获取对应的 S3 客户端
-	GetStorageClient(sid string, path string) StorageClient
-	GetStorageClientFromName(sid string, name string) StorageClient
+	GetStorageClientFromName(uid string, name string) StorageClient
 }
 
 type MongoStorageDatabase struct {
@@ -160,16 +159,7 @@ func NewSimpleInMemoryStorageDatabase() *SimpleInMemoryStorageDatabase {
 	}
 }
 
-func (database *SimpleInMemoryStorageDatabase) GetStorageClient(sid string, path string) StorageClient {
-	name := "aliyun-beijing"
-	bucketName := "jcspan-aliyun-bj-test"
-	return &S3BucketStorageClient{
-		minioClient: database.s3ClientMap[name].minioClient,
-		bucketName:  bucketName,
-	}
-}
-
-func (database *SimpleInMemoryStorageDatabase) GetStorageClientFromName(name string, sid string) StorageClient {
+func (database *SimpleInMemoryStorageDatabase) GetStorageClientFromName(uid string, name string) StorageClient {
 	bucketName := "jcspan-aliyun-bj-test"
 	return &S3BucketStorageClient{
 		minioClient: database.s3ClientMap[name].minioClient,

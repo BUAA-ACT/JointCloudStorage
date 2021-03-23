@@ -296,6 +296,9 @@ func RequestTask2Task(reqTask *RequestTask, taskType model.TaskType, state model
 	for _, cloud := range reqTask.SourceStoragePlan.Clouds {
 		srcCloudsID = append(srcCloudsID, cloud.ID)
 	}
+	for _, cloud := range reqTask.DestinationStoragePlan.Clouds {
+		dstCloudsID = append(dstCloudsID, cloud.ID)
+	}
 	task := model.Task{
 		Tid:             primitive.NewObjectID(),
 		TaskType:        taskType,

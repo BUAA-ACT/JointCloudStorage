@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"act.buaa.edu.cn/jcspan/transporter/model"
 	"errors"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -8,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -144,4 +146,11 @@ func GetFileContentType(out *os.File) (string, error) {
 	contentType := http.DetectContentType(buffer)
 
 	return contentType, nil
+}
+
+func FromFileInfoGetUidAndPath(file *model.File) (uid string, path string) {
+	p := strings.Index(file.Id, "/")
+	uid = file.Id[0:p]
+	path = file.Id[p+1:]
+	return
 }

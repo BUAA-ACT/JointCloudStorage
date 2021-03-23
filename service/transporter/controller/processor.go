@@ -11,8 +11,8 @@ import (
 	"log"
 	"path"
 	"path/filepath"
-	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -69,20 +69,6 @@ func (processor *TaskProcessor) ProcessTasks() {
 	for _, task := range tasks {
 		processor.taskStorage.SetTaskState(task.Tid, model.PROCESSING)
 		switch task.GetTaskType() {
-		case model.USER_UPLOAD_SIMPLE:
-			go func(t *model.Task) {
-				err := processor.ProcessUserUploadSimple(t)
-				processor.SetProcessResult(t, err)
-				finish <- task.GetTid()
-			}(task)
-			log.Printf("start simple upload task")
-		case model.SYNC_SIMPLE:
-			go func(t *model.Task) {
-				err := processor.ProcessSimpleSync(t)
-				processor.SetProcessResult(t, err)
-				finish <- t.GetTid()
-			}(task)
-			log.Printf("start simple SYNC task")
 		case model.UPLOAD:
 			go func(t *model.Task) {
 				err := processor.ProcessUpload(t)
@@ -141,7 +127,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 	var storageClients []model.StorageClient
 	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
 	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
-		storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(cloudName, t.Uid))
+		storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(t.Uid, cloudName))
 	}
 	if len(storageClients) == 0 {
 		return "", errors.New("EC storage num wrong")
@@ -195,30 +181,9 @@ func (processor *TaskProcessor) ProcessGetTmpDownloadUrl(t *model.Task) (url str
 	if err != nil {
 		return "", err
 	}
-	storageClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetSourcePath())
+	storageClient := processor.storageDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
 	url, err = storageClient.GetTmpDownloadUrl(t.GetSourcePath(), time.Minute*30)
 	return url, err
-}
-
-// 处理用户上传
-func (processor *TaskProcessor) ProcessUserUploadSimple(t *model.Task) (err error) {
-	if t.GetTaskType() != model.USER_UPLOAD_SIMPLE {
-		return errors.New("wrong task type")
-	}
-	if t.GetState() == model.FINISH {
-		return errors.New("task already finish")
-	}
-	// 先获取当前用户上传路径对应的存储客户端
-	storageClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetDestinationPath())
-	// 存储客户端上传文件
-	err = storageClient.Upload(t.GetSourcePath(), t.GetDestinationPath())
-	if err != nil {
-		processor.taskStorage.SetTaskState(t.GetTid(), model.FAIL)
-		log.Printf("Upload user file Fail: %v", err)
-		return
-	}
-	processor.taskStorage.SetTaskState(t.GetTid(), model.FINISH)
-	return
 }
 
 func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
@@ -233,7 +198,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	if t.TaskOptions != nil {
 		storageModel := t.TaskOptions.DestinationPlan.StorageMode
 		for _, cloudName := range t.TaskOptions.DestinationPlan.Clouds {
-			storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(cloudName, t.Uid))
+			storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(t.Uid, cloudName))
 		}
 		switch storageModel {
 		case "Replica":
@@ -281,18 +246,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 		}
 		return
 	}
-
-	// 先获取当前用户上传路径对应的存储客户端
-	storageClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetDestinationPath())
-	// 存储客户端上传文件
-	err = storageClient.Upload(t.GetSourcePath(), t.GetDestinationPath())
-	if err != nil {
-		processor.taskStorage.SetTaskState(t.GetTid(), model.FAIL)
-		log.Printf("Upload user file Fail: %v", err)
-		return
-	}
-	processor.taskStorage.SetTaskState(t.GetTid(), model.FINISH)
-	return
+	return errors.New("no storage plan")
 }
 
 // 获取用户目录信息
@@ -301,7 +255,7 @@ func (processor *TaskProcessor) ProcessPathIndex(t *model.Task) <-chan model.Obj
 	if err != nil {
 		return nil
 	}
-	storageClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetSourcePath())
+	storageClient := processor.storageDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
 
 	return storageClient.Index(t.GetSourcePath())
 }
@@ -312,6 +266,24 @@ func (processor *TaskProcessor) ProcessSync(t *model.Task) (err error) {
 	err = copier.Copy(&subTask, t)
 	if err != nil {
 		return err
+	}
+	// 列举所有对象
+	objects, err := processor.fileDatabase.Index(t.Uid + "/" + t.SourcePath)
+	if err != nil {
+		return err
+	}
+	for _, obj := range objects {
+		_, p := FromFileInfoGetUidAndPath(obj)
+		subTask.SourcePath = p
+		if strings.HasSuffix(t.DestinationPath, "/") {
+			// 目标是一个目录
+			fileName := path.Base(subTask.SourcePath)
+			subTask.DestinationPath = t.DestinationPath + fileName
+		}
+		err = processor.ProcessSyncSingleFile(&subTask)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -338,37 +310,6 @@ func (processor *TaskProcessor) ProcessSyncSingleFile(t *model.Task) (err error)
 		return err
 	}
 	logrus.Debugf("sync task %v finish", t.Tid.Hex())
-	return nil
-}
-
-// 普通同步任务
-func (processor *TaskProcessor) ProcessSimpleSync(t *model.Task) (err error) {
-	err = processor.CheckTaskType(t, model.SYNC_SIMPLE)
-	if err != nil {
-		return nil
-	}
-	// 获取源路径对应存储客户端
-	storageClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetSourcePath())
-	// 获取目的路径对应存储客户端
-	destClient := processor.storageDatabase.GetStorageClient(t.GetSid(), t.GetDestinationPath())
-	// 列举所有对象 todo: 如果是具有相同前缀的两个文件？
-	objectCh := storageClient.Index(t.GetSourcePath())
-	for obj := range objectCh {
-		fileName := path.Base(obj.Key)
-		// 判断两个客户端是否相同 todo: accesspoint 相同即可
-		if reflect.DeepEqual(storageClient, destClient) {
-			err = storageClient.Copy(obj.Key, t.GetDestinationPath()+fileName)
-		} else {
-			// 下载源文件
-			localPath := "./tmp/" + genRandomString(10)
-			err = storageClient.Download(t.GetSourcePath(), localPath)
-			err = destClient.Upload(localPath, t.GetDestinationPath()+fileName)
-		}
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
