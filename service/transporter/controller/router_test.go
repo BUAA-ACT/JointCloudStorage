@@ -71,7 +71,7 @@ func TestECUploadAndDownload(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
 
-		tid := recorder.Body.String()
+		token := recorder.Body.String()
 
 		filename := "../test/tmp/test.txt"
 		f, err := os.Open(filename)
@@ -79,7 +79,7 @@ func TestECUploadAndDownload(t *testing.T) {
 			t.Error("Open test file Fail")
 		}
 		defer f.Close()
-		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", tid)
+		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", token)
 		setCookie(req)
 		recorder = httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
@@ -442,13 +442,13 @@ func TestNewRouter(t *testing.T) {
 	})
 }
 
-func postFile(filename string, filepath string, target_url string, tid string) (*http.Request, error) {
+func postFile(filename string, filepath string, target_url string, token string) (*http.Request, error) {
 	body_buf := bytes.NewBufferString("")
 	body_writer := multipart.NewWriter(body_buf)
 
 	// use the body_writer to write the Part headers to the buffer
-	writer, _ := body_writer.CreateFormField("tid")
-	writer.Write([]byte(tid))
+	writer, _ := body_writer.CreateFormField("token")
+	writer.Write([]byte(token))
 	_, err := body_writer.CreateFormFile("file", filename)
 	if err != nil {
 		fmt.Println("error writing to buffer")

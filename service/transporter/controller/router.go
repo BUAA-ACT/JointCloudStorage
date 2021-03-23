@@ -49,7 +49,7 @@ func NewRouter(processor TaskProcessor) *Router {
 		processor: processor,
 	}
 	router.GET("/", Index)
-	router.POST("/upload/*path", router.AddUploadTask)
+	router.POST("/upload/*path", JWTAuthMiddleware(), router.AddUploadTask)
 	router.GET("/jcspan/*path", router.GetFile)
 	router.GET("/index/*path", router.FileIndex)
 	router.POST("/task", router.CreateTask)
@@ -102,9 +102,10 @@ func (router *Router) CreateTask(c *gin.Context) {
 		tid, err := router.processor.taskStorage.AddTask(&task)
 		if err != nil {
 			http.Error(c.Writer, err.Error(), http.StatusBadGateway)
+			return
 		}
-		tidStr := tid.Hex()
-		fmt.Fprintf(c.Writer, "%v", tidStr)
+		token, _ := GenerateTaskAccessToken(tid.Hex(), task.Uid, time.Hour*24)
+		fmt.Fprintf(c.Writer, "%v", token)
 	case "Download":
 		// req Task 转换为 model Task
 		var cloudsID []string
@@ -193,14 +194,12 @@ func (router *Router) FileIndex(c *gin.Context) {
 
 func (router *Router) AddUploadTask(c *gin.Context) {
 	destinationPath := c.Param("path")[1:]
+	uid := c.MustGet("tokenUid").(string)
+	tid := c.MustGet("tokenTid").(string)
+
 	log.Printf("upload to :%v", destinationPath)
-	sidCookie, err := c.Request.Cookie("sid")
-	if err != nil {
-		log.Printf("Get sid from cookie Fail: %v", err)
-	}
 	// todo: 文件较小时，不落盘，直接内存上传
 	c.Request.ParseMultipartForm(32 << 20)
-	tid := c.Request.FormValue("tid")
 	taskid, err := primitive.ObjectIDFromHex(tid)
 	task, err := router.processor.taskStorage.GetTask(taskid)
 	if err != nil {
@@ -209,10 +208,9 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 		return
 	}
 	// 鉴权
-	user, err := model.Authenticate(sidCookie.Value)
-	if err != nil || user.Id != task.Uid {
-		log.Printf("wrong sid")
-		http.Error(c.Writer, "wrong sid", http.StatusBadGateway)
+	if uid != task.Uid {
+		log.Printf("wrong uid")
+		http.Error(c.Writer, "wrong uid", http.StatusUnauthorized)
 		return
 	}
 

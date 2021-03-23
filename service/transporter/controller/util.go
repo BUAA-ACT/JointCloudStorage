@@ -23,15 +23,30 @@ const (
 	SECRET = "develop" // todo 签名密码加入配置文件
 )
 
-type FileAccessClaims struct {
+type AuthClaims struct {
 	Path string
 	Uid  string
+	Tid  string
 	jwt.StandardClaims
+}
+
+func GenerateTaskAccessToken(tid string, uid string, expireDuration time.Duration) (string, error) {
+	expire := time.Now().Add(expireDuration)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, AuthClaims{
+		Uid: uid,
+		Tid: tid,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expire.Unix(),
+			Issuer:    "transporter",
+		},
+	})
+	rs, err := token.SignedString([]byte(SECRET))
+	return rs, err
 }
 
 func GenerateLocalFileAccessToken(path string, uid string, expireDuration time.Duration) (string, error) {
 	expire := time.Now().Add(expireDuration)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, FileAccessClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, AuthClaims{
 		Path: path,
 		Uid:  uid,
 		StandardClaims: jwt.StandardClaims{
@@ -43,14 +58,14 @@ func GenerateLocalFileAccessToken(path string, uid string, expireDuration time.D
 	return rs, err
 }
 
-func ParseLocalFileAccessToken(accessToken string) (*FileAccessClaims, error) {
-	token, err := jwt.ParseWithClaims(accessToken, &FileAccessClaims{}, func(token *jwt.Token) (i interface{}, err error) {
+func ParseLocalFileAccessToken(accessToken string) (*AuthClaims, error) {
+	token, err := jwt.ParseWithClaims(accessToken, &AuthClaims{}, func(token *jwt.Token) (i interface{}, err error) {
 		return []byte(SECRET), nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	if claims, ok := token.Claims.(*FileAccessClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(*AuthClaims); ok && token.Valid {
 		return claims, nil
 	}
 	return nil, errors.New("invalid token")
@@ -86,6 +101,9 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		accessToken := c.DefaultQuery("token", "")
 		if accessToken == "" {
+			accessToken = c.DefaultPostForm("token", "")
+		}
+		if accessToken == "" {
 			c.JSON(http.StatusOK, gin.H{
 				"code": 2003,
 				"msg":  "no token found",
@@ -104,6 +122,8 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 		}
 		// 将当前请求的username信息保存到请求的上下文c上
 		c.Set("filePath", mc.Path)
+		c.Set("tokenUid", mc.Uid)
+		c.Set("tokenTid", mc.Tid)
 		c.Next() // 后续的处理函数可以用过c.Get("filePath")来获取当前请求的用户信息
 	}
 }
