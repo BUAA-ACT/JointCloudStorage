@@ -59,6 +59,7 @@ func (processor *TaskProcessor) SetProcessResult(t *model.Task, err error) {
 		logrus.Errorf("Process Task Fail: %v", err)
 		processor.taskStorage.SetTaskState(t.Tid, model.FAIL)
 	}
+	logrus.Infof("Process %v Task Sucess, tid :%v", t.TaskType, t.Tid.Hex())
 	processor.taskStorage.SetTaskState(t.Tid, model.FINISH)
 }
 
@@ -87,7 +88,13 @@ func (processor *TaskProcessor) ProcessTasks() {
 			}(task)
 		case model.SYNC:
 			go func(t *model.Task) {
-				err := processor.ProcessSync(task)
+				err := processor.ProcessSync(t)
+				processor.SetProcessResult(t, err)
+				finish <- t.Tid
+			}(task)
+		case model.DELETE:
+			go func(t *model.Task) {
+				err := processor.DeleteSingleFile(t)
 				processor.SetProcessResult(t, err)
 				finish <- t.Tid
 			}(task)
@@ -100,6 +107,42 @@ func (processor *TaskProcessor) ProcessTasks() {
 		id := <-finish
 		logrus.Infof("finish task: %v", id.Hex())
 	}
+}
+
+func (processor *TaskProcessor) DeleteSingleFile(t *model.Task) error {
+	fileInfo, err := processor.fileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
+	if err != nil {
+		logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
+		return err
+	}
+	var storageClients []model.StorageClient
+	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
+	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
+		client, err := processor.storageDatabase.GetStorageClientFromName(t.Uid, cloudName)
+		if err != nil {
+			return err
+		}
+		storageClients = append(storageClients, client)
+	}
+	switch storageModel {
+	case "Replica":
+		for _, client := range storageClients {
+			err = client.Remove(t.SourcePath, t.Uid)
+		}
+	case "EC":
+		N := t.TaskOptions.SourceStoragePlan.N
+		K := t.TaskOptions.SourceStoragePlan.K
+		if len(storageClients) != N+K {
+			return errors.New("storage num not correct")
+		}
+		for i, client := range storageClients {
+			err = client.Remove(t.SourcePath+"."+strconv.Itoa(i), t.Uid)
+		}
+	default:
+		return errors.New("storageModel not support")
+	}
+	err = processor.fileDatabase.DeleteFileInfo(fileInfo)
+	return err
 }
 
 func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string) error {
@@ -127,7 +170,11 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 	var storageClients []model.StorageClient
 	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
 	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
-		storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(t.Uid, cloudName))
+		client, err := processor.storageDatabase.GetStorageClientFromName(t.Uid, cloudName)
+		if err != nil {
+			return "", err
+		}
+		storageClients = append(storageClients, client)
 	}
 	if len(storageClients) == 0 {
 		return "", errors.New("EC storage num wrong")
@@ -181,7 +228,10 @@ func (processor *TaskProcessor) ProcessGetTmpDownloadUrl(t *model.Task) (url str
 	if err != nil {
 		return "", err
 	}
-	storageClient := processor.storageDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
+	storageClient, err := processor.storageDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
+	if err != nil {
+		return "", err
+	}
 	url, err = storageClient.GetTmpDownloadUrl(t.GetSourcePath(), t.Uid, time.Minute*30)
 	return url, err
 }
@@ -198,7 +248,11 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	if t.TaskOptions != nil {
 		storageModel := t.TaskOptions.DestinationPlan.StorageMode
 		for _, cloudName := range t.TaskOptions.DestinationPlan.Clouds {
-			storageClients = append(storageClients, processor.storageDatabase.GetStorageClientFromName(t.Uid, cloudName))
+			client, err := processor.storageDatabase.GetStorageClientFromName(t.Uid, cloudName)
+			if err != nil {
+				return err
+			}
+			storageClients = append(storageClients, client)
 		}
 		switch storageModel {
 		case "Replica":
@@ -255,7 +309,10 @@ func (processor *TaskProcessor) ProcessPathIndex(t *model.Task) <-chan model.Obj
 	if err != nil {
 		return nil
 	}
-	storageClient := processor.storageDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
+	storageClient, err := processor.storageDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
+	if err != nil {
+		return nil
+	}
 
 	return storageClient.Index(t.GetSourcePath(), t.Uid)
 }

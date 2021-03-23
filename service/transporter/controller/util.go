@@ -2,10 +2,14 @@ package controller
 
 import (
 	"act.buaa.edu.cn/jcspan/transporter/model"
+	"context"
 	"errors"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -152,5 +156,19 @@ func FromFileInfoGetUidAndPath(file *model.File) (uid string, path string) {
 	p := strings.Index(file.Id, "/")
 	uid = file.Id[0:p]
 	path = file.Id[p+1:]
+	return
+}
+
+func ClearAll() {
+	clientOptions := options.Client().ApplyURI("mongodb://192.168.105.8:20100")
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+	defer client.Disconnect(context.TODO())
+	if err != nil {
+		log.Print(err)
+	}
+	collection := client.Database("transporterTasks").Collection("Tasks")
+	collection.Drop(context.TODO())
+	collection = client.Database("Cloud").Collection("FileDatabase")
+	collection.Drop(context.TODO())
 	return
 }

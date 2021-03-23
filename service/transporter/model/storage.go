@@ -76,7 +76,12 @@ func (client *S3BucketStorageClient) Download(remotePath string, localPath strin
 	return err
 }
 func (client *S3BucketStorageClient) Remove(remotePath string, uid string) (err error) {
-	//todo
+	ctx := context.Background()
+	remotePath = client.realRemotePath(remotePath, uid)
+	opts := minio.RemoveObjectOptions{
+		GovernanceBypass: true,
+	}
+	err = client.minioClient.RemoveObject(ctx, client.bucketName, remotePath, opts)
 	return nil
 }
 func (client *S3BucketStorageClient) Copy(srcPath string, dstPath string, uid string) (err error) {

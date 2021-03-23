@@ -169,7 +169,15 @@ func (router *Router) CreateTask(c *gin.Context) {
 		}
 		tidStr := tid.Hex()
 		c.String(http.StatusOK, tidStr)
-
+	case "Delete":
+		task := RequestTask2Task(&reqTask, model.DELETE, model.CREATING)
+		tid, err := router.processor.taskStorage.AddTask(task)
+		if err != nil {
+			http.Error(c.Writer, err.Error(), http.StatusBadGateway)
+			return
+		}
+		tidStr := tid.Hex()
+		c.String(http.StatusOK, tidStr)
 	default:
 		http.Error(c.Writer, "wrong task type", http.StatusNotImplemented)
 	}

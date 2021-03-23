@@ -18,6 +18,7 @@ const (
 	UPLOAD              TaskType = 7
 	INDEX               TaskType = 8
 	SYNC                TaskType = 9
+	DELETE              TaskType = 10
 )
 
 func (taskType TaskType) String() string {
@@ -34,6 +35,12 @@ func (taskType TaskType) String() string {
 		return "DOWNLOAD"
 	case INDEX:
 		return "INDEX"
+	case UPLOAD:
+		return "UPLOAD"
+	case SYNC:
+		return "SYNC"
+	case DELETE:
+		return "DELETE"
 	}
 	return ""
 }

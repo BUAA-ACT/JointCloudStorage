@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/minio/minio-go/v7"
 	"go.mongodb.org/mongo-driver/bson"
@@ -24,7 +25,7 @@ type S3Client struct {
 // Storage 数据库
 type StorageDatabase interface {
 	// 通过用户的 session id 和访问路径，获取对应的 S3 客户端
-	GetStorageClientFromName(uid string, name string) StorageClient
+	GetStorageClientFromName(uid string, name string) (StorageClient, error)
 }
 
 type MongoStorageDatabase struct {
@@ -65,18 +66,28 @@ func (m *MongoStorageDatabase) CloseClient() error {
 	return err
 }
 
+func (m *MongoStorageDatabase) Clear() error {
+	collection := m.client.Database("Cloud").Collection("Cloud")
+	collection.Drop(context.TODO())
+	collection = m.client.Database("transporterTasks").Collection("Tasks")
+	collection.Drop(context.TODO())
+	collection = m.client.Database("Cloud").Collection("FileDatabase")
+	collection.Drop(context.TODO())
+	return nil
+}
+
 func (m *MongoStorageDatabase) GetStorageClient(sid string, path string) StorageClient {
 	return nil
 }
 
-func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string) StorageClient {
+func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string) (StorageClient, error) {
 	bucketName := "jcspan-aliyun-bj-test"
 	if s3Client, ok := m.s3ClientMap[name]; ok {
 		if time.Now().Sub(s3Client.lastReadTime).Minutes() < 5 {
 			return &S3BucketStorageClient{
 				bucketName:  bucketName,
 				minioClient: s3Client.minioClient,
-			}
+			}, nil
 		}
 	}
 
@@ -88,7 +99,7 @@ func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string)
 		m.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
 			log.Println(err)
-			return nil
+			return nil, errors.New("connect fail")
 		}
 	}
 
@@ -99,7 +110,7 @@ func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string)
 	err = collection.FindOne(context.TODO(), bson.D{{"id", name}}).Decode(&result)
 	if err != nil {
 		log.Print(err)
-		return nil
+		return nil, err
 	}
 	res := result.(primitive.D).Map()
 	fmt.Println(res)
@@ -111,7 +122,7 @@ func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string)
 		minioClient, err := GetMinioClient(endpoint, accessKeyId, secretAccessKey)
 		if err != nil {
 			log.Panicf("get minio client fail: %v", err)
-			return nil
+			return nil, err
 		}
 		s3 := S3Client{
 			name:         "aliyun-beijing",
@@ -124,9 +135,9 @@ func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string)
 		return &S3BucketStorageClient{
 			bucketName:  bucketName,
 			minioClient: s3.minioClient,
-		}
+		}, nil
 	} else {
-		return nil
+		return nil, err
 	}
 }
 
@@ -159,10 +170,10 @@ func NewSimpleInMemoryStorageDatabase() *SimpleInMemoryStorageDatabase {
 	}
 }
 
-func (database *SimpleInMemoryStorageDatabase) GetStorageClientFromName(uid string, name string) StorageClient {
+func (database *SimpleInMemoryStorageDatabase) GetStorageClientFromName(uid string, name string) (StorageClient, error) {
 	bucketName := "jcspan-aliyun-bj-test"
 	return &S3BucketStorageClient{
 		minioClient: database.s3ClientMap[name].minioClient,
 		bucketName:  bucketName,
-	}
+	}, nil
 }

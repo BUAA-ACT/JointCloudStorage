@@ -24,6 +24,7 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	var clientDatabase model.StorageDatabase
 	var fileDatabase model.FileDatabase
 	if DB == "Mongo" {
+		ClearAll()
 		storage, _ = model.NewMongoTaskStorage()
 		clientDatabase, _ = model.NewMongoStorageDatabase()
 		fileDatabase, _ = model.NewMongoFileDatabase()
@@ -135,11 +136,11 @@ func TestECUploadAndDownload(t *testing.T) {
 	t.Run("Check File DB and get download url", func(t *testing.T) {
 		fileInfo, err := processor.fileDatabase.GetFileInfo("tester/path/to/jcspantest.txt")
 		if err != nil {
-			t.Errorf("get file info err:%v", err)
+			t.Fatalf("get file info err:%v", err)
 		}
 		url = fileInfo.DownloadUrl
 		if url == "" {
-			t.Errorf("get download url err")
+			t.Fatalf("get download url err")
 		}
 		t.Logf("download url: %v", url)
 		waitUntilAllDone(processor)
@@ -303,6 +304,35 @@ func TestReplica2ECSync(t *testing.T) {
    },
    "DestinationStoragePlan":{
       "StorageMode": "EC",
+      "Clouds": [
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         }
+      ]
+   }
+}`)
+	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+	waitUntilAllDone(processor)
+}
+
+func TestReplicaUploadAndDelete(t *testing.T) {
+	router, processor := initRouterAndProcessor()
+	dstPath := "tmp/test/sync/未命名.png"
+	testReplicaUpload(t, router, processor, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	dstPath = "tmp/test/sync/test.txt"
+	testReplicaUpload(t, router, processor, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	jsonStr := []byte(`
+{
+  "TaskType": "Delete",
+   "Uid": "tester",
+   "SourcePath": "tmp/test/sync/未命名.png",
+   "SourceStoragePlan":{
+      "StorageMode": "Replica",
       "Clouds": [
          {
             "ID": "aliyun-beijing"
