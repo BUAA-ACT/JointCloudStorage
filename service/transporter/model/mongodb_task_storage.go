@@ -174,7 +174,7 @@ func (task *MongoTaskStorage) SetTaskState(tid primitive.ObjectID, state TaskSta
 	filter := bson.D{{"_id", tid}}
 	update := bson.D{
 		{"$set", bson.D{
-			{"State", state},
+			{"state", state},
 		}},
 	}
 	collection := task.client.Database("transporterTasks").Collection("Tasks")
@@ -199,13 +199,13 @@ func (task *MongoTaskStorage) SetTask(tid primitive.ObjectID, t *Task) error {
 
 	update := bson.D{
 		{"$set", bson.D{
-			{"TaskType", t.TaskType},
-			{"State", t.State},
-			{"StartTime", t.StartTime},
-			{"Uid", t.Uid},
-			{"SourcePath", t.SourcePath},
-			{"DestinationPath", t.DestinationPath},
-			{"TaskOptions", t.TaskOptions},
+			{"taskType", t.TaskType},
+			{"state", t.State},
+			{"startTime", t.StartTime},
+			{"uid", t.Uid},
+			{"sourcePath", t.SourcePath},
+			{"destinationPath", t.DestinationPath},
+			{"taskOptions", t.TaskOptions},
 		}},
 	}
 	collection := task.client.Database("transporterTasks").Collection("Tasks")
