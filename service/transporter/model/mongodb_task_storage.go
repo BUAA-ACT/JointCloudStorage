@@ -107,7 +107,7 @@ func (task *MongoTaskStorage) GetTaskList(n int) (t []*Task) {
 	collection := task.client.Database("transporterTasks").Collection("Tasks")
 	findOptions := options.Find()
 	findOptions.SetLimit(int64(n))
-	cur, err := collection.Find(context.TODO(), bson.D{{"State", WAITING}}, findOptions)
+	cur, err := collection.Find(context.TODO(), bson.D{{"state", WAITING}}, findOptions)
 
 	if err != nil {
 		log.Print(err)
