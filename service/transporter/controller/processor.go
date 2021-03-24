@@ -19,7 +19,7 @@ import (
 type TaskProcessor struct {
 	taskStorage     model.TaskStorage
 	storageDatabase model.StorageDatabase
-	fileDatabase    model.FileDatabase
+	FileDatabase    model.FileDatabase
 }
 
 func (processor *TaskProcessor) SetTaskStorage(storage model.TaskStorage) {
@@ -110,7 +110,7 @@ func (processor *TaskProcessor) ProcessTasks() {
 }
 
 func (processor *TaskProcessor) DeleteSingleFile(t *model.Task) error {
-	fileInfo, err := processor.fileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
+	fileInfo, err := processor.FileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
 	if err != nil {
 		logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 		return err
@@ -141,12 +141,12 @@ func (processor *TaskProcessor) DeleteSingleFile(t *model.Task) error {
 	default:
 		return errors.New("storageModel not support")
 	}
-	err = processor.fileDatabase.DeleteFileInfo(fileInfo)
+	err = processor.FileDatabase.DeleteFileInfo(fileInfo)
 	return err
 }
 
 func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string) error {
-	fileInfo, err := processor.fileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
+	fileInfo, err := processor.FileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
 	if err != nil {
 		logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 		return err
@@ -158,7 +158,7 @@ func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string)
 	fileInfo.DownloadUrl = "/cache_file?token=" + accessToken
 	fileInfo.ReconstructStatus = "Done"
 	fileInfo.ReconstructTime = time.Now()
-	err = processor.fileDatabase.UpdateFileInfo(fileInfo)
+	err = processor.FileDatabase.UpdateFileInfo(fileInfo)
 	return err
 }
 
@@ -186,7 +186,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		if N < 1 || K < 1 || N+K != len(storageClients) {
 			return "", errors.New("EC storage num wrong")
 		}
-		fileInfo, err := processor.fileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
+		fileInfo, err := processor.FileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
 		if err != nil {
 			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 		}
@@ -207,7 +207,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		}
 		return rebuildPath, nil
 	case "Replica":
-		_, err := processor.fileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
+		_, err := processor.FileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
 		if err != nil {
 			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 		}
@@ -243,7 +243,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	if t.GetState() == model.FINISH {
 		return errors.New("task already finish")
 	}
-	fileInfo, fileInfoErr := processor.fileDatabase.GetFileInfo(t.Uid + "/" + t.DestinationPath)
+	fileInfo, fileInfoErr := processor.FileDatabase.GetFileInfo(t.Uid + "/" + t.DestinationPath)
 	// 判断上传方式
 	var storageClients []model.StorageClient
 	if t.TaskOptions != nil {
@@ -266,9 +266,9 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			}
 			fileInfo.LastChange = time.Now()
 			if fileInfoErr != nil { // 文件之前不存在
-				err = processor.fileDatabase.CreateFileInfo(fileInfo)
+				err = processor.FileDatabase.CreateFileInfo(fileInfo)
 			} else {
-				err = processor.fileDatabase.UpdateFileInfo(fileInfo)
+				err = processor.FileDatabase.UpdateFileInfo(fileInfo)
 			}
 			CheckErr(err, "Create File Info")
 		case "EC": // 纠删码模式
@@ -300,9 +300,9 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 				return err
 			}
 			if fileInfoErr != nil { // 文件之前不存在
-				err = processor.fileDatabase.CreateFileInfo(fileInfo)
+				err = processor.FileDatabase.CreateFileInfo(fileInfo)
 			} else {
-				err = processor.fileDatabase.UpdateFileInfo(fileInfo)
+				err = processor.FileDatabase.UpdateFileInfo(fileInfo)
 			}
 			CheckErr(err, "Create File Info")
 		default:
@@ -335,7 +335,7 @@ func (processor *TaskProcessor) ProcessSync(t *model.Task) (err error) {
 		return err
 	}
 	// 列举所有对象
-	objects, err := processor.fileDatabase.Index(t.Uid + "/" + t.SourcePath)
+	objects, err := processor.FileDatabase.Index(t.Uid + "/" + t.SourcePath)
 	if err != nil {
 		return err
 	}

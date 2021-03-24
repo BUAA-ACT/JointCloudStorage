@@ -38,7 +38,7 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	// 初始化存储数据库
 	processor.SetStorageDatabase(clientDatabase)
 	// 初始化 FileInfo 数据库
-	processor.fileDatabase = fileDatabase
+	processor.FileDatabase = fileDatabase
 	// 初始化路由
 	router := NewTestRouter(processor)
 	// 启动 processor
@@ -134,7 +134,7 @@ func TestECUploadAndDownload(t *testing.T) {
 	})
 	var url string
 	t.Run("Check File DB and get download url", func(t *testing.T) {
-		fileInfo, err := processor.fileDatabase.GetFileInfo("tester/path/to/jcspantest.txt")
+		fileInfo, err := processor.FileDatabase.GetFileInfo("tester/path/to/jcspantest.txt")
 		if err != nil {
 			t.Fatalf("get file info err:%v", err)
 		}

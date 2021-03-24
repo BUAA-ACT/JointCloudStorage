@@ -13,5 +13,6 @@ require (
 	github.com/klauspost/reedsolomon v1.9.12
 	github.com/minio/minio-go/v7 v7.0.8
 	github.com/sirupsen/logrus v1.8.1
+	github.com/urfave/cli/v2 v2.3.0
 	go.mongodb.org/mongo-driver v1.5.0
 )
