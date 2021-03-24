@@ -1,4 +1,4 @@
-package controller
+package util
 
 import (
 	"act.buaa.edu.cn/jcspan/transporter/model"
@@ -77,7 +77,7 @@ func ParseLocalFileAccessToken(accessToken string) (*AuthClaims, error) {
 	return nil, errors.New("invalid token")
 }
 
-func genRandomString(n int) string {
+func GenRandomString(n int) string {
 	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	const (
 		letterIdxBits = 6                    // 6 bits to represent a letter index
@@ -94,7 +94,7 @@ func genRandomString(n int) string {
 }
 
 // 判断所给路径是否为文件夹
-func isDir(path string) bool {
+func IsDir(path string) bool {
 	s, err := os.Stat(path)
 	if err != nil {
 		return false

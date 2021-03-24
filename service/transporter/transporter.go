@@ -3,6 +3,7 @@ package main
 import (
 	"act.buaa.edu.cn/jcspan/transporter/controller"
 	"act.buaa.edu.cn/jcspan/transporter/model"
+	"act.buaa.edu.cn/jcspan/transporter/util"
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -36,7 +37,7 @@ func StartServe() {
 		Flags: flags,
 		Action: func(c *cli.Context) error {
 			configFilePath := c.Path("config")
-			err := ReadConfigFromFile(configFilePath)
+			err := util.ReadConfigFromFile(configFilePath)
 			if err != nil {
 				logrus.Errorf("Read config file fail:%v", err)
 				return err
@@ -58,12 +59,12 @@ func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
 	var storage model.TaskStorage
 	var clientDatabase model.StorageDatabase
 	var fileDatabase model.FileDatabase
-	if CONFIG.DebugMode {
+	if util.CONFIG.DebugMode {
 		logrus.SetLevel(logrus.DebugLevel)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	if CONFIG.Database == MongoDB {
+	if util.CONFIG.Database == util.MongoDB {
 		storage, _ = model.NewMongoTaskStorage()
 		clientDatabase, _ = model.NewMongoStorageDatabase()
 		fileDatabase, _ = model.NewMongoFileDatabase()

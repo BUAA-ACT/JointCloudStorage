@@ -2,6 +2,7 @@ package controller
 
 import (
 	"act.buaa.edu.cn/jcspan/transporter/model"
+	"act.buaa.edu.cn/jcspan/transporter/util"
 	"encoding/json"
 	"fmt"
 	"github.com/gabriel-vasile/mimetype"
@@ -49,11 +50,11 @@ func NewRouter(processor TaskProcessor) *Router {
 		processor: processor,
 	}
 	router.GET("/", Index)
-	router.POST("/upload/*path", JWTAuthMiddleware(), router.AddUploadTask)
+	router.POST("/upload/*path", util.JWTAuthMiddleware(), router.AddUploadTask)
 	router.GET("/jcspan/*path", router.GetFile)
 	router.GET("/index/*path", router.FileIndex)
 	router.POST("/task", router.CreateTask)
-	router.GET("/cache_file", JWTAuthMiddleware(), router.GetLocalFileByToken)
+	router.GET("/cache_file", util.JWTAuthMiddleware(), router.GetLocalFileByToken)
 	rand.Seed(time.Now().Unix())
 	return &router
 }
@@ -104,7 +105,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 			http.Error(c.Writer, err.Error(), http.StatusBadGateway)
 			return
 		}
-		token, _ := GenerateTaskAccessToken(tid.Hex(), task.Uid, time.Hour*24)
+		token, _ := util.GenerateTaskAccessToken(tid.Hex(), task.Uid, time.Hour*24)
 		fmt.Fprintf(c.Writer, "%v", token)
 	case "Download":
 		// req Task 转换为 model Task
@@ -228,11 +229,10 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 		return
 	}
 	defer file.Close()
-	// todo: 自定义临时路径
-	randStr := genRandomString(10)
-	filePath := "./tmp/" + handler.Filename + randStr
-	if !isDir("./tmp/") {
-		os.MkdirAll("./tmp/", os.ModePerm)
+	randStr := util.GenRandomString(10)
+	filePath := util.CONFIG.UploadFileTempPath + handler.Filename + randStr
+	if !util.IsDir(util.CONFIG.UploadFileTempPath) { // todo config 模块负责验证目录存在
+		os.MkdirAll(util.CONFIG.UploadFileTempPath, os.ModePerm)
 	}
 	// 创建文件，且文件必须不存在
 	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0666) // 此处假设当前目录下已存在test目录

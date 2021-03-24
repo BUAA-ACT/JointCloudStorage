@@ -2,6 +2,7 @@ package controller
 
 import (
 	"act.buaa.edu.cn/jcspan/transporter/model"
+	"act.buaa.edu.cn/jcspan/transporter/util"
 	"context"
 	"errors"
 	"fmt"
@@ -150,7 +151,7 @@ func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string)
 		logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 		return err
 	}
-	accessToken, err := GenerateLocalFileAccessToken(path, t.Uid, time.Hour*24)
+	accessToken, err := util.GenerateLocalFileAccessToken(path, t.Uid, time.Hour*24)
 	if err != nil {
 		logrus.Warnf("cant gen access token, err: %v", err)
 	}
@@ -189,7 +190,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		if err != nil {
 			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 		}
-		rebuildPath := "./tmp/download/" + genRandomString(20) // todo 自定义 tmp 目录
+		rebuildPath := util.CONFIG.DownloadFileTempPath + util.GenRandomString(20)
 		shards := make([]string, N+K)
 		for i := range shards {
 			// 设置临时分块存储路径
@@ -199,7 +200,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 				logrus.Errorf("Download EC block %v from %v fail: %v", shards[i], storageClients[i], err)
 			}
 		}
-		err = Decode(rebuildPath, fileInfo.Size, shards, N, K) // todo 文件大小
+		err = Decode(rebuildPath, fileInfo.Size, shards, N, K)
 		if err != nil {
 			logrus.Errorf("Rebuild File %v fail: %v", rebuildPath, err)
 			return "", err
@@ -210,7 +211,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		if err != nil {
 			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 		}
-		rebuildPath := "./tmp/download/" + genRandomString(20) // todo 自定义 tmp 目录
+		rebuildPath := util.CONFIG.DownloadFileTempPath + util.GenRandomString(20)
 		err = storageClients[0].Download(t.SourcePath, rebuildPath, t.Uid)
 		if err != nil {
 			logrus.Errorf("Download Replica %v from %v fail: %v", t.SourcePath, storageClients[0], err)
@@ -260,7 +261,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath(), t.Uid)
 			}
 			fileInfo, err = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
-			if CheckErr(err, "New File Info") {
+			if util.CheckErr(err, "New File Info") {
 				return err
 			}
 			fileInfo.LastChange = time.Now()
@@ -269,7 +270,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			} else {
 				err = processor.FileDatabase.UpdateFileInfo(fileInfo)
 			}
-			CheckErr(err, "Create File Info")
+			util.CheckErr(err, "Create File Info")
 		case "EC": // 纠删码模式
 			N := t.TaskOptions.DestinationPlan.N
 			K := t.TaskOptions.DestinationPlan.K
@@ -291,11 +292,11 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			for i, client := range storageClients {
 				err = client.Upload(shards[i], t.GetDestinationPath()+"."+strconv.Itoa(i), t.Uid)
 			}
-			if CheckErr(err, "Upload EC block") {
+			if util.CheckErr(err, "Upload EC block") {
 				return err
 			}
 			fileInfo, err := model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
-			if CheckErr(err, "New File Info") {
+			if util.CheckErr(err, "New File Info") {
 				return err
 			}
 			if fileInfoErr != nil { // 文件之前不存在
@@ -303,7 +304,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			} else {
 				err = processor.FileDatabase.UpdateFileInfo(fileInfo)
 			}
-			CheckErr(err, "Create File Info")
+			util.CheckErr(err, "Create File Info")
 		default:
 			return errors.New("storage model not implement")
 		}
@@ -339,7 +340,7 @@ func (processor *TaskProcessor) ProcessSync(t *model.Task) (err error) {
 		return err
 	}
 	for _, obj := range objects {
-		_, p := FromFileInfoGetUidAndPath(obj)
+		_, p := util.FromFileInfoGetUidAndPath(obj)
 		subTask.SourcePath = p
 		if strings.HasSuffix(t.DestinationPath, "/") {
 			// 目标是一个目录

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"act.buaa.edu.cn/jcspan/transporter/model"
+	"act.buaa.edu.cn/jcspan/transporter/util"
 	"bytes"
 	"context"
 	"fmt"
@@ -23,8 +24,12 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	var storage model.TaskStorage
 	var clientDatabase model.StorageDatabase
 	var fileDatabase model.FileDatabase
-	if DB == "Mongo" {
-		ClearAll()
+	err := util.CheckConfig()
+	if err != nil {
+		return nil, nil
+	}
+	if util.CONFIG.Database == util.MongoDB {
+		util.ClearAll()
 		storage, _ = model.NewMongoTaskStorage()
 		clientDatabase, _ = model.NewMongoStorageDatabase()
 		fileDatabase, _ = model.NewMongoFileDatabase()
@@ -44,6 +49,9 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	// 启动 processor
 	processor.StartProcessTasks(context.Background())
 	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&logrus.TextFormatter{
+		ForceColors: true,
+	})
 	return router, &processor
 }
 
