@@ -243,6 +243,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	if t.GetState() == model.FINISH {
 		return errors.New("task already finish")
 	}
+	fileInfo, fileInfoErr := processor.fileDatabase.GetFileInfo(t.Uid + "/" + t.DestinationPath)
 	// 判断上传方式
 	var storageClients []model.StorageClient
 	if t.TaskOptions != nil {
@@ -259,11 +260,16 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			for _, client := range storageClients {
 				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath(), t.Uid)
 			}
-			fileInfo, err := model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
+			fileInfo, err = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
 			if CheckErr(err, "New File Info") {
 				return err
 			}
-			err = processor.fileDatabase.CreateFileInfo(fileInfo)
+			fileInfo.LastChange = time.Now()
+			if fileInfoErr != nil { // 文件之前不存在
+				err = processor.fileDatabase.CreateFileInfo(fileInfo)
+			} else {
+				err = processor.fileDatabase.UpdateFileInfo(fileInfo)
+			}
 			CheckErr(err, "Create File Info")
 		case "EC": // 纠删码模式
 			N := t.TaskOptions.DestinationPlan.N
@@ -293,7 +299,11 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			if CheckErr(err, "New File Info") {
 				return err
 			}
-			err = processor.fileDatabase.CreateFileInfo(fileInfo)
+			if fileInfoErr != nil { // 文件之前不存在
+				err = processor.fileDatabase.CreateFileInfo(fileInfo)
+			} else {
+				err = processor.fileDatabase.UpdateFileInfo(fileInfo)
+			}
 			CheckErr(err, "Create File Info")
 		default:
 			return errors.New("storage model not implement")

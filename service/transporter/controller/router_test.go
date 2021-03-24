@@ -383,6 +383,14 @@ func TestECUploadAndDelete(t *testing.T) {
 	waitUntilAllDone(processor)
 }
 
+func TestMultiUpload(t *testing.T) {
+	router, processor := initRouterAndProcessor()
+	dstPath := "tmp/test/upload/未命名.png"
+	testReplicaUpload(t, router, processor, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	dstPath = "tmp/test/upload/未命名.png"
+	testReplicaUpload(t, router, processor, dstPath, "../test/tmp/未命名1.png", "aliyun-beijing")
+}
+
 func postFile(filename string, filepath string, target_url string, token string) (*http.Request, error) {
 	body_buf := bytes.NewBufferString("")
 	body_writer := multipart.NewWriter(body_buf)
@@ -424,31 +432,6 @@ func postFile(filename string, filepath string, target_url string, token string)
 	req.Header.Add("Content-Type", "multipart/form-data; boundary="+boundary)
 	req.ContentLength = fi.Size() + int64(body_buf.Len()) + int64(close_buf.Len())
 	return req, nil
-}
-
-func multipartUpload(f io.Reader, fields map[string]string) (*bytes.Buffer, error) {
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	fw, err := writer.CreateFormFile("file", fields["filename"])
-	if err != nil {
-		return nil, fmt.Errorf("CreateFormFile %v", err)
-	}
-
-	_, err = io.Copy(fw, f)
-	if err != nil {
-		return nil, fmt.Errorf("copying fileWriter %v", err)
-	}
-
-	for k, v := range fields {
-		_ = writer.WriteField(k, v)
-	}
-
-	err = writer.Close() // close writer before POST request
-	if err != nil {
-		return nil, fmt.Errorf("writerClose: %v", err)
-	}
-
-	return body, nil
 }
 
 func waitUntilAllDone(processor *TaskProcessor) {
