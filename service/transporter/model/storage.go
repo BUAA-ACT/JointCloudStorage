@@ -6,6 +6,7 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	url2 "net/url"
+	"path"
 	"time"
 )
 
@@ -145,8 +146,9 @@ func (client *S3BucketStorageClient) RecursiveIndex(remotePath string, uid strin
 func (client *S3BucketStorageClient) GetTmpDownloadUrl(remotePath string, uid string, validTime time.Duration) (url string, err error) {
 	ctx := context.Background()
 	remotePath = client.realRemotePath(remotePath, uid)
+	filename := path.Base(remotePath)
 	reqParams := make(url2.Values)
-	reqParams.Set("response-content-disposition", "attachment; filename=\"your-filename.txt\"")
+	reqParams.Set("response-content-disposition", "attachment; filename=\""+filename+"\"")
 	res, err := client.minioClient.PresignedGetObject(ctx, client.bucketName, remotePath, validTime, reqParams)
 	if err != nil {
 		return "", err
