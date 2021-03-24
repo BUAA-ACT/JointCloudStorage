@@ -288,6 +288,17 @@ func TestReplica2ECSync(t *testing.T) {
    "SourcePath": "tmp/test/sync/",
    "SourceStoragePlan":{
       "StorageMode": "Replica",
+     "Clouds": [
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         }
+      ] 
+   },
+   "DestinationStoragePlan":{
+      "StorageMode": "EC",
       "Clouds": [
          {
             "ID": "aliyun-beijing"
@@ -301,17 +312,6 @@ func TestReplica2ECSync(t *testing.T) {
       ],
       "N": 2,
       "K": 1
-   },
-   "DestinationStoragePlan":{
-      "StorageMode": "EC",
-      "Clouds": [
-         {
-            "ID": "aliyun-beijing"
-         },
-         {
-            "ID": "aliyun-beijing"
-         }
-      ]
    }
 }`)
 	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
@@ -341,6 +341,40 @@ func TestReplicaUploadAndDelete(t *testing.T) {
             "ID": "aliyun-beijing"
          }
       ]
+   }
+}`)
+	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+	waitUntilAllDone(processor)
+}
+
+func TestECUploadAndDelete(t *testing.T) {
+	router, processor := initRouterAndProcessor()
+	dstPath := "tmp/test/del/未命名.png"
+	testECUpload(t, router, processor, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	dstPath = "tmp/test/del/test.txt"
+	testECUpload(t, router, processor, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	jsonStr := []byte(`
+{
+  "TaskType": "Delete",
+   "Uid": "tester",
+   "SourcePath": "tmp/test/del/未命名.png",
+   "SourceStoragePlan":{
+      "StorageMode": "EC",
+      "Clouds": [
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-beijing"
+         }
+      ],
+      "N": 2,
+      "K": 1
    }
 }`)
 	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))

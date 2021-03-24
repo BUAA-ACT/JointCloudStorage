@@ -366,6 +366,13 @@ func (processor *TaskProcessor) ProcessSyncSingleFile(t *model.Task) (err error)
 	if err != nil {
 		return err
 	}
+	err = copier.Copy(&subTask, t)
+	subTask.TaskType = model.DELETE
+	subTask.TaskOptions.DestinationPlan = nil
+	err = processor.DeleteSingleFile(&subTask)
+	if err != nil {
+		return err
+	}
 	logrus.Debugf("sync task %v finish", t.Tid.Hex())
 	return nil
 }
