@@ -166,7 +166,7 @@ Content-Length：ContentLength
       "StorageMode": "EC",
       "Clouds": [],
       "N": 3,
-      "K": 1,
+      "K": 1
   }
   ```
 
