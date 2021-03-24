@@ -10,7 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"path"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -190,7 +189,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		if err != nil {
 			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 		}
-		rebuildPath := "./tmp/download/" + filepath.Base(t.SourcePath) // todo 自定义 tmp 目录
+		rebuildPath := "./tmp/download/" + genRandomString(20) // todo 自定义 tmp 目录
 		shards := make([]string, N+K)
 		for i := range shards {
 			// 设置临时分块存储路径
@@ -211,7 +210,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		if err != nil {
 			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 		}
-		rebuildPath := "./tmp/download/" + filepath.Base(t.SourcePath) // todo 自定义 tmp 目录
+		rebuildPath := "./tmp/download/" + genRandomString(20) // todo 自定义 tmp 目录
 		err = storageClients[0].Download(t.SourcePath, rebuildPath, t.Uid)
 		if err != nil {
 			logrus.Errorf("Download Replica %v from %v fail: %v", t.SourcePath, storageClients[0], err)
