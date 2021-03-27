@@ -1,0 +1,6 @@
+{
+  "debugMode": true,
+  "database": "MongoDB",
+  "UploadFileTempPath": "./tmp/Upload",
+  "DownloadFileTempPath": "./tmp/Download"
+}

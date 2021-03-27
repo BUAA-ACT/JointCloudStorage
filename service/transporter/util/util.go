@@ -1,15 +1,17 @@
-package controller
+package util
 
 import (
-	"act.buaa.edu.cn/jcspan/transporter/model"
+	"context"
 	"errors"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -73,7 +75,7 @@ func ParseLocalFileAccessToken(accessToken string) (*AuthClaims, error) {
 	return nil, errors.New("invalid token")
 }
 
-func genRandomString(n int) string {
+func GenRandomString(n int) string {
 	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	const (
 		letterIdxBits = 6                    // 6 bits to represent a letter index
@@ -90,7 +92,7 @@ func genRandomString(n int) string {
 }
 
 // 判断所给路径是否为文件夹
-func isDir(path string) bool {
+func IsDir(path string) bool {
 	s, err := os.Stat(path)
 	if err != nil {
 		return false
@@ -148,9 +150,16 @@ func GetFileContentType(out *os.File) (string, error) {
 	return contentType, nil
 }
 
-func FromFileInfoGetUidAndPath(file *model.File) (uid string, path string) {
-	p := strings.Index(file.Id, "/")
-	uid = file.Id[0:p]
-	path = file.Id[p+1:]
+func ClearAll() {
+	clientOptions := options.Client().ApplyURI("mongodb://" + CONFIG.Database.Host + ":" + CONFIG.Database.Port)
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+	defer client.Disconnect(context.TODO())
+	if err != nil {
+		log.Print(err)
+	}
+	collection := client.Database(CONFIG.Database.DatabaseName).Collection("Tasks")
+	collection.Drop(context.TODO())
+	collection = client.Database(CONFIG.Database.DatabaseName).Collection("File")
+	collection.Drop(context.TODO())
 	return
 }
