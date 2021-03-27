@@ -64,7 +64,7 @@ func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	if util.CONFIG.Database == util.MongoDB {
+	if util.CONFIG.Database.Driver == util.MongoDB {
 		storage, _ = model.NewMongoTaskStorage()
 		clientDatabase, _ = model.NewMongoStorageDatabase()
 		fileDatabase, _ = model.NewMongoFileDatabase()

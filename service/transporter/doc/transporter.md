@@ -22,7 +22,35 @@
 - `storage client`: 提供不同云存储客户端的统一抽象
 - `minio client`: 使用 minio 库对 Amazon S3 类型的对象存储进行操作
 
+## 测试环境
 
+- 在开发过程中可以使用测试环境来对 transporter 提供的接口进行测试
+
+- 在进行测试前，请确保请求发起方位于 ACT 网络内，通过 ping 192.168.105.2 来验证请求发起方与 transporter 的连通性
+
+- 测试环境地址
+
+  1. http://transporter.act.sumblog.cn/
+  2. http://192.168.105.2:9648/
+
+  - 测试时，cloudID 请填写 `aliyun-beijing` 
+
+- 测试接口 1 仅为接口 2 的反向代理，两者并无区别，若无法使用，请联系张俊华
+
+## 历史版本
+
+- [v0.3.24-transporter-alpha](http://gitlab.act.buaa.edu.cn/jointcloudstorage/jcspan/-/releases/v0.3.24-transporter-alpha)
+
+  首个 transporter alpha 版本
+
+  - 支持 Uplaod、Download、Sync、Delete 任务
+  - 支持用户端通过表单上传文件
+  - 生成有超时时间的临时下载链接
+  - 所有用户文件共用临时测试 bucket
+  - 采用 jwt 生成签名 token 认证用户身份
+  - 从配置文件读取配置
+  - 使用 MongoDB 进行持久化存储 (MongoDB 服务器硬编码，暂不能修改）
+  - 受限的云存储支持，不能容忍云服务失效
 
 ## 接口文档
 
@@ -110,8 +138,7 @@ Content-Length：ContentLength
 
 {
   "TaskType": "Upload",
-   "Uid": "12",
-   "Sid": "sdjfsdjfsadjkf21",
+   "Uid": "tester",
    "DestinationPath":"/path/to/upload/",
    "StoragePlan":{
       "StorageMode": "Replica",
@@ -149,16 +176,15 @@ Content-Length：ContentLength
   }
   ```
 
-  | 名称                   | 值                     | 是否必选 | 描述                                                         |
-  | ---------------------- | ---------------------- | -------- | ------------------------------------------------------------ |
-  | TaskType               | "Upload" \| "Download" | 必选     | 任务类型，当前实现的任务类型有 Upload、Download。即将实现：Sync、Delete |
-  | SourcePath             | string                 | 可选     | 任务的作用路径，创建的任务对 SourcePath 路径下的文件进行处理 |
-  | DestinationPath        | string                 | 可选     | 任务的目的路径，任务完成后，生成的目标文件在网盘中的存储位置 |
-  | Sid                    | string                 | 必选     | 用户 session id，用于用户身份认证                            |
-  | Uid                    | string                 | 必选     | 用户 user id，用户指定特定的用户                             |
-  | SourceStoragePlan      | storagePlanStruct      | 可选     | 任务作用路径的存储方案                                       |
-  | DestinationStoragePlan | storagePlanStruct      | 可选     | 任务路径的存储方案                                           |
-
+  | 名称                   | 值                                           | 是否必选 | 描述                                                         |
+  | ---------------------- | -------------------------------------------- | -------- | ------------------------------------------------------------ |
+  | TaskType               | "Upload" \| "Download" \| "Sync" \| "Delete" | 必选     | 任务类型，当前实现的任务类型有 Upload、Download、Sync、Delete |
+  | SourcePath             | string                                       | 可选     | 任务的作用路径，创建的任务对 SourcePath 路径下的文件进行处理 |
+  | DestinationPath        | string                                       | 可选     | 任务的目的路径，任务完成后，生成的目标文件在网盘中的存储位置 |
+  | Uid                    | string                                       | 必选     | 用户 user id，用户指定特定的用户                             |
+  | SourceStoragePlan      | storagePlanStruct                            | 可选     | 任务作用路径的存储方案                                       |
+  | DestinationStoragePlan | storagePlanStruct                            | 可选     | 任务路径的存储方案                                           |
+  
 - storagePlanStruct：
 
   ```json
@@ -221,7 +247,6 @@ Content-Length：ContentLength
   {
     "TaskType": "Upload",
      "Uid": "12",
-     "Sid": "tttteeeesssstttt",
      "DestinationPath":"/path/to/upload/",
      "DestinationStoragePlan":{
         "StorageMode": "EC",
@@ -241,14 +266,13 @@ Content-Length：ContentLength
      }
   }
   ```
-
+  
 - 请求创建下载文件 Task (纠删码模式）：
 
   ```json
   {
     "TaskType": "Download",
      "Uid": "tester",
-     "Sid": "tttteeeesssstttt",
      "SourcePath":"/path/to/jcspantest.txt",
      "SourceStoragePlan":{
         "StorageMode": "EC",
@@ -268,8 +292,8 @@ Content-Length：ContentLength
      }
   }
   ```
-
-  请注意，纠删码模式下，云服务提供商数量必须等于 N+K，且按照云服务商在 Clouds 中出现的顺序，依次存储数据分块以及校验分块
+  
+请注意，纠删码模式下，云服务提供商数量必须等于 N+K，且按照云服务商在 Clouds 中出现的顺序，依次存储数据分块以及校验分块
 
 **返回值示例：**
 

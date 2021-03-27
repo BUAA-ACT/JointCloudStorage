@@ -12,15 +12,26 @@ const (
 )
 
 var CONFIG = Configuration{
-	DebugMode:            true,
-	Database:             InMemoryDB,
+	DebugMode: true,
+	Database: DBConfiguration{
+		Driver: InMemoryDB,
+	},
 	UploadFileTempPath:   "./tmp/upload/",
 	DownloadFileTempPath: "./tmp/download/",
 }
 
+type DBConfiguration struct {
+	Driver       string
+	Host         string
+	Port         string
+	DatabaseName string
+	Username     string
+	Password     string
+}
+
 type Configuration struct {
 	DebugMode            bool
-	Database             string
+	Database             DBConfiguration
 	UploadFileTempPath   string
 	DownloadFileTempPath string
 }
@@ -49,7 +60,7 @@ func CheckConfig() (err error) {
 	if IsDir(CONFIG.DownloadFileTempPath) {
 		err = os.MkdirAll(CONFIG.DownloadFileTempPath, os.ModePerm)
 	}
-	if CONFIG.Database != InMemoryDB && CONFIG.Database != MongoDB {
+	if CONFIG.Database.Driver != InMemoryDB && CONFIG.Database.Driver != MongoDB {
 		err = errors.New("nonsupport database type")
 	}
 	return

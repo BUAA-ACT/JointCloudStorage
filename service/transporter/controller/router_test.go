@@ -28,7 +28,7 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	if err != nil {
 		return nil, nil
 	}
-	if util.CONFIG.Database == util.MongoDB {
+	if util.CONFIG.Database.Driver == util.MongoDB {
 		util.ClearAll()
 		storage, _ = model.NewMongoTaskStorage()
 		clientDatabase, _ = model.NewMongoStorageDatabase()
