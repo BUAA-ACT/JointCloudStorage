@@ -1,7 +1,6 @@
 package util
 
 import (
-	"act.buaa.edu.cn/jcspan/transporter/model"
 	"context"
 	"errors"
 	jwt "github.com/dgrijalva/jwt-go"
@@ -13,7 +12,6 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -152,23 +150,16 @@ func GetFileContentType(out *os.File) (string, error) {
 	return contentType, nil
 }
 
-func FromFileInfoGetUidAndPath(file *model.File) (uid string, path string) {
-	p := strings.Index(file.Id, "/")
-	uid = file.Id[0:p]
-	path = file.Id[p+1:]
-	return
-}
-
 func ClearAll() {
-	clientOptions := options.Client().ApplyURI("mongodb://192.168.105.8:20100")
+	clientOptions := options.Client().ApplyURI("mongodb://" + CONFIG.Database.Host + ":" + CONFIG.Database.Port)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	defer client.Disconnect(context.TODO())
 	if err != nil {
 		log.Print(err)
 	}
-	collection := client.Database("transporterTasks").Collection("Tasks")
+	collection := client.Database(CONFIG.Database.DatabaseName).Collection("Tasks")
 	collection.Drop(context.TODO())
-	collection = client.Database("Cloud").Collection("FileDatabase")
+	collection = client.Database(CONFIG.Database.DatabaseName).Collection("File")
 	collection.Drop(context.TODO())
 	return
 }

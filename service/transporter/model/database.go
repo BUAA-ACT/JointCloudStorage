@@ -1,6 +1,7 @@
 package model
 
 import (
+	"act.buaa.edu.cn/jcspan/transporter/util"
 	"context"
 	"errors"
 	"fmt"
@@ -35,7 +36,7 @@ type MongoStorageDatabase struct {
 
 //get a MongoStorageDatabase
 func NewMongoStorageDatabase() (*MongoStorageDatabase, error) {
-	clientOptions := options.Client().ApplyURI("mongodb://192.168.105.8:20100")
+	clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
 		log.Print(err)
@@ -51,7 +52,7 @@ func NewMongoStorageDatabase() (*MongoStorageDatabase, error) {
 func (m *MongoStorageDatabase) UpdateClient() error {
 	err := m.client.Ping(context.TODO(), nil)
 	if err != nil {
-		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
 		m.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
 			return err
@@ -67,11 +68,11 @@ func (m *MongoStorageDatabase) CloseClient() error {
 }
 
 func (m *MongoStorageDatabase) Clear() error {
-	collection := m.client.Database("Cloud").Collection("Cloud")
+	collection := m.client.Database("dev").Collection("Cloud")
 	collection.Drop(context.TODO())
-	collection = m.client.Database("transporterTasks").Collection("Tasks")
+	collection = m.client.Database("dev").Collection("Tasks")
 	collection.Drop(context.TODO())
-	collection = m.client.Database("Cloud").Collection("FileDatabase")
+	collection = m.client.Database("dev").Collection("File")
 	collection.Drop(context.TODO())
 	return nil
 }
@@ -95,7 +96,7 @@ func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string)
 	err := m.client.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
+		clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
 		m.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
 			log.Println(err)
@@ -106,7 +107,7 @@ func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string)
 	var result interface{}
 
 	//get the collection and find by _id
-	collection := m.client.Database("Cloud").Collection("Cloud")
+	collection := m.client.Database(util.CONFIG.Database.DatabaseName).Collection("Cloud")
 	err = collection.FindOne(context.TODO(), bson.D{{"id", name}}).Decode(&result)
 	if err != nil {
 		log.Print(err)
@@ -125,7 +126,7 @@ func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string)
 			return nil, err
 		}
 		s3 := S3Client{
-			name:         "aliyun-beijing",
+			name:         res["id"].(string),
 			endpoint:     res["endpoint"].(string),
 			ak:           res["access_key"].(string),
 			minioClient:  minioClient,

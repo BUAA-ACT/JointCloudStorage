@@ -14,7 +14,10 @@ const (
 var CONFIG = Configuration{
 	DebugMode: true,
 	Database: DBConfiguration{
-		Driver: InMemoryDB,
+		Driver:       MongoDB,
+		Host:         "192.168.105.8",
+		Port:         "20100",
+		DatabaseName: "dev",
 	},
 	UploadFileTempPath:   "./tmp/upload/",
 	DownloadFileTempPath: "./tmp/download/",

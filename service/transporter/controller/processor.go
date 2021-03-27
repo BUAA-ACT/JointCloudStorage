@@ -340,7 +340,7 @@ func (processor *TaskProcessor) ProcessSync(t *model.Task) (err error) {
 		return err
 	}
 	for _, obj := range objects {
-		_, p := util.FromFileInfoGetUidAndPath(obj)
+		_, p := model.FromFileInfoGetUidAndPath(obj)
 		subTask.SourcePath = p
 		if strings.HasSuffix(t.DestinationPath, "/") {
 			// 目标是一个目录

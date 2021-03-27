@@ -1,6 +1,7 @@
 package model
 
 import (
+	"act.buaa.edu.cn/jcspan/transporter/util"
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -56,7 +57,7 @@ type MongoTaskStorage struct {
 //func NewMongoTaskStorage() *MongoTaskStorage
 //create a struct MongoTaskStorage
 func NewMongoTaskStorage() (*MongoTaskStorage, error) {
-	clientOptions := options.Client().ApplyURI("mongodb://192.168.105.8:20100")
+	clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
 		log.Print(err)
@@ -78,15 +79,13 @@ func (task *MongoTaskStorage) AddTask(t *Task) (tid primitive.ObjectID, err erro
 	err = task.client.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
 			return primitive.NewObjectID(), err
 		}
 	}
 
 	//get the collection and insert the bson
-	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	collection := task.client.Database(util.CONFIG.Database.DatabaseName).Collection("Tasks")
 	insertResult, err := collection.InsertOne(context.TODO(), *t)
 	objectID := insertResult.InsertedID.(primitive.ObjectID)
 
@@ -99,15 +98,13 @@ func (task *MongoTaskStorage) GetTaskList(n int) (t []*Task) {
 	err := task.client.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
 			return nil
 		}
 	}
 
 	//find the table
-	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	collection := task.client.Database(util.CONFIG.Database.DatabaseName).Collection("Tasks")
 	findOptions := options.Find()
 	findOptions.SetLimit(int64(n))
 	cur, err := collection.Find(context.TODO(), bson.D{{"state", WAITING}}, findOptions)
@@ -143,8 +140,6 @@ func (task *MongoTaskStorage) GetTask(tid primitive.ObjectID) (*Task, error) {
 	err := task.client.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +148,7 @@ func (task *MongoTaskStorage) GetTask(tid primitive.ObjectID) (*Task, error) {
 	var result Task
 
 	//get the collection and find by _id
-	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	collection := task.client.Database(util.CONFIG.Database.DatabaseName).Collection("Tasks")
 	err = collection.FindOne(context.TODO(), bson.D{{"_id", tid}}).Decode(&result)
 	if err != nil {
 		log.Print(err)
@@ -167,8 +162,6 @@ func (task *MongoTaskStorage) SetTaskState(tid primitive.ObjectID, state TaskSta
 	err := task.client.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
 			return err
 		}
@@ -180,7 +173,7 @@ func (task *MongoTaskStorage) SetTaskState(tid primitive.ObjectID, state TaskSta
 			{"state", state},
 		}},
 	}
-	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	collection := task.client.Database(util.CONFIG.Database.DatabaseName).Collection("Tasks")
 	_, err = collection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		return err
@@ -193,8 +186,6 @@ func (task *MongoTaskStorage) SetTask(tid primitive.ObjectID, t *Task) error {
 	err := task.client.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
 			return err
 		}
@@ -211,7 +202,7 @@ func (task *MongoTaskStorage) SetTask(tid primitive.ObjectID, t *Task) error {
 			{"taskOptions", t.TaskOptions},
 		}},
 	}
-	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	collection := task.client.Database(util.CONFIG.Database.DatabaseName).Collection("Tasks")
 	_, err = collection.UpdateByID(context.TODO(), tid, update)
 	if err != nil {
 		return err
@@ -224,14 +215,12 @@ func (task *MongoTaskStorage) DelTask(tid primitive.ObjectID) error {
 	err := task.client.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
 			return err
 		}
 	}
 
-	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	collection := task.client.Database(util.CONFIG.Database.DatabaseName).Collection("Tasks")
 	_, err = collection.DeleteOne(context.TODO(), bson.D{{"id", tid}})
 	if err != nil {
 		return nil
@@ -242,8 +231,6 @@ func (task *MongoTaskStorage) DelTask(tid primitive.ObjectID) error {
 func (task *MongoTaskStorage) UpdateClient() error {
 	err := task.client.Ping(context.TODO(), nil)
 	if err != nil {
-		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
 			return err
 		}
@@ -256,16 +243,11 @@ func (task *MongoTaskStorage) IsAllDone() bool {
 	err := task.client.Ping(context.TODO(), nil)
 	if err != nil {
 		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://192.168.106.8:20100")
-		task.client, err = mongo.Connect(context.TODO(), clientOptions)
-		if err != nil {
-			log.Println(err)
-			return false
-		}
+		return false
 	}
 
 	//get the collection and find by _id
-	collection := task.client.Database("transporterTasks").Collection("Tasks")
+	collection := task.client.Database(util.CONFIG.Database.DatabaseName).Collection("Tasks")
 	filter := bson.M{"state": bson.M{
 		"$nin": bson.A{FAIL, FINISH},
 	}}
