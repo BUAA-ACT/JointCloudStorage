@@ -3,6 +3,9 @@ module act.buaa.edu.cn/jcspan/transporter
 go 1.15
 
 require (
+	github.com/aws/aws-sdk-go v1.34.28
+	github.com/aws/aws-sdk-go-v2 v1.3.0 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.1.3 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gabriel-vasile/mimetype v1.2.0
 	github.com/gin-gonic/gin v1.6.3

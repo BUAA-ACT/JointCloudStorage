@@ -65,6 +65,9 @@ func (client *S3BucketStorageClient) Upload(localPath string, remotePath string,
 		minio.PutObjectOptions{ContentType: mime.String()},
 	)
 	if err != nil {
+		_, err = client.minioClient.FPutObject(ctx, client.bucketName, remotePath, localPath, minio.PutObjectOptions{})
+	}
+	if err != nil {
 		return err
 	}
 	return nil

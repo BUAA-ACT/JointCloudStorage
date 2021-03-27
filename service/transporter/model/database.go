@@ -82,15 +82,14 @@ func (m *MongoStorageDatabase) GetStorageClient(sid string, path string) Storage
 }
 
 func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string) (StorageClient, error) {
-	bucketName := "jcspan-aliyun-bj-test"
-	if s3Client, ok := m.s3ClientMap[name]; ok {
-		if time.Now().Sub(s3Client.lastReadTime).Minutes() < 5 {
-			return &S3BucketStorageClient{
-				bucketName:  bucketName,
-				minioClient: s3Client.minioClient,
-			}, nil
-		}
-	}
+	//if s3Client, ok := m.s3ClientMap[name]; ok {
+	//	if time.Now().Sub(s3Client.lastReadTime).Minutes() < 5 {
+	//		return &S3BucketStorageClient{
+	//			bucketName:  bucketName,
+	//			minioClient: s3Client.minioClient,
+	//		}, nil
+	//	}
+	//}
 
 	//check the client connection
 	err := m.client.Ping(context.TODO(), nil)
@@ -120,22 +119,32 @@ func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string)
 		endpoint := res["endpoint"].(string)
 		accessKeyId := res["access_key"].(string)
 		secretAccessKey := res["secret_key"].(string)
-		minioClient, err := GetMinioClient(endpoint, accessKeyId, secretAccessKey)
+		bucketName := res["bucket"].(string)
+		//minioClient, err := GetMinioClient(endpoint, accessKeyId, secretAccessKey)
+		//if err != nil {
+		//	log.Panicf("get minio client fail: %v", err)
+		//	return nil, err
+		//}
+		//s3 := S3Client{
+		//	name:         res["id"].(string),
+		//	endpoint:     res["endpoint"].(string),
+		//	ak:           res["access_key"].(string),
+		//	minioClient:  minioClient,
+		//	lastReadTime: time.Now(),
+		//}
+		//m.s3ClientMap[name] = s3
+		//return &S3BucketStorageClient{
+		//	bucketName:  bucketName,
+		//	minioClient: s3.minioClient,
+		//}, nil
+		awsClient, err := GetAWSClient(endpoint, accessKeyId, secretAccessKey)
 		if err != nil {
 			log.Panicf("get minio client fail: %v", err)
 			return nil, err
 		}
-		s3 := S3Client{
-			name:         res["id"].(string),
-			endpoint:     res["endpoint"].(string),
-			ak:           res["access_key"].(string),
-			minioClient:  minioClient,
-			lastReadTime: time.Now(),
-		}
-		m.s3ClientMap[name] = s3
-		return &S3BucketStorageClient{
-			bucketName:  bucketName,
-			minioClient: s3.minioClient,
+		return &AWSBucketStorageClient{
+			awsClient:  awsClient,
+			bucketName: bucketName,
 		}, nil
 	} else {
 		return nil, err
