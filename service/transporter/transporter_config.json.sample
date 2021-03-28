@@ -8,5 +8,7 @@
     "Port": "27017",
     "DatabaseName": "dev"
   },
-  "DefaultStorageClient": "Aws"
+  "DefaultStorageClient": "Aws",
+  "Host": "0.0.0.0",
+  "Port": 8083
 }

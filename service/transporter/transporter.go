@@ -10,6 +10,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 func main() {
@@ -43,8 +44,8 @@ func StartServe() {
 				return err
 			}
 			router, _ := initRouterAndProcessor()
-			logrus.Info("Transporter Started")
-			logrus.Info(http.ListenAndServe(":9648", router))
+			logrus.Infof("Transporter Started at: %v:%v", util.CONFIG.Host, util.CONFIG.Port)
+			logrus.Info(http.ListenAndServe(":"+strconv.Itoa(util.CONFIG.Port), router))
 			return nil
 		},
 	}
