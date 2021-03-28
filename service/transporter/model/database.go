@@ -4,8 +4,8 @@ import (
 	"act.buaa.edu.cn/jcspan/transporter/util"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/minio/minio-go/v7"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -113,9 +113,9 @@ func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string)
 		return nil, err
 	}
 	res := result.(primitive.D).Map()
-	fmt.Println(res)
+	//fmt.Println(res)
 	if res != nil {
-		fmt.Println(res["endpoint"].(string))
+		//fmt.Println(res["endpoint"].(string))
 		endpoint := res["endpoint"].(string)
 		accessKeyId := res["access_key"].(string)
 		secretAccessKey := res["secret_key"].(string)
@@ -153,7 +153,8 @@ func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string)
 
 // 一个简单的内存 Storage 数据库
 type SimpleInMemoryStorageDatabase struct {
-	s3ClientMap map[string]S3Client
+	s3ClientMap  map[string]S3Client
+	awsClientMap map[string]AWSBucketStorageClient
 }
 
 // 构造内存 Storage 数据库
@@ -161,7 +162,7 @@ func NewSimpleInMemoryStorageDatabase() *SimpleInMemoryStorageDatabase {
 	endpoint := "oss-cn-beijing.aliyuncs.com"
 	accessKeyID := "LTAI4G3PCfrg7aXQ6EvuDo25"
 	secretAccessKey := "5bmnIvUqvuuAG1j6QuWuhJ73MWAHE0"
-
+	bucketName := "jcspan-aliyun-bj-test"
 	minioClient, err := GetMinioClient(endpoint, accessKeyID, secretAccessKey)
 	if err != nil {
 		log.Panicf("get minio client fail: %v", err)
@@ -173,17 +174,35 @@ func NewSimpleInMemoryStorageDatabase() *SimpleInMemoryStorageDatabase {
 		ak:          accessKeyID,
 		minioClient: minioClient,
 	}
+	awsClient, err := GetAWSClient(endpoint, accessKeyID, secretAccessKey)
+	if err != nil {
+		logrus.Errorf("get aws client fail: %v", err)
+		return nil
+	}
 	return &SimpleInMemoryStorageDatabase{
 		s3ClientMap: map[string]S3Client{
 			"aliyun-beijing": s3,
+		},
+		awsClientMap: map[string]AWSBucketStorageClient{
+			"aliyun-beijing": {
+				awsClient:  awsClient,
+				bucketName: bucketName,
+			},
 		},
 	}
 }
 
 func (database *SimpleInMemoryStorageDatabase) GetStorageClientFromName(uid string, name string) (StorageClient, error) {
 	bucketName := "jcspan-aliyun-bj-test"
-	return &S3BucketStorageClient{
-		minioClient: database.s3ClientMap[name].minioClient,
-		bucketName:  bucketName,
-	}, nil
+	if util.CONFIG.DefaultStorageClient == util.MinioClient {
+		return &S3BucketStorageClient{
+			minioClient: database.s3ClientMap[name].minioClient,
+			bucketName:  bucketName,
+		}, nil
+	} else {
+		return &AWSBucketStorageClient{
+			awsClient:  database.awsClientMap[name].awsClient,
+			bucketName: database.awsClientMap[name].bucketName,
+		}, nil
+	}
 }
