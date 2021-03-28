@@ -35,34 +35,41 @@ type FileDatabase interface {
 }
 
 type MongoFileDatabase struct {
+	collectionName string
+	databaseName string
+	clientOption *options.ClientOptions
 	client *mongo.Client
 }
 
 func NewMongoFileDatabase() (*MongoFileDatabase, error) {
-	clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+	var clientOptions *options.ClientOptions
+	if util.CONFIG.Database.Username!=""{
+		clientOptions = options.Client().ApplyURI("mongodb://" +util.CONFIG.Database.Username+":"+util.CONFIG.Database.Password+"@"+
+			util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+	}else{
+		clientOptions = options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+	}
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
 		log.Print(err)
 		return nil, err
 	}
 	return &MongoFileDatabase{
+		collectionName: "File",
+		databaseName: util.CONFIG.Database.DatabaseName,
+		clientOption: clientOptions,
 		client: client,
 	}, nil
 }
 func (mf *MongoFileDatabase) CreateFileInfo(file *File) (err error) {
 	//check the connection
-	err = mf.client.Ping(context.TODO(), nil)
-	if err != nil {
-		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
-		mf.client, err = mongo.Connect(context.TODO(), clientOptions)
-		if err != nil {
-			return err
-		}
+	err=CheckClient(mf.client,mf.clientOption)
+	if err!=nil{
+		return err
 	}
 
 	//insert the file
-	collection := mf.client.Database(util.CONFIG.Database.DatabaseName).Collection("File")
+	collection := mf.client.Database(mf.databaseName).Collection(mf.collectionName)
 	_, err = collection.InsertOne(context.TODO(), *file)
 	if err != nil {
 		return err
@@ -70,21 +77,16 @@ func (mf *MongoFileDatabase) CreateFileInfo(file *File) (err error) {
 	return nil
 }
 func (mf *MongoFileDatabase) DeleteFileInfo(file *File) (err error) {
-	err = mf.client.Ping(context.TODO(), nil)
-	if err != nil {
-		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
-		mf.client, err = mongo.Connect(context.TODO(), clientOptions)
-		if err != nil {
-			return err
-		}
+	err=CheckClient(mf.client,mf.clientOption)
+	if err!=nil{
+		return err
 	}
 
 	//delete the file
 	filter := bson.M{
 		"id": file.Id,
 	}
-	collection := mf.client.Database(util.CONFIG.Database.DatabaseName).Collection("File")
+	collection := mf.client.Database(mf.databaseName).Collection(mf.collectionName)
 	_, err = collection.DeleteOne(context.TODO(), filter)
 	if err != nil {
 		return err
@@ -92,14 +94,9 @@ func (mf *MongoFileDatabase) DeleteFileInfo(file *File) (err error) {
 	return nil
 }
 func (mf *MongoFileDatabase) UpdateFileInfo(file *File) (err error) {
-	err = mf.client.Ping(context.TODO(), nil)
-	if err != nil {
-		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
-		mf.client, err = mongo.Connect(context.TODO(), clientOptions)
-		if err != nil {
-			return err
-		}
+	err=CheckClient(mf.client,mf.clientOption)
+	if err!=nil{
+		return err
 	}
 
 	//delete the file
@@ -109,7 +106,7 @@ func (mf *MongoFileDatabase) UpdateFileInfo(file *File) (err error) {
 	update := bson.D{
 		{"$set", *file},
 	}
-	collection := mf.client.Database(util.CONFIG.Database.DatabaseName).Collection("File")
+	collection := mf.client.Database(mf.databaseName).Collection(mf.collectionName)
 	_, err = collection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		return err
@@ -118,14 +115,9 @@ func (mf *MongoFileDatabase) UpdateFileInfo(file *File) (err error) {
 }
 
 func (mf *MongoFileDatabase) GetFileInfo(Id string) (file *File, err error) {
-	err = mf.client.Ping(context.TODO(), nil)
-	if err != nil {
-		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
-		mf.client, err = mongo.Connect(context.TODO(), clientOptions)
-		if err != nil {
-			return nil, err
-		}
+	err=CheckClient(mf.client,mf.clientOption)
+	if err!=nil{
+		return nil,err
 	}
 
 	//delete the file
@@ -133,7 +125,7 @@ func (mf *MongoFileDatabase) GetFileInfo(Id string) (file *File, err error) {
 	filter := bson.D{
 		{"id", Id},
 	}
-	collection := mf.client.Database(util.CONFIG.Database.DatabaseName).Collection("File")
+	collection := mf.client.Database(mf.databaseName).Collection(mf.collectionName)
 	err = collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
 		return nil, err
@@ -142,14 +134,9 @@ func (mf *MongoFileDatabase) GetFileInfo(Id string) (file *File, err error) {
 }
 
 func (mf *MongoFileDatabase) Index(prefix string) (files []*File, err error) {
-	err = mf.client.Ping(context.TODO(), nil)
-	if err != nil {
-		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
-		mf.client, err = mongo.Connect(context.TODO(), clientOptions)
-		if err != nil {
-			return nil, err
-		}
+	err=CheckClient(mf.client,mf.clientOption)
+	if err!=nil{
+		return nil,err
 	}
 	//delete the file
 	var result []*File
@@ -158,7 +145,7 @@ func (mf *MongoFileDatabase) Index(prefix string) (files []*File, err error) {
 			"$regex": prefix + "*",
 		},
 	}
-	collection := mf.client.Database(util.CONFIG.Database.DatabaseName).Collection("File")
+	collection := mf.client.Database(mf.databaseName).Collection(mf.collectionName)
 	cur, err := collection.Find(context.TODO(), filter)
 	if err != nil {
 		return nil, err

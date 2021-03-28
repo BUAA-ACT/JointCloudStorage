@@ -87,7 +87,7 @@ func TestFileDatabase(t *testing.T) {
 	})
 
 	t.Run("test GetInfo", func(t *testing.T) {
-		file, err := mongo.GetFileInfo("《2》-Wanggj")
+		file, err := mongo.GetFileInfo("tester/path/to/jcspantest.txt")
 		if err != nil {
 			t.Error(err)
 		}
