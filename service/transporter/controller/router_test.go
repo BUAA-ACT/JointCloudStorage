@@ -164,6 +164,104 @@ func TestECUploadAndDownload(t *testing.T) {
 	})
 }
 
+func TestECUploadAndDownloadMultiCloud(t *testing.T) {
+	router, processor := initRouterAndProcessor()
+	t.Run("Create EC Upload Task and process", func(t *testing.T) {
+		jsonStr := []byte(`
+{
+  "TaskType": "Upload",
+   "Uid": "tester",
+   "DestinationPath":"path/to/upload/",
+   "DestinationStoragePlan":{
+      "StorageMode": "EC",
+      "Clouds": [
+         {
+            "ID": "aliyun-beijing"
+         },
+         {
+            "ID": "aliyun-hangzhou"
+         },
+         {
+            "ID": "txyun-chengdu"
+         }
+      ],
+      "N": 2,
+      "K": 1
+   }
+}`)
+		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
+		recorder := httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+
+		token := recorder.Body.String()
+
+		filename := "../test/tmp/test.txt"
+		f, err := os.Open(filename)
+		if err != nil {
+			t.Error("Open test file Fail")
+		}
+		defer f.Close()
+		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", token)
+		setCookie(req)
+		recorder = httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		waitUntilAllDone(processor)
+	})
+	t.Run("Create EC Download Task", func(t *testing.T) {
+		jsonStr := []byte(`
+  {
+    "TaskType": "Download",
+     "Uid": "tester",
+     "Sid": "tttteeeesssstttt",
+     "SourcePath":"path/to/jcspantest.txt",
+     "SourceStoragePlan":{
+        "StorageMode": "EC",
+        "Clouds": [
+			 {
+				"ID": "aliyun-beijing"
+			 },
+			 {
+				"ID": "aliyun-hangzhou"
+			 },
+			 {
+				"ID": "txyun-chengdu"
+			 }
+        ],
+        "N": 2,
+        "K": 1
+     }
+  }
+`)
+		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
+		recorder := httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		tid := recorder.Body.String()
+		logrus.Debugf("tid: %v", tid)
+		waitUntilAllDone(processor)
+	})
+	var url string
+	t.Run("Check File DB and get download url", func(t *testing.T) {
+		fileInfo, err := processor.FileDatabase.GetFileInfo("tester/path/to/jcspantest.txt")
+		if err != nil {
+			t.Fatalf("get file info err:%v", err)
+		}
+		url = fileInfo.DownloadUrl
+		if url == "" {
+			t.Fatalf("get download url err")
+		}
+		t.Logf("download url: %v", url)
+		waitUntilAllDone(processor)
+	})
+	t.Run("Get file", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", url, nil)
+		recorder := httptest.NewRecorder()
+		router.ServeHTTP(recorder, req)
+		fmt.Println(recorder.Body)
+		if recorder.Code != http.StatusOK {
+			t.Error("Get file fail")
+		}
+	})
+}
 func TestReplicaUploadAndDownload(t *testing.T) {
 	router, processor := initRouterAndProcessor()
 	t.Run("Create Replica Upload Task and process", func(t *testing.T) {

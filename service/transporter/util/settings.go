@@ -7,8 +7,10 @@ import (
 )
 
 const (
-	InMemoryDB = "InMemoryDB"
-	MongoDB    = "MongoDB"
+	InMemoryDB  = "InMemoryDB"
+	MongoDB     = "MongoDB"
+	MinioClient = "Minio"
+	AwsS3Client = "Aws"
 )
 
 var CONFIG = Configuration{
@@ -21,6 +23,7 @@ var CONFIG = Configuration{
 	},
 	UploadFileTempPath:   "./tmp/upload/",
 	DownloadFileTempPath: "./tmp/download/",
+	DefaultStorageClient: AwsS3Client,
 }
 
 type DBConfiguration struct {
@@ -37,6 +40,7 @@ type Configuration struct {
 	Database             DBConfiguration
 	UploadFileTempPath   string
 	DownloadFileTempPath string
+	DefaultStorageClient string
 }
 
 func ReadConfigFromFile(configFilepath string) error {
