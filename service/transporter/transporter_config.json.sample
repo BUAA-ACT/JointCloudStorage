@@ -1,6 +1,12 @@
 {
   "debugMode": true,
-  "database": "MongoDB",
   "UploadFileTempPath": "./tmp/Upload",
-  "DownloadFileTempPath": "./tmp/Download"
+  "DownloadFileTempPath": "./tmp/Download",
+  "Database": {
+    "Driver": "MongoDB",
+    "Host": "192.168.105.13",
+    "Port": "27017",
+    "DatabaseName": "dev"
+  },
+  "DefaultStorageClient": "Aws"
 }
