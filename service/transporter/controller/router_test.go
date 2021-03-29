@@ -5,6 +5,7 @@ import (
 	"act.buaa.edu.cn/jcspan/transporter/util"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -93,8 +94,10 @@ func TestECUploadAndDownload(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
 		recorder := httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
+		var reply RequestTaskReply
+		_ = json.NewDecoder(recorder.Body).Decode(&reply)
 
-		token := recorder.Body.String()
+		token := reply.Data.Result
 
 		filename := "../test/tmp/test.txt"
 		f, err := os.Open(filename)
@@ -136,7 +139,9 @@ func TestECUploadAndDownload(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
 		recorder := httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
-		tid := recorder.Body.String()
+		var reply RequestTaskReply
+		_ = json.NewDecoder(recorder.Body).Decode(&reply)
+		tid := reply.Data.Result
 		logrus.Debugf("tid: %v", tid)
 		waitUntilAllDone(processor)
 	})
@@ -192,8 +197,10 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
 		recorder := httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
+		var reply RequestTaskReply
+		err := json.NewDecoder(recorder.Body).Decode(&reply)
 
-		token := recorder.Body.String()
+		token := reply.Data.Result
 
 		filename := "../test/tmp/test.txt"
 		f, err := os.Open(filename)
@@ -235,7 +242,9 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
 		recorder := httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
-		tid := recorder.Body.String()
+		var reply RequestTaskReply
+		_ = json.NewDecoder(recorder.Body).Decode(&reply)
+		tid := reply.Data.Result
 		logrus.Debugf("tid: %v", tid)
 		waitUntilAllDone(processor)
 	})
@@ -284,8 +293,10 @@ func TestReplicaUploadAndDownload(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
 		recorder := httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
+		var reply RequestTaskReply
+		_ = json.NewDecoder(recorder.Body).Decode(&reply)
 
-		tid := recorder.Body.String()
+		tid := reply.Data.Result
 
 		filename := "../test/tmp/test.txt"
 		f, err := os.Open(filename)
@@ -328,7 +339,9 @@ func TestReplicaUploadAndDownload(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
 		recorder := httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
-		downloadUrl := recorder.Body.String()
+		var reply RequestTaskReply
+		_ = json.NewDecoder(recorder.Body).Decode(&reply)
+		downloadUrl := reply.Data.Result
 		t.Logf("tid: %v", downloadUrl)
 		waitUntilAllDone(processor)
 	})
@@ -377,6 +390,11 @@ func TestEC2ReplicaSync(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, req)
+	var reply RequestTaskReply
+	_ = json.NewDecoder(recorder.Body).Decode(&reply)
+	if reply.Code != http.StatusOK {
+		t.Fatalf("Sync fail :%v", reply.Msg)
+	}
 	waitUntilAllDone(processor)
 }
 
@@ -423,6 +441,11 @@ func TestReplica2ECSync(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, req)
+	var reply RequestTaskReply
+	_ = json.NewDecoder(recorder.Body).Decode(&reply)
+	if reply.Code != http.StatusOK {
+		t.Fatalf("Sync fail :%v", reply.Msg)
+	}
 	waitUntilAllDone(processor)
 }
 
@@ -452,6 +475,11 @@ func TestReplicaUploadAndDelete(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, req)
+	var reply RequestTaskReply
+	_ = json.NewDecoder(recorder.Body).Decode(&reply)
+	if reply.Code != http.StatusOK {
+		t.Fatalf("task fail :%v", reply.Msg)
+	}
 	waitUntilAllDone(processor)
 }
 
@@ -486,6 +514,11 @@ func TestECUploadAndDelete(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, req)
+	var reply RequestTaskReply
+	_ = json.NewDecoder(recorder.Body).Decode(&reply)
+	if reply.Code != http.StatusOK {
+		t.Fatalf("task fail :%v", reply.Msg)
+	}
 	waitUntilAllDone(processor)
 }
 
@@ -579,8 +612,12 @@ func testECUpload(t *testing.T, router *Router, processor *TaskProcessor, dstPat
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonByte))
 		recorder := httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
-
-		tid := recorder.Body.String()
+		var reply RequestTaskReply
+		_ = json.NewDecoder(recorder.Body).Decode(&reply)
+		if reply.Code != http.StatusOK {
+			t.Fatalf("task fail :%v", reply.Msg)
+		}
+		tid := reply.Data.Result
 		url := fmt.Sprintf("/upload/%v", dstPath)
 
 		req, _ = postFile("test.txt", localPath, url, tid)
@@ -619,8 +656,13 @@ func testReplicaUpload(t *testing.T, router *Router, processor *TaskProcessor, d
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonByte))
 		recorder := httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
+		var reply RequestTaskReply
+		_ = json.NewDecoder(recorder.Body).Decode(&reply)
+		if reply.Code != http.StatusOK {
+			t.Fatalf("task fail :%v", reply.Msg)
+		}
 
-		tid := recorder.Body.String()
+		tid := reply.Data.Result
 		url := fmt.Sprintf("/upload/%v", dstPath)
 
 		req, _ = postFile("test.txt", localPath, url, tid)

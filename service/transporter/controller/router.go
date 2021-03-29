@@ -42,6 +42,17 @@ type RequestCloud struct {
 	ID string `json:"ID"`
 }
 
+type RequestTaskReply struct {
+	Code int
+	Msg  string
+	Data TaskResult
+}
+
+type TaskResult struct {
+	Type   string
+	Result string
+}
+
 func NewRouter(processor TaskProcessor) *Router {
 	var router Router
 	router = Router{
@@ -71,7 +82,12 @@ func (router *Router) CreateTask(c *gin.Context) {
 
 	err := json.NewDecoder(c.Request.Body).Decode(&reqTask)
 	if err != nil {
-		http.Error(c.Writer, err.Error(), http.StatusBadRequest)
+		reply := RequestTaskReply{
+			Code: util.ErrorCodeWrongRequestFormat,
+			Msg:  util.ErrorMsgWrongRequestFormat,
+			Data: TaskResult{},
+		}
+		c.JSON(util.ErrorCodeWrongRequestFormat, reply)
 		return
 	}
 
@@ -101,11 +117,19 @@ func (router *Router) CreateTask(c *gin.Context) {
 		}
 		tid, err := router.processor.taskStorage.AddTask(&task)
 		if err != nil {
-			http.Error(c.Writer, err.Error(), http.StatusBadGateway)
+			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 			return
 		}
 		token, _ := util.GenerateTaskAccessToken(tid.Hex(), task.Uid, time.Hour*24)
-		fmt.Fprintf(c.Writer, "%v", token)
+		requestTaskReply := RequestTaskReply{
+			Code: http.StatusOK,
+			Msg:  "Create upload task OK",
+			Data: TaskResult{
+				Type:   "token",
+				Result: token,
+			},
+		}
+		c.JSON(http.StatusOK, requestTaskReply)
 	case "Download":
 		// req Task 转换为 model Task
 		var cloudsID []string
@@ -119,10 +143,9 @@ func (router *Router) CreateTask(c *gin.Context) {
 			taskType = model.DOWNLOAD_REPLICA
 		} else {
 			logrus.Warn("wrong storageMode")
-			http.Error(c.Writer, "wrong storage mode", http.StatusBadRequest)
-
+			taskRequestReplyErr(util.ErrorCodeWrongStorageType, util.ErrorMsgWrongStorageType, c)
+			return
 		}
-
 		task := model.Task{
 			Tid:             primitive.NewObjectID(),
 			TaskType:        taskType,
@@ -144,43 +167,87 @@ func (router *Router) CreateTask(c *gin.Context) {
 		if task.TaskType == model.DOWNLOAD_REPLICA {
 			url, err := router.processor.ProcessGetTmpDownloadUrl(&task)
 			if err != nil {
-				http.Error(c.Writer, err.Error(), http.StatusBadGateway)
+				taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 				return
 			}
 			err = router.processor.WriteDownloadUrlToDB(&task, url)
 			if err != nil {
 				logrus.Errorf("write download url to db fail: %v", err)
 			}
-			fmt.Fprintln(c.Writer, url)
+			requestTaskReply := RequestTaskReply{
+				Code: http.StatusOK,
+				Msg:  "Generate download url OK",
+				Data: TaskResult{
+					Type:   "url",
+					Result: url,
+				},
+			}
+			c.JSON(http.StatusOK, requestTaskReply)
 		} else {
 			tid, err := router.processor.taskStorage.AddTask(&task)
 			if err != nil {
-				http.Error(c.Writer, err.Error(), http.StatusBadGateway)
+				taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 				return
 			}
-			fmt.Fprintln(c.Writer, tid)
+			requestTaskReply := RequestTaskReply{
+				Code: http.StatusOK,
+				Msg:  "Generate download task OK",
+				Data: TaskResult{
+					Type:   "tid",
+					Result: tid.Hex(),
+				},
+			}
+			c.JSON(http.StatusOK, requestTaskReply)
 		}
 	case "Sync":
 		task := RequestTask2Task(&reqTask, model.SYNC, model.CREATING)
 		tid, err := router.processor.taskStorage.AddTask(task)
 		if err != nil {
-			http.Error(c.Writer, err.Error(), http.StatusBadGateway)
+			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 			return
 		}
-		tidStr := tid.Hex()
-		c.String(http.StatusOK, tidStr)
+		requestTaskReply := RequestTaskReply{
+			Code: http.StatusOK,
+			Msg:  "Generate sync task OK",
+			Data: TaskResult{
+				Type:   "tid",
+				Result: tid.Hex(),
+			},
+		}
+		c.JSON(http.StatusOK, requestTaskReply)
 	case "Delete":
 		task := RequestTask2Task(&reqTask, model.DELETE, model.CREATING)
 		tid, err := router.processor.taskStorage.AddTask(task)
 		if err != nil {
-			http.Error(c.Writer, err.Error(), http.StatusBadGateway)
+			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 			return
 		}
-		tidStr := tid.Hex()
-		c.String(http.StatusOK, tidStr)
+		requestTaskReply := RequestTaskReply{
+			Code: http.StatusOK,
+			Msg:  "Generate delete task OK",
+			Data: TaskResult{
+				Type:   "tid",
+				Result: tid.Hex(),
+			},
+		}
+		c.JSON(http.StatusOK, requestTaskReply)
 	default:
-		http.Error(c.Writer, "wrong task type", http.StatusNotImplemented)
+		requestTaskReply := RequestTaskReply{
+			Code: util.ErrorCodeWrongTaskType,
+			Msg:  util.ErrorMsgWrongTaskType,
+			Data: TaskResult{},
+		}
+		c.JSON(util.ErrorCodeWrongTaskType, requestTaskReply)
 	}
+}
+
+func taskRequestReplyErr(errCode int, errMsg string, c *gin.Context) {
+	requestTaskReply := RequestTaskReply{
+		Code: errCode,
+		Msg:  errMsg,
+		Data: TaskResult{},
+	}
+	c.JSON(util.ErrorCodeWrongTaskType, requestTaskReply)
 }
 
 func Index(c *gin.Context) {
