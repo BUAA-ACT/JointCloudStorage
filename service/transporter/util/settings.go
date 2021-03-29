@@ -24,6 +24,8 @@ var CONFIG = Configuration{
 	UploadFileTempPath:   "./tmp/upload/",
 	DownloadFileTempPath: "./tmp/download/",
 	DefaultStorageClient: AwsS3Client,
+	Port:                 8083,
+	Host:                 "0.0.0.0",
 }
 
 type DBConfiguration struct {
@@ -41,6 +43,8 @@ type Configuration struct {
 	UploadFileTempPath   string
 	DownloadFileTempPath string
 	DefaultStorageClient string
+	Port                 int
+	Host                 string
 }
 
 func ReadConfigFromFile(configFilepath string) error {
