@@ -3,7 +3,6 @@ package model
 import (
 	"act.buaa.edu.cn/jcspan/transporter/util"
 	"context"
-	"errors"
 	"github.com/minio/minio-go/v7"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -30,21 +29,35 @@ type StorageDatabase interface {
 }
 
 type MongoStorageDatabase struct {
-	s3ClientMap map[string]S3Client
+	databaseName string
+	collectionName string
+	clientOptions *options.ClientOptions
+	ClientMap map[string]StorageClient
+	ReadTimeMap map[string]time.Time
 	client      *mongo.Client
 }
 
 //get a MongoStorageDatabase
 func NewMongoStorageDatabase() (*MongoStorageDatabase, error) {
-	clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+	var clientOptions *options.ClientOptions
+	if util.CONFIG.Database.Username!=""{
+		clientOptions = options.Client().ApplyURI("mongodb://" +util.CONFIG.Database.Username+":"+util.CONFIG.Database.Password+"@"+
+			util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+	}else{
+		clientOptions = options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+	}
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
 		log.Print(err)
 		return nil, err
 	}
 	return &MongoStorageDatabase{
+		databaseName: util.CONFIG.Database.DatabaseName,
+		collectionName: "Cloud",
+		clientOptions: clientOptions,
 		client:      client,
-		s3ClientMap: map[string]S3Client{},
+		ClientMap: map[string]StorageClient{},
+		ReadTimeMap: map[string]time.Time{},
 	}, nil
 }
 
@@ -82,25 +95,21 @@ func (m *MongoStorageDatabase) GetStorageClient(sid string, path string) Storage
 }
 
 func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string) (StorageClient, error) {
-	//if s3Client, ok := m.s3ClientMap[name]; ok {
-	//	if time.Now().Sub(s3Client.lastReadTime).Minutes() < 5 {
-	//		return &S3BucketStorageClient{
-	//			bucketName:  bucketName,
-	//			minioClient: s3Client.minioClient,
-	//		}, nil
-	//	}
-	//}
+	if _, ok := m.ClientMap[name]; ok {
+		if time.Now().Sub(m.ReadTimeMap[name]).Minutes() < 5 {
+			if util.CONFIG.DefaultStorageClient == util.MinioClient {
+				return m.ClientMap[name].(*S3BucketStorageClient), nil
+			} else {
+				return m.ClientMap[name].(*AWSBucketStorageClient), nil
+			}
+		}
+	}
 
 	//check the client connection
-	err := m.client.Ping(context.TODO(), nil)
-	if err != nil {
-		log.Print(err)
-		clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
-		m.client, err = mongo.Connect(context.TODO(), clientOptions)
-		if err != nil {
-			log.Println(err)
-			return nil, errors.New("connect fail")
-		}
+	err:=CheckClient(m.client,m.clientOptions)
+	if err!=nil{
+		log.Println(err)
+		return nil,err
 	}
 
 	var result interface{}
@@ -137,15 +146,31 @@ func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string)
 		//	bucketName:  bucketName,
 		//	minioClient: s3.minioClient,
 		//}, nil
-		awsClient, err := GetAWSClient(endpoint, accessKeyId, secretAccessKey)
-		if err != nil {
-			log.Panicf("get minio client fail: %v", err)
-			return nil, err
+		if util.CONFIG.DefaultStorageClient == util.MinioClient{
+			minioClient,err:=GetMinioClient(endpoint,accessKeyId,secretAccessKey)
+			if err!=nil{
+				return nil,err
+			}
+			newClient:= &S3BucketStorageClient{
+				minioClient: minioClient,
+				bucketName: bucketName,
+			}
+
+			return newClient,nil
+		}else{
+			awsClient, err := GetAWSClient(endpoint, accessKeyId, secretAccessKey)
+			if err != nil {
+				log.Panicf("get minio client fail: %v", err)
+				return nil, err
+			}
+			newClient:=&AWSBucketStorageClient{
+				awsClient:  awsClient,
+				bucketName: bucketName,
+			}
+			m.ClientMap["name"]=newClient
+			m.ReadTimeMap["name"]=time.Now()
+			return newClient,nil
 		}
-		return &AWSBucketStorageClient{
-			awsClient:  awsClient,
-			bucketName: bucketName,
-		}, nil
 	} else {
 		return nil, err
 	}
