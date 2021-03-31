@@ -5,20 +5,20 @@ import (
 	"time"
 )
 
-type TaskType int32
-type TaskState int32
+type TaskType string
+type TaskState string
 
 const (
-	USER_UPLOAD_SIMPLE  TaskType = 1
-	USER_UPLOAD_ERASURE TaskType = 2
-	SYNC_SIMPLE         TaskType = 3
-	SYNC_ERASURE        TaskType = 4
-	DOWNLOAD            TaskType = 5
-	DOWNLOAD_REPLICA    TaskType = 6
-	UPLOAD              TaskType = 7
-	INDEX               TaskType = 8
-	SYNC                TaskType = 9
-	DELETE              TaskType = 10
+	USER_UPLOAD_SIMPLE  TaskType = "USER_UPLOAD_SIMPLE"
+	USER_UPLOAD_ERASURE TaskType = "USER_UPLOAD_ERASURE"
+	SYNC_SIMPLE         TaskType = "SYNC_SIMPLE"
+	SYNC_ERASURE        TaskType = "SYNC_ERASURE"
+	DOWNLOAD            TaskType = "DOWNLOAD"
+	DOWNLOAD_REPLICA    TaskType = "DOWNLOAD_REPLICA"
+	UPLOAD              TaskType = "UPLOAD"
+	INDEX               TaskType = "INDEX"
+	SYNC                TaskType = "SYNC"
+	DELETE              TaskType = "DELETE"
 )
 
 func (taskType TaskType) String() string {
@@ -46,12 +46,12 @@ func (taskType TaskType) String() string {
 }
 
 const (
-	CREATING   TaskState = 1
-	WAITING    TaskState = 2
-	PROCESSING TaskState = 3
-	FINISH     TaskState = 4
-	FAIL       TaskState = 5
-	BLOCKED    TaskState = 6
+	CREATING   TaskState = "CREATING"
+	WAITING    TaskState = "WAITING"
+	PROCESSING TaskState = "PROCESSING"
+	FINISH     TaskState = "FINISH"
+	FAIL       TaskState = "FAIL"
+	BLOCKED    TaskState = "BLOCKED"
 )
 
 type Task struct {

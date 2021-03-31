@@ -50,21 +50,21 @@ import (
 //}
 
 type MongoTaskStorage struct {
-	databaseName string
-	clientOptions *options.ClientOptions
-	client *mongo.Client
+	databaseName   string
+	clientOptions  *options.ClientOptions
+	client         *mongo.Client
 	collectionName string
-	maxTid int
+	maxTid         int
 }
 
 //func NewMongoTaskStorage() *MongoTaskStorage
 //create a struct MongoTaskStorage
 func NewMongoTaskStorage() (*MongoTaskStorage, error) {
 	var clientOptions *options.ClientOptions
-	if util.CONFIG.Database.Username!=""{
-		clientOptions = options.Client().ApplyURI("mongodb://" +util.CONFIG.Database.Username+":"+util.CONFIG.Database.Password+"@"+
+	if util.CONFIG.Database.Username != "" {
+		clientOptions = options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Username + ":" + util.CONFIG.Database.Password + "@" +
 			util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
-	}else{
+	} else {
 		clientOptions = options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
 	}
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -73,11 +73,11 @@ func NewMongoTaskStorage() (*MongoTaskStorage, error) {
 		return nil, err
 	}
 	return &MongoTaskStorage{
-		databaseName: util.CONFIG.Database.DatabaseName,
-		clientOptions: clientOptions,
-		client: client,
+		databaseName:   util.CONFIG.Database.DatabaseName,
+		clientOptions:  clientOptions,
+		client:         client,
 		collectionName: "Tasks",
-		maxTid: 0,
+		maxTid:         0,
 	}, nil
 }
 
@@ -88,9 +88,9 @@ func (task *MongoTaskStorage) AddTask(t *Task) (primitive.ObjectID, error) {
 		t.State = WAITING
 	}
 	//check the connection
-	err:=CheckClient(task.client,task.clientOptions)
-	if err!=nil{
-		return primitive.NewObjectID(),err
+	err := CheckClient(task.client, task.clientOptions)
+	if err != nil {
+		return primitive.NewObjectID(), err
 	}
 
 	//get the collection and insert the bson
@@ -104,8 +104,8 @@ func (task *MongoTaskStorage) AddTask(t *Task) (primitive.ObjectID, error) {
 //get at most n tasks with state WAITTING
 func (task *MongoTaskStorage) GetTaskList(n int) (t []*Task) {
 	//check the connection
-	err:=CheckClient(task.client,task.clientOptions)
-	if err!=nil{
+	err := CheckClient(task.client, task.clientOptions)
+	if err != nil {
 		log.Println(err)
 		return nil
 	}
@@ -144,9 +144,9 @@ func (task *MongoTaskStorage) GetTaskList(n int) (t []*Task) {
 //get one task by _id
 func (task *MongoTaskStorage) GetTask(tid primitive.ObjectID) (*Task, error) {
 	//check the connection
-	err:=CheckClient(task.client,task.clientOptions)
-	if err!=nil{
-		return nil,err
+	err := CheckClient(task.client, task.clientOptions)
+	if err != nil {
+		return nil, err
 	}
 
 	var result Task
@@ -163,8 +163,8 @@ func (task *MongoTaskStorage) GetTask(tid primitive.ObjectID) (*Task, error) {
 
 //set the state to task tid to TaskState
 func (task *MongoTaskStorage) SetTaskState(tid primitive.ObjectID, state TaskState) error {
-	err:=CheckClient(task.client,task.clientOptions)
-	if err!=nil{
+	err := CheckClient(task.client, task.clientOptions)
+	if err != nil {
 		log.Println(err)
 		return err
 	}
@@ -185,20 +185,20 @@ func (task *MongoTaskStorage) SetTaskState(tid primitive.ObjectID, state TaskSta
 
 //set the task by _id
 func (task *MongoTaskStorage) SetTask(tid primitive.ObjectID, t *Task) error {
-	err:=CheckClient(task.client,task.clientOptions)
-	if err!=nil{
+	err := CheckClient(task.client, task.clientOptions)
+	if err != nil {
 		return err
 	}
 
 	update := bson.D{
 		{"$set", bson.D{
-			{"taskType", t.TaskType},
+			{"tasktype", t.TaskType},
 			{"state", t.State},
-			{"startTime", t.StartTime},
+			{"starttime", t.StartTime},
 			{"uid", t.Uid},
-			{"sourcePath", t.SourcePath},
-			{"destinationPath", t.DestinationPath},
-			{"taskOptions", t.TaskOptions},
+			{"sourcepath", t.SourcePath},
+			{"destinationpath", t.DestinationPath},
+			{"taskoptions", t.TaskOptions},
 		}},
 	}
 	collection := task.client.Database(task.databaseName).Collection(task.collectionName)
@@ -211,8 +211,8 @@ func (task *MongoTaskStorage) SetTask(tid primitive.ObjectID, t *Task) error {
 
 //delete the task
 func (task *MongoTaskStorage) DelTask(tid primitive.ObjectID) error {
-	err:=CheckClient(task.client,task.clientOptions)
-	if err!=nil{
+	err := CheckClient(task.client, task.clientOptions)
+	if err != nil {
 		return err
 	}
 
@@ -224,11 +224,10 @@ func (task *MongoTaskStorage) DelTask(tid primitive.ObjectID) error {
 	return nil
 }
 
-
 func (task *MongoTaskStorage) IsAllDone() bool {
 	//check the client
-	err:=CheckClient(task.client,task.clientOptions)
-	if err!=nil{
+	err := CheckClient(task.client, task.clientOptions)
+	if err != nil {
 		log.Println(err)
 		return false
 	}

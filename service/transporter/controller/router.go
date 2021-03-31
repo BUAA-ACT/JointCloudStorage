@@ -251,7 +251,7 @@ func taskRequestReplyErr(errCode int, errMsg string, c *gin.Context) {
 }
 
 func Index(c *gin.Context) {
-	c.String(http.StatusOK, "JcsPan Transporter")
+	c.String(http.StatusOK, "JcsPan Transporter version: "+util.GetVersionStr())
 }
 
 func (router *Router) FileIndex(c *gin.Context) {

@@ -1,0 +1,47 @@
+image: golang:1.16.2
+
+stages:
+  - transporter_build
+  - transporter_deploy
+
+before_script:
+  - export GOPATH=$GOPATH:/usr/local/${CI_PROJECT_NAME}
+  - export VERSION=`echo ${CI_COMMIT_TAG} | awk -F"_" '{print $1}'`
+  - export GOPROXY=https://goproxy.io,direct
+
+cache:
+  key: ${CI_BUILD_REF_NAME}
+  paths:
+    - service/transporter/vendor
+
+# transporter 编译
+transporter_build:
+  stage: transporter_build
+  only:
+    - master
+  script:
+    - echo '下载依赖'
+    - cd service/transporter
+    - go mod tidy
+    - echo '开始构建'
+    - go build
+    - echo '构建完成'
+  tags:
+    - docker
+  artifacts:
+    paths:
+      - service/transporter/transporter
+    when: always
+    expire_in: 4 weeks
+
+
+# 登录项目部署服务器，移除旧版本项目文件，最后将打包好的文件拷贝过去
+transporter_deploy_job:
+  stage: transporter_deploy
+  only:
+    - master
+  script:
+    - echo '登录项目部署服务器，移除旧版本项目文件，最后将打包好的文件拷贝过去'
+    - file transporter
+  tags:
+    - docker

@@ -30,7 +30,7 @@ func StartServe() {
 	app := cli.App{
 		Name:    "Jcs-Transporter",
 		Usage:   "Transporter backend for JcsPan",
-		Version: "0.3.24",
+		Version: util.GetVersionStr(),
 		Authors: []*cli.Author{&cli.Author{
 			Name:  "Zhang Junhua",
 			Email: "zhangjh@mail.act.buaa.edu.cn",
@@ -44,7 +44,7 @@ func StartServe() {
 				return err
 			}
 			router, _ := initRouterAndProcessor()
-			logrus.Infof("Transporter Started at: %v:%v", util.CONFIG.Host, util.CONFIG.Port)
+			logrus.Infof("Transporter Started v%v at: %v:%v", util.GetVersionStr(), util.CONFIG.Host, util.CONFIG.Port)
 			logrus.Info(http.ListenAndServe(":"+strconv.Itoa(util.CONFIG.Port), router))
 			return nil
 		},
