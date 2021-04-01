@@ -42,7 +42,6 @@ transporter_docker_build:
   stage: transporter_docker_build
   image: docker:19.03.12-dind
   variables: 
-    DOCKER_HOST: tcp://localhost:2375
     DOCKER_TLS_CERTDIR: ""
   dependencies:
     - transporter_build
