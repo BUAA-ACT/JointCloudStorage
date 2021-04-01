@@ -379,7 +379,7 @@ Content-Length：ContentLength
   		"Result": "http://jcspan-aliyun-bj-test.oss-cn-beijing.aliyuncs.com/tester/path/to/jcspantest.txt?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=LTAI4G3PCfrg7aXQ6EvuDo25%2F20210329%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210329T122646Z\u0026X-Amz-Expires=1800\u0026X-Amz-SignedHeaders=host\u0026X-Amz-Signature=a27c353b0f0e0bcfd1b30435bd39e8110ba731a636667c0ef544df761670515b"
   	}
   }
-```
+  ```
   
   如 Upload 生成token：
   
@@ -431,3 +431,16 @@ Host: transporter.host
 | sid             | session id               | string | JIOWEJ238HFFQ89          |
 | sourcePath      | 任务操作对象路径         | string | /path/to/file.txt        |
 | destinationPath | 任务生成对象路径（可选） | string | /jcspan/path/to/file.txt |
+
+## Docker 配置
+账号：robot$pub+gitlab-ci
+令牌：tVGegelWtspeQFGZYPivzIWP8w2vy8fj
+
+在项目中标记镜像：
+```shell
+docker tag SOURCE_IMAGE[:TAG] harbor.sumblog.cn/pub/REPOSITORY[:TAG]
+```
+推送镜像到harbor：
+```shell
+docker push harbor.sumblog.cn/pub/REPOSITORY[:TAG]
+```
