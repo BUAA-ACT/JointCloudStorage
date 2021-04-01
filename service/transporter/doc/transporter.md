@@ -436,6 +436,10 @@ Host: transporter.host
 账号：robot$pub+gitlab-ci
 令牌：tVGegelWtspeQFGZYPivzIWP8w2vy8fj
 
+```shell
+docker build -t transporter:v1-dev .
+```
+
 在项目中标记镜像：
 ```shell
 docker tag SOURCE_IMAGE[:TAG] harbor.sumblog.cn/pub/REPOSITORY[:TAG]
@@ -443,4 +447,14 @@ docker tag SOURCE_IMAGE[:TAG] harbor.sumblog.cn/pub/REPOSITORY[:TAG]
 推送镜像到harbor：
 ```shell
 docker push harbor.sumblog.cn/pub/REPOSITORY[:TAG]
+```
+
+运行 docker transporter
+```shell
+docker volume create transporter-vol
+docker run -d -p 8083:8083 \
+  --name transporter-dev-v1 \
+  --mount source=transporter-vol,target=/data/transporter \
+  --mount type=bind,source=/home/jcspan/transporter/transporter_config.json.docker,readonly \
+  transporter[:TAG]
 ```
