@@ -48,6 +48,7 @@ transporter_docker_build:
     - dev-transporter
   script:
     - echo '构建 transporter docker 镜像'
+    - export DOCKER_HOST=tcp://localhost:2375
     - cd service/transporter
     - docker build -t transporter:v1-dev .
     - docker tag transporter:v1-dev harbor.sumblog.cn/pub/transporter:v1-dev
