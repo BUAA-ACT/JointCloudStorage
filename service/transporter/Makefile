@@ -23,7 +23,7 @@ build: &(objects)
 
 &(objects):
 	@echo "  >  Building binary start..."
-	go build $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME) $(GOFILES)
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME) $(GOFILES)
 
 clean:
 	@-rm $(GOBIN)/$(PROJECTNAME) 2> /dev/null
