@@ -3,3 +3,4 @@
 bin/
 
 *.pb.go
+**/.DS_Store

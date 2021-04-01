@@ -2,6 +2,7 @@ image: golang:1.16.2
 
 stages:
   - transporter_build
+  - transporter_docker_build
   - transporter_deploy
 
 before_script:
@@ -10,9 +11,8 @@ before_script:
   - export GOPROXY=https://goproxy.io,direct
 
 cache:
-  key: ${CI_BUILD_REF_NAME}
   paths:
-    - service/transporter/vendor
+    - /go/pkg
 
 # transporter 编译
 transporter_build:
@@ -21,19 +21,35 @@ transporter_build:
     - master
   script:
     - echo '下载依赖'
+    - pwd
+    - ls
     - cd service/transporter
     - go mod tidy
     - echo '开始构建'
-    - go build
+    - make build
     - echo '构建完成'
   tags:
     - docker
   artifacts:
     paths:
-      - service/transporter/transporter
+      - service/transporter/build/bin/transporter
     when: always
     expire_in: 4 weeks
 
+transporter_docker_build:
+  stage: transporter_docker_build
+  image: docker:latest
+  dependencies:
+    - transporter_build
+  only:
+    - master
+    - dev-transporter
+  script:
+    - echo '构建 transporter docker 镜像'
+    - cd service/transporter
+    - docker build t transporter:v1-dev .
+    - docker tag transporter:v1-dev harbor.sumblog.cn/pub/transporter:v1-dev
+    - docker push harbor.sumblog.cn/pub/transporter:v1-dev
 
 # 登录项目部署服务器，移除旧版本项目文件，最后将打包好的文件拷贝过去
 transporter_deploy_job:
@@ -41,7 +57,8 @@ transporter_deploy_job:
   only:
     - master
   script:
+    - cd service/transporter
     - echo '登录项目部署服务器，移除旧版本项目文件，最后将打包好的文件拷贝过去'
-    - file transporter
+    - ls -l transporter
   tags:
     - docker
