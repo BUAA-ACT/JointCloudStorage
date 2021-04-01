@@ -13,7 +13,7 @@ GOBIN := $(BUILD_PATH)/bin
 GOFILES := transporter.go
 
 # Use linker flags to provide version/build settings
-LDFLAGS=-ldflags "-w -s -extldflags \"-static\" -X=util.GitRev=$(GIT_REV) -X=util.BuildTime=$(BUILD_TIME)"
+LDFLAGS=-ldflags '-w -s -extldflags "-static" -X=util.GitRev=$(GIT_REV) -X=util.BuildTime=$(BUILD_TIME)'
 
 objects = transporter
 
