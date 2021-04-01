@@ -40,7 +40,7 @@ transporter_build:
 
 transporter_docker_build:
   stage: transporter_docker_build
-  image: docker:latest
+  image: docker:dind
   dependencies:
     - transporter_build
   only:
