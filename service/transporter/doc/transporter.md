@@ -455,6 +455,6 @@ docker volume create transporter-vol
 docker run -d -p 8083:8083 \
   --name transporter-dev-v1 \
   --mount source=transporter-vol,target=/data/transporter \
-  --mount type=bind,source=/home/jcspan/transporter/transporter_config.json.docker,readonly \
+  --mount type=bind,source=/home/jcspan/transporter/transporter_config.json.docker,target=/home/jcspan/config/transporter_config.json,readonly \
   transporter[:TAG]
 ```
