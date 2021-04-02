@@ -78,6 +78,6 @@ transporter_deploy_job:
   script:
     - cd service/transporter
     - echo '登录项目部署服务器，删除旧 docker，拉取新镜像'
-    - ssh zjh@$DEV_SERVER "uname -a"
+    - ssh zhangjh@$DEV_SERVER "uname -a"
   tags:
     - docker
