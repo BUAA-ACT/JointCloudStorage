@@ -54,6 +54,7 @@ transporter_docker_build:
     - dev-transporter
   before_script:
     - docker info
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_TOKEN $CI_REGISTRY
   script:
     - echo '构建 transporter docker 镜像'
     - cd service/transporter
