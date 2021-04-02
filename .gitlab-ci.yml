@@ -65,11 +65,20 @@ transporter_docker_build:
 # 登录项目部署服务器，移除旧版本项目文件，最后将打包好的文件拷贝过去
 transporter_deploy_job:
   stage: transporter_deploy
+  image: ubuntu:latest
   only:
     - master
     - dev-transporter
+  before_script:
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    - source .${CI_COMMIT_REF_NAME}.env
   script:
     - cd service/transporter
     - echo '登录项目部署服务器，删除旧 docker，拉取新镜像'
+    - ssh zjh@$DEV_SERVER "uname -a"
   tags:
     - docker
