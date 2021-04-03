@@ -26,6 +26,7 @@ var CONFIG = Configuration{
 	DefaultStorageClient: AwsS3Client,
 	Port:                 8083,
 	Host:                 "0.0.0.0",
+	ZookeeperHost:        "192.168.105.13",
 }
 
 type DBConfiguration struct {
@@ -45,6 +46,7 @@ type Configuration struct {
 	DefaultStorageClient string
 	Port                 int
 	Host                 string
+	ZookeeperHost        string
 }
 
 func ReadConfigFromFile(configFilepath string) error {

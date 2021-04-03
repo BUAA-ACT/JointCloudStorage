@@ -10,5 +10,6 @@
   },
   "DefaultStorageClient": "Aws",
   "Host": "0.0.0.0",
-  "Port": 8083
+  "Port": 8083,
+  "ZookeeperHost":"192.168.105.13"
 }
