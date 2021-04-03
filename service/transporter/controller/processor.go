@@ -20,6 +20,7 @@ type TaskProcessor struct {
 	taskStorage     model.TaskStorage
 	storageDatabase model.StorageDatabase
 	FileDatabase    model.FileDatabase
+	lock *Lock
 }
 
 func (processor *TaskProcessor) SetTaskStorage(storage model.TaskStorage) {
@@ -58,9 +59,10 @@ func (processor *TaskProcessor) SetProcessResult(t *model.Task, err error) {
 	if err != nil {
 		logrus.Errorf("Process Task Fail: %v", err)
 		processor.taskStorage.SetTaskState(t.Tid, model.FAIL)
+	}else {
+		logrus.Infof("Process %v Task Sucess, tid :%v", t.TaskType, t.Tid.Hex())
+		processor.taskStorage.SetTaskState(t.Tid, model.FINISH)
 	}
-	logrus.Infof("Process %v Task Sucess, tid :%v", t.TaskType, t.Tid.Hex())
-	processor.taskStorage.SetTaskState(t.Tid, model.FINISH)
 }
 
 // 处理任务
@@ -189,6 +191,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		fileInfo, err := processor.FileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
 		if err != nil {
 			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
+			return "", errors.New(util.ErrorMsgCantGetFileInfo)
 		}
 		rebuildPath := util.CONFIG.DownloadFileTempPath + util.GenRandomString(20)
 		shards := make([]string, N+K)
@@ -210,6 +213,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		_, err := processor.FileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
 		if err != nil {
 			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
+			return "", errors.New(util.ErrorMsgCantGetFileInfo)
 		}
 		rebuildPath := util.CONFIG.DownloadFileTempPath + util.GenRandomString(20)
 		err = storageClients[0].Download(t.SourcePath, rebuildPath, t.Uid)
@@ -243,7 +247,8 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	if t.GetState() == model.FINISH {
 		return errors.New("task already finish")
 	}
-	fileInfo, fileInfoErr := processor.FileDatabase.GetFileInfo(t.Uid + "/" + t.DestinationPath)
+	defer processor.lock.UnLock(t.GetRealDestinationPath())
+	fileInfo, fileInfoErr := processor.FileDatabase.GetFileInfo(t.GetRealDestinationPath())
 	// 判断上传方式
 	var storageClients []model.StorageClient
 	if t.TaskOptions != nil {
@@ -368,10 +373,14 @@ func (processor *TaskProcessor) ProcessSyncSingleFile(t *model.Task) (err error)
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("rebuile file finish, path: %v", filePath)
+	logrus.Debugf("rebuild file finish, path: %v", filePath)
 	subTask.SourcePath = filePath
 	subTask.TaskOptions.SourceStoragePlan = nil
 	subTask.TaskType = model.UPLOAD
+	err = processor.lock.Lock(subTask.GetRealDestinationPath()) // todo 在这里加锁是否是有必要的
+	if err != nil {
+		logrus.Errorf("get file lock fail: %v",err)
+	}
 	err = processor.ProcessUpload(&subTask)
 	if err != nil {
 		return err

@@ -46,6 +46,10 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	processor.SetStorageDatabase(clientDatabase)
 	// 初始化 FileInfo 数据库
 	processor.FileDatabase = fileDatabase
+	// 初始化 lock
+	lock, _:= NewLock(util.CONFIG.ZookeeperHost)
+	processor.lock = lock
+	processor.lock.UnLockAll("/tester")
 	// 初始化路由
 	router := NewTestRouter(processor)
 	// 启动 processor
@@ -74,7 +78,7 @@ func TestECUploadAndDownload(t *testing.T) {
 {
   "TaskType": "Upload",
    "Uid": "tester",
-   "DestinationPath":"path/to/upload/",
+   "DestinationPath":"path/to/jcspantest.txt",
    "DestinationStoragePlan":{
       "StorageMode": "EC",
       "Clouds": [
@@ -97,6 +101,9 @@ func TestECUploadAndDownload(t *testing.T) {
 		router.ServeHTTP(recorder, req)
 		var reply RequestTaskReply
 		_ = json.NewDecoder(recorder.Body).Decode(&reply)
+		if reply.Code != http.StatusOK {
+			t.Fatalf("create upload task fail: %v", reply.Msg)
+		}
 
 		token := reply.Data.Result
 
@@ -177,7 +184,7 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
 {
   "TaskType": "Upload",
    "Uid": "tester",
-   "DestinationPath":"path/to/upload/",
+   "DestinationPath": "path/to/jcspantest.txt",
    "DestinationStoragePlan":{
       "StorageMode": "EC",
       "Clouds": [
@@ -278,7 +285,7 @@ func TestReplicaUploadAndDownload(t *testing.T) {
 		jsonStr := []byte(`{
    "TaskType": "Upload",
    "Uid": "tester",
-   "DestinationPath":"/path/to/upload/",
+   "DestinationPath":"path/to/jcspantest.txt",
    "DestinationStoragePlan":{
       "StorageMode": "Replica",
       "Clouds": [
@@ -312,7 +319,7 @@ func TestReplicaUploadAndDownload(t *testing.T) {
 		setCookie(req)
 		recorder = httptest.NewRecorder()
 		router.ServeHTTP(recorder, req)
-		time.Sleep(time.Second * 5)
+		waitUntilAllDone(processor)
 	})
 	t.Run("Create Replica Download Task", func(t *testing.T) {
 		jsonStr := []byte(`

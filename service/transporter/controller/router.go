@@ -97,27 +97,16 @@ func (router *Router) CreateTask(c *gin.Context) {
 		for _, cloud := range reqTask.DestinationStoragePlan.Clouds {
 			cloudsID = append(cloudsID, cloud.ID)
 		}
-		task := model.Task{
-			Tid:             primitive.NewObjectID(),
-			TaskType:        model.UPLOAD,
-			State:           model.BLOCKED,
-			StartTime:       time.Time{},
-			Uid:             reqTask.Uid,
-			SourcePath:      "",
-			DestinationPath: reqTask.DestinationPath,
-			TaskOptions: &model.TaskOptions{
-				SourceStoragePlan: nil,
-				DestinationPlan: &model.StoragePlan{
-					StorageMode: reqTask.DestinationStoragePlan.StorageMode,
-					Clouds:      cloudsID,
-					N:           reqTask.DestinationStoragePlan.N,
-					K:           reqTask.DestinationStoragePlan.K,
-				},
-			},
+		task := RequestTask2Task(&reqTask, model.UPLOAD, model.BLOCKED)
+		err := router.processor.lock.Lock(task.GetRealDestinationPath())
+		if err != nil {
+			taskRequestReplyErr(util.ErrorCodeGetFileLockErr, util.ErrorMsgGetFileLockErr+": "+err.Error(), c)
+			return
 		}
-		tid, err := router.processor.taskStorage.AddTask(&task)
+		tid, err := router.processor.taskStorage.AddTask(task)
 		if err != nil {
 			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
+			router.processor.lock.UnLock(task.GetRealDestinationPath())
 			return
 		}
 		token, _ := util.GenerateTaskAccessToken(tid.Hex(), task.Uid, time.Hour*24)
@@ -271,10 +260,6 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 	destinationPath := c.Param("path")[1:]
 	uid := c.MustGet("tokenUid").(string)
 	tid := c.MustGet("tokenTid").(string)
-
-	log.Printf("upload to :%v", destinationPath)
-	// todo: 文件较小时，不落盘，直接内存上传
-	c.Request.ParseMultipartForm(32 << 20)
 	taskid, err := primitive.ObjectIDFromHex(tid)
 	task, err := router.processor.taskStorage.GetTask(taskid)
 	if err != nil {
@@ -282,6 +267,13 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 		http.Error(c.Writer, err.Error(), http.StatusBadGateway)
 		return
 	}
+	if task.DestinationPath != destinationPath {
+		logrus.Errorf("destination path not equal")
+		destinationPath = task.DestinationPath
+	}
+	logrus.Infof("upload to :%v", destinationPath)
+	// todo: 文件较小时，不落盘，直接内存上传
+	c.Request.ParseMultipartForm(32 << 20)
 	// 鉴权
 	if uid != task.Uid {
 		log.Printf("wrong uid")
@@ -297,9 +289,6 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 	defer file.Close()
 	randStr := util.GenRandomString(10)
 	filePath := util.CONFIG.UploadFileTempPath + handler.Filename + randStr
-	if !util.IsDir(util.CONFIG.UploadFileTempPath) { // todo config 模块负责验证目录存在
-		os.MkdirAll(util.CONFIG.UploadFileTempPath, os.ModePerm)
-	}
 	// 创建文件，且文件必须不存在
 	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0666) // 此处假设当前目录下已存在test目录
 	if err != nil {

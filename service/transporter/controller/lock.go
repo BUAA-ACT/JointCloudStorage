@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
 
@@ -88,10 +89,32 @@ func (l *Lock) Lock(path string) error {
 	return nil
 }
 
+func (l *Lock) UnLockAll(path string) {
+	_,_, err := l.c.Get(path)
+	if err != nil {
+		return
+	}
+	children, _, err := l.c.Children(path)
+
+	if len(children) == 0 {
+		err = l.UnLock(path)
+		if err != nil {
+			logrus.Errorf("unlock err: %v", err)
+		}
+		return
+	} else {
+		for _, child := range children{
+			l.UnLockAll(path + sep + child)
+		}
+	}
+	return
+}
+
 func (l *Lock) UnLock(path string) error {
 	// 检查path格式
 	paths := strings.Split(strings.Trim(path, sep), sep)
 	if len(paths) == 0 {
+		logrus.Infof("unlock fail" )
 		return ErrBadKey
 	}
 
@@ -109,6 +132,7 @@ func (l *Lock) UnLock(path string) error {
 	for idx = 0; idx < len(nodes); idx++ {
 		_, stat, err := l.c.Exists(nodes[idx])
 		if err != nil {
+			logrus.Infof("unlock fail: %v", err)
 			return err
 		}
 		if stat.NumChildren > 1 {
@@ -126,8 +150,9 @@ func (l *Lock) UnLock(path string) error {
 	// 发送多个子请求
 	_, err := l.c.Multi(ops...)
 	if err != nil {
+		logrus.Errorf("unlock %v fail: %v",path, err)
 		return err
 	}
-
+	logrus.Infof("unlock success")
 	return nil
 }

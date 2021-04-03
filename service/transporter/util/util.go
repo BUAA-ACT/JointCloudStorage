@@ -157,7 +157,7 @@ func ClearAll() {
 	if err != nil {
 		log.Print(err)
 	}
-	collection := client.Database(CONFIG.Database.DatabaseName).Collection("Tasks")
+	collection := client.Database(CONFIG.Database.DatabaseName).Collection("Task")
 	collection.Drop(context.TODO())
 	collection = client.Database(CONFIG.Database.DatabaseName).Collection("File")
 	collection.Drop(context.TODO())

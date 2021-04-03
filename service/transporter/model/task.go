@@ -77,6 +77,21 @@ type StoragePlan struct {
 	K           int
 }
 
+func (t *Task) GetRealSourcePath() string {
+	if t.SourcePath[0] == '/' {
+		return t.Uid + t.SourcePath
+	} else {
+		return t.Uid + "/" + t.SourcePath
+	}
+}
+func (t *Task) GetRealDestinationPath() string {
+	if t.DestinationPath[0] == '/' {
+		return t.Uid + t.DestinationPath
+	} else {
+		return t.Uid + "/" + t.DestinationPath
+	}
+}
+
 func (t *Task) GetTid() primitive.ObjectID {
 	return t.Tid
 }
