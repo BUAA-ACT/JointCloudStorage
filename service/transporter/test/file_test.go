@@ -33,15 +33,15 @@ func TestFileDatabase(t *testing.T) {
 	//get the collection and insert the bson
 	collection := client.Database("Cloud").Collection("FileDatabase")
 	_, err = collection.InsertOne(context.TODO(), bson.D{
-		{"Id", "《1》-Wanggj"},
+		{"FileID", "《1》-Wanggj"},
 		{"Filename", "《1》"},
 		{"Owner", "wanggj"},
 		{"Size", 2},
-		{"LastChange", time.Now()},
+		{"LastModified", time.Now()},
 		{"SyncStatus", "oss-cn-beijing.aliyuncs.com"},
 		{"ReconstructStatus", "LTAI4G3PCfrg7aXQ6EvuDo25"},
 		{"DownloadUrl", "5bmnIvUqvuuAG1j6QuWuhJ73MWAHE0"},
-		{"ReconstructTime", time.Now()},
+		{"LastReconstructed", time.Now()},
 	})
 
 	mongo, err := model.NewMongoFileDatabase()
@@ -51,15 +51,15 @@ func TestFileDatabase(t *testing.T) {
 
 	//t.Run("test CreateFileInfo ",func(t *testing.T){
 	//	file:=model.File{
-	//		Id:                "《2》-Wanggj",
+	//		FileID:                "《2》-Wanggj",
 	//		Filename:          "《2》",
 	//		Owner:             "wanggj",
 	//		Size:              2,
-	//		LastChange:        time.Now(),
+	//		LastModified:        time.Now(),
 	//		SyncStatus:        "asdfasd",
 	//		ReconstructStatus: "adfasd",
 	//		DownloadUrl:       "asdfasd",
-	//		ReconstructTime:   time.Now(),
+	//		LastReconstructed:   time.Now(),
 	//	}
 	//	err:=mongo.CreateFileInfo(&file)
 	//	if err!=nil{
@@ -69,15 +69,15 @@ func TestFileDatabase(t *testing.T) {
 
 	t.Run("test Update", func(t *testing.T) {
 		file := model.File{
-			Id:                "《2》-Wanggj",
+			FileID:            "《2》-Wanggj",
 			Filename:          "《2》",
 			Owner:             "wanggj",
 			Size:              2,
-			LastChange:        time.Now(),
+			LastModified:      time.Now(),
 			SyncStatus:        "this is a new status",
 			ReconstructStatus: "adfasd",
 			DownloadUrl:       "asdfasd",
-			ReconstructTime:   time.Now(),
+			LastReconstructed: time.Now(),
 		}
 
 		err := mongo.UpdateFileInfo(&file)
@@ -108,15 +108,15 @@ func TestFileDatabase(t *testing.T) {
 
 	t.Run("test deleteInfo", func(t *testing.T) {
 		file := model.File{
-			Id:                "《2》-Wanggj",
+			FileID:            "《2》-Wanggj",
 			Filename:          "《2》",
 			Owner:             "wanggj",
 			Size:              2,
-			LastChange:        time.Now(),
+			LastModified:      time.Now(),
 			SyncStatus:        "this is a new status",
 			ReconstructStatus: "adfasd",
 			DownloadUrl:       "asdfasd",
-			ReconstructTime:   time.Now(),
+			LastReconstructed: time.Now(),
 		}
 		err := mongo.DeleteFileInfo(&file)
 		if err != nil {

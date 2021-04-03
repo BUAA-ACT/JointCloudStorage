@@ -157,7 +157,7 @@ func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string)
 	}
 	fileInfo.DownloadUrl = "/cache_file?token=" + accessToken
 	fileInfo.ReconstructStatus = "Done"
-	fileInfo.ReconstructTime = time.Now()
+	fileInfo.LastReconstructed = time.Now()
 	err = processor.FileDatabase.UpdateFileInfo(fileInfo)
 	return err
 }
@@ -264,7 +264,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			if util.CheckErr(err, "New File Info") {
 				return err
 			}
-			fileInfo.LastChange = time.Now()
+			fileInfo.LastModified = time.Now()
 			if fileInfoErr != nil { // 文件之前不存在
 				err = processor.FileDatabase.CreateFileInfo(fileInfo)
 			} else {

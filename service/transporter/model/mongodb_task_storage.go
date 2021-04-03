@@ -11,7 +11,7 @@ import (
 )
 
 //type baseTask struct {
-//	Id 				primitive.ObjectID			`bson:"_id,omitempty"`
+//	FileID 				primitive.ObjectID			`bson:"_id,omitempty"`
 //	TaskType        TaskType
 //	State           TaskState
 //	StartTime       time.Time
@@ -24,7 +24,7 @@ import (
 ////change a baseTask to Task
 //func bt2t(task baseTask ) *Task{
 //	return &Task{
-//		Tid: 			string(task.Id[:]),
+//		Tid: 			string(task.FileID[:]),
 //		TaskType: 		task.TaskType,
 //		State:			task.State,
 //		StartTime: 		task.StartTime,
@@ -35,10 +35,10 @@ import (
 //	}
 //}
 //
-////change task to basetask,Id field of the baseTask is nil
+////change task to basetask,FileID field of the baseTask is nil
 //func t2bt(task Task) *baseTask{
 //	return &baseTask{
-//		Id:				nil,
+//		FileID:				nil,
 //		TaskType: 		task.TaskType,
 //		State:			task.State,
 //		StartTime: 		task.StartTime,
@@ -76,7 +76,7 @@ func NewMongoTaskStorage() (*MongoTaskStorage, error) {
 		databaseName:   util.CONFIG.Database.DatabaseName,
 		clientOptions:  clientOptions,
 		client:         client,
-		collectionName: "Tasks",
+		collectionName: "Task",
 		maxTid:         0,
 	}, nil
 }

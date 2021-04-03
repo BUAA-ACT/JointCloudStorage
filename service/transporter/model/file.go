@@ -15,15 +15,15 @@ import (
 )
 
 type File struct {
-	Id                string
-	Filename          string
-	Owner             string
-	Size              int64
-	LastChange        time.Time
-	SyncStatus        string // 同步状态 Pending/Deleting/Done
-	ReconstructStatus string // 重建状态
-	DownloadUrl       string
-	ReconstructTime   time.Time
+	FileID            string    `bson:"file_id"`
+	Filename          string    `bson:"file_name"`
+	Owner             string    `bson:"owner"`
+	Size              int64     `bson:"size"`
+	LastModified      time.Time `bson:"last_modified"`
+	SyncStatus        string    `bson:"sync_status"`
+	ReconstructStatus string    `bson:"reconstruct_status"`
+	DownloadUrl       string    `bson:"download_url"`
+	LastReconstructed time.Time `bson:"last_reconstructed"`
 }
 
 type FileDatabase interface {
@@ -36,17 +36,17 @@ type FileDatabase interface {
 
 type MongoFileDatabase struct {
 	collectionName string
-	databaseName string
-	clientOption *options.ClientOptions
-	client *mongo.Client
+	databaseName   string
+	clientOption   *options.ClientOptions
+	client         *mongo.Client
 }
 
 func NewMongoFileDatabase() (*MongoFileDatabase, error) {
 	var clientOptions *options.ClientOptions
-	if util.CONFIG.Database.Username!=""{
-		clientOptions = options.Client().ApplyURI("mongodb://" +util.CONFIG.Database.Username+":"+util.CONFIG.Database.Password+"@"+
+	if util.CONFIG.Database.Username != "" {
+		clientOptions = options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Username + ":" + util.CONFIG.Database.Password + "@" +
 			util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
-	}else{
+	} else {
 		clientOptions = options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
 	}
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -56,15 +56,15 @@ func NewMongoFileDatabase() (*MongoFileDatabase, error) {
 	}
 	return &MongoFileDatabase{
 		collectionName: "File",
-		databaseName: util.CONFIG.Database.DatabaseName,
-		clientOption: clientOptions,
-		client: client,
+		databaseName:   util.CONFIG.Database.DatabaseName,
+		clientOption:   clientOptions,
+		client:         client,
 	}, nil
 }
 func (mf *MongoFileDatabase) CreateFileInfo(file *File) (err error) {
 	//check the connection
-	err=CheckClient(mf.client,mf.clientOption)
-	if err!=nil{
+	err = CheckClient(mf.client, mf.clientOption)
+	if err != nil {
 		return err
 	}
 
@@ -77,14 +77,14 @@ func (mf *MongoFileDatabase) CreateFileInfo(file *File) (err error) {
 	return nil
 }
 func (mf *MongoFileDatabase) DeleteFileInfo(file *File) (err error) {
-	err=CheckClient(mf.client,mf.clientOption)
-	if err!=nil{
+	err = CheckClient(mf.client, mf.clientOption)
+	if err != nil {
 		return err
 	}
 
 	//delete the file
 	filter := bson.M{
-		"id": file.Id,
+		"id": file.FileID,
 	}
 	collection := mf.client.Database(mf.databaseName).Collection(mf.collectionName)
 	_, err = collection.DeleteOne(context.TODO(), filter)
@@ -94,14 +94,14 @@ func (mf *MongoFileDatabase) DeleteFileInfo(file *File) (err error) {
 	return nil
 }
 func (mf *MongoFileDatabase) UpdateFileInfo(file *File) (err error) {
-	err=CheckClient(mf.client,mf.clientOption)
-	if err!=nil{
+	err = CheckClient(mf.client, mf.clientOption)
+	if err != nil {
 		return err
 	}
 
 	//delete the file
 	filter := bson.M{
-		"id": file.Id,
+		"file_id": file.FileID,
 	}
 	update := bson.D{
 		{"$set", *file},
@@ -115,15 +115,15 @@ func (mf *MongoFileDatabase) UpdateFileInfo(file *File) (err error) {
 }
 
 func (mf *MongoFileDatabase) GetFileInfo(Id string) (file *File, err error) {
-	err=CheckClient(mf.client,mf.clientOption)
-	if err!=nil{
-		return nil,err
+	err = CheckClient(mf.client, mf.clientOption)
+	if err != nil {
+		return nil, err
 	}
 
 	//delete the file
 	var result File
 	filter := bson.D{
-		{"id", Id},
+		{"file_id", Id},
 	}
 	collection := mf.client.Database(mf.databaseName).Collection(mf.collectionName)
 	err = collection.FindOne(context.TODO(), filter).Decode(&result)
@@ -134,14 +134,14 @@ func (mf *MongoFileDatabase) GetFileInfo(Id string) (file *File, err error) {
 }
 
 func (mf *MongoFileDatabase) Index(prefix string) (files []*File, err error) {
-	err=CheckClient(mf.client,mf.clientOption)
-	if err!=nil{
-		return nil,err
+	err = CheckClient(mf.client, mf.clientOption)
+	if err != nil {
+		return nil, err
 	}
 	//delete the file
 	var result []*File
 	filter := bson.M{
-		"id": bson.M{
+		"file_id": bson.M{
 			"$regex": prefix + "*",
 		},
 	}
@@ -182,33 +182,33 @@ func NewFileInfoFromPath(path string, uid string, fileName string) (file *File, 
 		return nil, err
 	}
 	return &File{
-		Id:                uid + fileName,
+		FileID:            uid + fileName,
 		Filename:          fileName,
 		Owner:             uid,
 		Size:              fi.Size(),
-		LastChange:        time.Now(),
+		LastModified:      time.Now(),
 		SyncStatus:        "",
 		ReconstructStatus: "",
 		DownloadUrl:       "",
-		ReconstructTime:   time.Time{},
+		LastReconstructed: time.Time{},
 	}, nil
 }
 
 func (fd *InMemoryFileDatabase) CreateFileInfo(file *File) (err error) {
-	fd.db[file.Id] = *file
+	fd.db[file.FileID] = *file
 	return nil
 }
 
 func (fd *InMemoryFileDatabase) DeleteFileInfo(file *File) (err error) {
-	delete(fd.db, file.Id)
+	delete(fd.db, file.FileID)
 	return nil
 }
 
 func (fd *InMemoryFileDatabase) UpdateFileInfo(file *File) (err error) {
-	if _, ok := fd.db[file.Id]; !ok {
+	if _, ok := fd.db[file.FileID]; !ok {
 		return errors.New("file info not exist")
 	}
-	fd.db[file.Id] = *file
+	fd.db[file.FileID] = *file
 	return nil
 }
 
@@ -222,7 +222,7 @@ func (fd *InMemoryFileDatabase) GetFileInfo(Id string) (file *File, err error) {
 
 func (fd *InMemoryFileDatabase) Index(prefix string) (files []*File, err error) {
 	for _, v := range fd.db {
-		if strings.HasPrefix(v.Id, prefix) {
+		if strings.HasPrefix(v.FileID, prefix) {
 			file := File{}
 			copier.Copy(&file, v)
 			files = append(files, &file)
@@ -232,8 +232,8 @@ func (fd *InMemoryFileDatabase) Index(prefix string) (files []*File, err error) 
 }
 
 func FromFileInfoGetUidAndPath(file *File) (uid string, path string) {
-	p := strings.Index(file.Id, "/")
-	uid = file.Id[0:p]
-	path = file.Id[p+1:]
+	p := strings.Index(file.FileID, "/")
+	uid = file.FileID[0:p]
+	path = file.FileID[p+1:]
 	return
 }
