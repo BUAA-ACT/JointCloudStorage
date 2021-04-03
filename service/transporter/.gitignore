@@ -1,0 +1,7 @@
+vendor/
+tmp
+go.sum
+transporter_config.json
+transporter
+transporter.exe
+**/.DS_Store
