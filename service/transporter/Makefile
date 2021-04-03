@@ -1,5 +1,6 @@
 -include .env
 
+VERSION := v0.1
 GIT_REV := $(shell git rev-parse --short HEAD)
 BUILD_TIME := $(shell $(date +'%Y-%m-%d_%T'))
 PROJECTNAME := $(shell basename "$(PWD)")
@@ -13,7 +14,7 @@ GOBIN := $(BUILD_PATH)/bin
 GOFILES := transporter.go
 
 # Use linker flags to provide version/build settings
-LDFLAGS=-ldflags '-w -s -extldflags "-static" -X act.buaa.edu.cn/jcspan/transporter/util.GitRev=$(GIT_REV) -X act.buaa.edu.cn/jcspan/transporter/util.BuildTime=$(BUILD_TIME)'
+LDFLAGS=-ldflags '-w -s -extldflags "-static" -X act.buaa.edu.cn/jcspan/transporter/util.Version=$(VERSION) -X act.buaa.edu.cn/jcspan/transporter/util.GitRev=$(GIT_REV) -X act.buaa.edu.cn/jcspan/transporter/util.BuildTime=$(BUILD_TIME)'
 
 objects = transporter
 
