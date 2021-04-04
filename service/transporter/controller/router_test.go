@@ -47,9 +47,9 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	// 初始化 FileInfo 数据库
 	processor.FileDatabase = fileDatabase
 	// 初始化 lock
-	lock, _:= NewLock(util.CONFIG.ZookeeperHost)
+	lock, _ := NewLock(util.CONFIG.ZookeeperHost)
 	processor.lock = lock
-	processor.lock.UnLockAll("/tester")
+	//processor.lock.UnLockAll("/tester")
 	// 初始化路由
 	router := NewTestRouter(processor)
 	// 启动 processor
@@ -83,13 +83,13 @@ func TestECUploadAndDownload(t *testing.T) {
       "StorageMode": "EC",
       "Clouds": [
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          },
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          },
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          }
       ],
       "N": 2,
@@ -130,13 +130,13 @@ func TestECUploadAndDownload(t *testing.T) {
         "StorageMode": "EC",
         "Clouds": [
            {
-              "ID": "aliyun-beijing"
+              "CloudID": "aliyun-beijing"
            },
            {
-              "ID": "aliyun-beijing"
+              "CloudID": "aliyun-beijing"
            },
            {
-              "ID": "aliyun-beijing"
+              "CloudID": "aliyun-beijing"
            }
         ],
         "N": 2,
@@ -189,13 +189,13 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
       "StorageMode": "EC",
       "Clouds": [
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          },
          {
-            "ID": "aliyun-hangzhou"
+            "CloudID": "aliyun-hangzhou"
          },
          {
-            "ID": "txyun-chengdu"
+            "CloudID": "txyun-chengdu"
          }
       ],
       "N": 2,
@@ -233,13 +233,13 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
         "StorageMode": "EC",
         "Clouds": [
 			 {
-				"ID": "aliyun-beijing"
+				"CloudID": "aliyun-beijing"
 			 },
 			 {
-				"ID": "aliyun-hangzhou"
+				"CloudID": "aliyun-hangzhou"
 			 },
 			 {
-				"ID": "txyun-chengdu"
+				"CloudID": "txyun-chengdu"
 			 }
         ],
         "N": 2,
@@ -290,10 +290,10 @@ func TestReplicaUploadAndDownload(t *testing.T) {
       "StorageMode": "Replica",
       "Clouds": [
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          },
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          }
       ]
    }
@@ -332,13 +332,13 @@ func TestReplicaUploadAndDownload(t *testing.T) {
         "StorageMode": "Replica",
         "Clouds": [
            {
-              "ID": "aliyun-beijing"
+              "CloudID": "aliyun-beijing"
            },
            {
-              "ID": "aliyun-beijing"
+              "CloudID": "aliyun-beijing"
            },
            {
-              "ID": "aliyun-beijing"
+              "CloudID": "aliyun-beijing"
            }
         ]
      }
@@ -371,13 +371,13 @@ func TestEC2ReplicaSync(t *testing.T) {
       "StorageMode": "EC",
       "Clouds": [
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          },
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          },
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          }
       ],
       "N": 2,
@@ -387,10 +387,10 @@ func TestEC2ReplicaSync(t *testing.T) {
       "StorageMode": "Replica",
       "Clouds": [
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          },
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          }
       ]
    }
@@ -422,10 +422,10 @@ func TestReplica2ECSync(t *testing.T) {
       "StorageMode": "Replica",
      "Clouds": [
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          },
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          }
       ] 
    },
@@ -433,13 +433,13 @@ func TestReplica2ECSync(t *testing.T) {
       "StorageMode": "EC",
       "Clouds": [
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          },
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          },
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          }
       ],
       "N": 2,
@@ -472,10 +472,10 @@ func TestReplicaUploadAndDelete(t *testing.T) {
       "StorageMode": "Replica",
       "Clouds": [
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          },
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          }
       ]
    }
@@ -506,13 +506,13 @@ func TestECUploadAndDelete(t *testing.T) {
       "StorageMode": "EC",
       "Clouds": [
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          },
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          },
          {
-            "ID": "aliyun-beijing"
+            "CloudID": "aliyun-beijing"
          }
       ],
       "N": 2,
@@ -601,13 +601,13 @@ func testECUpload(t *testing.T, router *Router, processor *TaskProcessor, dstPat
       "StorageMode": "EC",
       "Clouds": [
          {
-            "ID": "%v"
+            "CloudID": "%v"
          },
          {
-            "ID": "%v"
+            "CloudID": "%v"
          },
          {
-            "ID": "%v"
+            "CloudID": "%v"
          }
       ],
       "N": 2,
@@ -647,13 +647,13 @@ func testReplicaUpload(t *testing.T, router *Router, processor *TaskProcessor, d
       "StorageMode": "Replica",
       "Clouds": [
          {
-            "ID": "%v"
+            "CloudID": "%v"
          },
          {
-            "ID": "%v"
+            "CloudID": "%v"
          },
          {
-            "ID": "%v"
+            "CloudID": "%v"
          }
       ]
    }
