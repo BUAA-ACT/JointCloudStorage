@@ -44,7 +44,7 @@ func TestDatabase(t *testing.T) {
 		{"location", "116.381252,39.906569"},
 	})
 
-	mongo, err := model.NewMongoStorageDatabase()
+	mongo, err := model.NewMongoCloudDatabase()
 	if err != nil {
 		t.Error(err)
 	}

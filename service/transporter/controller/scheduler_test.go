@@ -7,32 +7,16 @@ import (
 )
 
 func TestJcsPanScheduler(t *testing.T) {
-	scheduler := NewJcsPanScheduler("aliyun-hangzhou", "http://192.168.105.13:8082")
-	clouds := []*model.Cloud{
-		{
-			CloudID:      "aliyun-hangzhou",
-			Endpoint:     "",
-			AccessKey:    "",
-			SecretKey:    "",
-			StoragePrice: 0,
-			TrafficPrice: 0,
-			Availability: 0,
-			Status:       "",
-			Location:     "",
-			Address:      "localhost:8082",
-		},
-		{
-			CloudID:      "ksyun-beijing",
-			Endpoint:     "",
-			AccessKey:    "",
-			SecretKey:    "",
-			StoragePrice: 0,
-			TrafficPrice: 0,
-			Availability: 0,
-			Status:       "",
-			Location:     "",
-			Address:      "localhost:8182",
-		},
+	cloudDatabase, _ := model.NewMongoCloudDatabase()
+	scheduler := JcsPanScheduler{
+		LocalCloudID:     "aliyun-hangzhou",
+		SchedulerHostUrl: "http://192.168.105.13:8082",
+		ReloadCloudInfo:  true,
+		CloudDatabase:    cloudDatabase,
+	}
+	clouds := []string{
+		"aliyun-hangzhou",
+		"ksyun-beijing",
 	}
 	file := &model.File{
 		FileID:            "tester/test/metaData/file.txt",

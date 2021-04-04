@@ -47,6 +47,8 @@ type Configuration struct {
 	Port                 int
 	Host                 string
 	ZookeeperHost        string
+	LocalCloudID         string
+	SchedulerHost        string
 }
 
 func ReadConfigFromFile(configFilepath string) error {

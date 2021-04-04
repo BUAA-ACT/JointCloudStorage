@@ -14,7 +14,7 @@ const (
 )
 
 var (
-	ErrLocked = errors.New("acquire lock failed")
+	ErrLocked = errors.New("acquire Lock failed")
 	ErrBadKey = errors.New("invalid key")
 )
 
@@ -90,7 +90,7 @@ func (l *Lock) Lock(path string) error {
 }
 
 func (l *Lock) UnLockAll(path string) {
-	_,_, err := l.c.Get(path)
+	_, _, err := l.c.Get(path)
 	if err != nil {
 		return
 	}
@@ -103,7 +103,7 @@ func (l *Lock) UnLockAll(path string) {
 		}
 		return
 	} else {
-		for _, child := range children{
+		for _, child := range children {
 			l.UnLockAll(path + sep + child)
 		}
 	}
@@ -114,7 +114,7 @@ func (l *Lock) UnLock(path string) error {
 	// 检查path格式
 	paths := strings.Split(strings.Trim(path, sep), sep)
 	if len(paths) == 0 {
-		logrus.Infof("unlock fail" )
+		logrus.Infof("unlock fail")
 		return ErrBadKey
 	}
 
@@ -150,7 +150,7 @@ func (l *Lock) UnLock(path string) error {
 	// 发送多个子请求
 	_, err := l.c.Multi(ops...)
 	if err != nil {
-		logrus.Errorf("unlock %v fail: %v",path, err)
+		logrus.Errorf("unlock %v fail: %v", path, err)
 		return err
 	}
 	logrus.Infof("unlock success")

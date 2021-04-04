@@ -8,12 +8,12 @@ import (
 func TestLock(t *testing.T) {
 	l, err := NewLock(util.CONFIG.ZookeeperHost)
 	if err != nil {
-		t.Fatalf("create lock connect error: %v", err)
+		t.Fatalf("create Lock connect error: %v", err)
 	}
-	t.Run("lock", func(t *testing.T) {
+	t.Run("Lock", func(t *testing.T) {
 		err = l.Lock("/tester/lockTest")
 		if err != nil {
-			t.Fatalf("lock error: %v", err)
+			t.Fatalf("Lock error: %v", err)
 		}
 	})
 	t.Run("unlock", func(t *testing.T) {

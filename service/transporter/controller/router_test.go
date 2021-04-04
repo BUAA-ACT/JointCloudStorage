@@ -23,9 +23,9 @@ const (
 
 func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	var storage model.TaskStorage
-	var clientDatabase model.StorageDatabase
+	var clientDatabase model.CloudDatabase
 	var fileDatabase model.FileDatabase
-	//util.ReadConfigFromFile("../transporter_config.json")
+	util.ReadConfigFromFile("../transporter_config.json")
 	err := util.CheckConfig()
 	if err != nil {
 		return nil, nil
@@ -33,7 +33,7 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	if util.CONFIG.Database.Driver == util.MongoDB {
 		util.ClearAll()
 		storage, _ = model.NewMongoTaskStorage()
-		clientDatabase, _ = model.NewMongoStorageDatabase()
+		clientDatabase, _ = model.NewMongoCloudDatabase()
 		fileDatabase, _ = model.NewMongoFileDatabase()
 	} else {
 		storage = model.NewInMemoryTaskStorage()
@@ -46,10 +46,18 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	processor.SetStorageDatabase(clientDatabase)
 	// 初始化 FileInfo 数据库
 	processor.FileDatabase = fileDatabase
-	// 初始化 lock
+	// 初始化 Lock
 	lock, _ := NewLock(util.CONFIG.ZookeeperHost)
-	processor.lock = lock
-	//processor.lock.UnLockAll("/tester")
+	processor.Lock = lock
+	//processor.Lock.UnLockAll("/tester")
+	// 初始化 Scheduler
+	scheduler := JcsPanScheduler{
+		LocalCloudID:     "aliyun-hangzhou",
+		SchedulerHostUrl: "http://192.168.105.13:8082",
+		ReloadCloudInfo:  true,
+		CloudDatabase:    clientDatabase,
+	}
+	processor.Scheduler = &scheduler
 	// 初始化路由
 	router := NewTestRouter(processor)
 	// 启动 processor

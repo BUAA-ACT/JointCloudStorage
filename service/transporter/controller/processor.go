@@ -17,18 +17,19 @@ import (
 )
 
 type TaskProcessor struct {
-	taskStorage     model.TaskStorage
-	storageDatabase model.StorageDatabase
-	FileDatabase    model.FileDatabase
-	lock *Lock
+	taskStorage   model.TaskStorage
+	cloudDatabase model.CloudDatabase
+	FileDatabase  model.FileDatabase
+	Lock          *Lock
+	Scheduler     Scheduler
 }
 
 func (processor *TaskProcessor) SetTaskStorage(storage model.TaskStorage) {
 	processor.taskStorage = storage
 }
 
-func (processor *TaskProcessor) SetStorageDatabase(database model.StorageDatabase) {
-	processor.storageDatabase = database
+func (processor *TaskProcessor) SetStorageDatabase(database model.CloudDatabase) {
+	processor.cloudDatabase = database
 }
 
 // 创建任务
@@ -59,7 +60,7 @@ func (processor *TaskProcessor) SetProcessResult(t *model.Task, err error) {
 	if err != nil {
 		logrus.Errorf("Process Task Fail: %v", err)
 		processor.taskStorage.SetTaskState(t.Tid, model.FAIL)
-	}else {
+	} else {
 		logrus.Infof("Process %v Task Sucess, tid :%v", t.TaskType, t.Tid.Hex())
 		processor.taskStorage.SetTaskState(t.Tid, model.FINISH)
 	}
@@ -120,7 +121,7 @@ func (processor *TaskProcessor) DeleteSingleFile(t *model.Task) error {
 	var storageClients []model.StorageClient
 	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
 	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
-		client, err := processor.storageDatabase.GetStorageClientFromName(t.Uid, cloudName)
+		client, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, cloudName)
 		if err != nil {
 			return err
 		}
@@ -172,7 +173,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 	var storageClients []model.StorageClient
 	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
 	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
-		client, err := processor.storageDatabase.GetStorageClientFromName(t.Uid, cloudName)
+		client, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, cloudName)
 		if err != nil {
 			return "", err
 		}
@@ -232,7 +233,7 @@ func (processor *TaskProcessor) ProcessGetTmpDownloadUrl(t *model.Task) (url str
 	if err != nil {
 		return "", err
 	}
-	storageClient, err := processor.storageDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
+	storageClient, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
 	if err != nil {
 		return "", err
 	}
@@ -247,14 +248,14 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	if t.GetState() == model.FINISH {
 		return errors.New("task already finish")
 	}
-	defer processor.lock.UnLock(t.GetRealDestinationPath())
+	defer processor.Lock.UnLock(t.GetRealDestinationPath())
 	fileInfo, fileInfoErr := processor.FileDatabase.GetFileInfo(t.GetRealDestinationPath())
 	// 判断上传方式
 	var storageClients []model.StorageClient
 	if t.TaskOptions != nil {
 		storageModel := t.TaskOptions.DestinationPlan.StorageMode
 		for _, cloudName := range t.TaskOptions.DestinationPlan.Clouds {
-			client, err := processor.storageDatabase.GetStorageClientFromName(t.Uid, cloudName)
+			client, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, cloudName)
 			if err != nil {
 				return err
 			}
@@ -275,7 +276,11 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			} else {
 				err = processor.FileDatabase.UpdateFileInfo(fileInfo)
 			}
-			util.CheckErr(err, "Create File Info")
+			if util.CheckErr(err, "Create File Info") {
+				return err
+			}
+			err := processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo)
+			util.CheckErr(err, "File Metadata sync")
 		case "EC": // 纠删码模式
 			N := t.TaskOptions.DestinationPlan.N
 			K := t.TaskOptions.DestinationPlan.K
@@ -288,7 +293,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 				shards[i] = t.GetSourcePath() + fmt.Sprintf(".%d", i)
 			}
 			// 开始分块
-			err := Encode(t.GetSourcePath(), shards, N, K)
+			err = Encode(t.GetSourcePath(), shards, N, K)
 			if err != nil {
 				logrus.Errorf("Encode file %s failed.", t.GetSourcePath())
 				return err
@@ -300,7 +305,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			if util.CheckErr(err, "Upload EC block") {
 				return err
 			}
-			fileInfo, err := model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
+			fileInfo, err = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
 			if util.CheckErr(err, "New File Info") {
 				return err
 			}
@@ -309,7 +314,11 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			} else {
 				err = processor.FileDatabase.UpdateFileInfo(fileInfo)
 			}
-			util.CheckErr(err, "Create File Info")
+			if util.CheckErr(err, "Create File Info") {
+				return err
+			}
+			err := processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo)
+			util.CheckErr(err, "File Metadata sync")
 		default:
 			return errors.New("storage model not implement")
 		}
@@ -324,7 +333,7 @@ func (processor *TaskProcessor) ProcessPathIndex(t *model.Task) <-chan model.Obj
 	if err != nil {
 		return nil
 	}
-	storageClient, err := processor.storageDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
+	storageClient, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
 	if err != nil {
 		return nil
 	}
@@ -377,9 +386,9 @@ func (processor *TaskProcessor) ProcessSyncSingleFile(t *model.Task) (err error)
 	subTask.SourcePath = filePath
 	subTask.TaskOptions.SourceStoragePlan = nil
 	subTask.TaskType = model.UPLOAD
-	err = processor.lock.Lock(subTask.GetRealDestinationPath()) // todo 在这里加锁是否是有必要的
+	err = processor.Lock.Lock(subTask.GetRealDestinationPath()) // todo 在这里加锁是否是有必要的
 	if err != nil {
-		logrus.Errorf("get file lock fail: %v",err)
+		logrus.Errorf("get file Lock fail: %v", err)
 	}
 	err = processor.ProcessUpload(&subTask)
 	if err != nil {

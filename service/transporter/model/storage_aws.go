@@ -32,7 +32,7 @@ func GetAWSClient(endpoint, accessKeyID, secretAccessKey string) (*s3.S3, error)
 		return nil, err
 	}
 	config := &aws.Config{
-		Region:      aws.String("us-east-1"),
+		Region:      aws.String("BEIJING"),
 		Endpoint:    aws.String(endpoint),
 		DisableSSL:  aws.Bool(true),
 		Credentials: creds,

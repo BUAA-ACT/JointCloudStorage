@@ -58,7 +58,7 @@ func StartServe() {
 
 func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
 	var storage model.TaskStorage
-	var clientDatabase model.StorageDatabase
+	var clientDatabase model.CloudDatabase
 	var fileDatabase model.FileDatabase
 	if util.CONFIG.DebugMode {
 		logrus.SetLevel(logrus.DebugLevel)
@@ -67,7 +67,7 @@ func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
 	}
 	if util.CONFIG.Database.Driver == util.MongoDB {
 		storage, _ = model.NewMongoTaskStorage()
-		clientDatabase, _ = model.NewMongoStorageDatabase()
+		clientDatabase, _ = model.NewMongoCloudDatabase()
 		fileDatabase, _ = model.NewMongoFileDatabase()
 	} else {
 		storage = model.NewInMemoryTaskStorage()
@@ -80,6 +80,19 @@ func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
 	processor.SetStorageDatabase(clientDatabase)
 	// 初始化 FileInfo 数据库
 	processor.FileDatabase = fileDatabase
+	// 初始化 lock
+	lock, _ := controller.NewLock(util.CONFIG.ZookeeperHost)
+	processor.Lock = lock
+	//processor.lock.UnLockAll("/tester")
+	// 初始化 scheduler
+	scheduler := controller.JcsPanScheduler{
+		LocalCloudID:     util.CONFIG.LocalCloudID,
+		SchedulerHostUrl: util.CONFIG.SchedulerHost,
+		ReloadCloudInfo:  true,
+		CloudDatabase:    clientDatabase,
+	}
+	processor.Scheduler = &scheduler
+
 	// 初始化路由
 	router := controller.NewRouter(processor)
 	// 启动 processor

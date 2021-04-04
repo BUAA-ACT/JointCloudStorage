@@ -94,7 +94,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 	switch reqTask.TaskType {
 	case "Upload":
 		task := RequestTask2Task(&reqTask, model.UPLOAD, model.BLOCKED)
-		err := router.processor.lock.Lock(task.GetRealDestinationPath())
+		err := router.processor.Lock.Lock(task.GetRealDestinationPath())
 		if err != nil {
 			taskRequestReplyErr(util.ErrorCodeGetFileLockErr, util.ErrorMsgGetFileLockErr+": "+err.Error(), c)
 			return
@@ -102,7 +102,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 		tid, err := router.processor.taskStorage.AddTask(task)
 		if err != nil {
 			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
-			router.processor.lock.UnLock(task.GetRealDestinationPath())
+			router.processor.Lock.UnLock(task.GetRealDestinationPath())
 			return
 		}
 		token, _ := util.GenerateTaskAccessToken(tid.Hex(), task.Uid, time.Hour*24)
