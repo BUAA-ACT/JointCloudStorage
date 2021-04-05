@@ -25,7 +25,7 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	var storage model.TaskStorage
 	var clientDatabase model.CloudDatabase
 	var fileDatabase model.FileDatabase
-	util.ReadConfigFromFile("../transporter_config.json")
+	//util.ReadConfigFromFile("../transporter_config.json")
 	err := util.CheckConfig()
 	if err != nil {
 		return nil, nil
@@ -49,7 +49,7 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	// 初始化 Lock
 	lock, _ := NewLock(util.CONFIG.ZookeeperHost)
 	processor.Lock = lock
-	//processor.Lock.UnLockAll("/tester")
+	processor.Lock.UnLockAll("/tester")
 	// 初始化 Scheduler
 	scheduler := JcsPanScheduler{
 		LocalCloudID:     "aliyun-hangzhou",

@@ -202,6 +202,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 			err := storageClients[i].Download(t.SourcePath+"."+strconv.Itoa(i), shards[i], t.Uid)
 			if err != nil {
 				logrus.Errorf("Download EC block %v from %v fail: %v", shards[i], storageClients[i], err)
+				shards[i] = shards[i] + ".fail"
 			}
 		}
 		err = Decode(rebuildPath, fileInfo.Size, shards, N, K)
