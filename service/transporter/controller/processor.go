@@ -103,6 +103,8 @@ func (processor *TaskProcessor) ProcessTasks() {
 			}(task)
 		case model.MIGRATE:
 			go func(t *model.Task) {
+				err := processor.ProcessMigrate(t)
+				processor.SetProcessResult(t, err)
 				finish <- t.Tid
 			}(task)
 		default:
@@ -428,12 +430,13 @@ func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
 			err = srcClient.Download(object.Key, rebuildPath, t.Uid)
 			if err != nil {
 				logrus.Errorf("Download Replica %v from %v fail: %v", t.SourcePath, srcClient, err)
+				return errors.New(util.ErrorMsgProcessMigrateDownloadErr)
 			}
 			err = dstClient.Upload(rebuildPath, object.Key, t.Uid)
 			if err != nil {
 				logrus.Errorf("Upload Replica %v from %v fail: %v", t.SourcePath, srcClient, err)
+				return errors.New(util.ErrorMsgProcessMigrateUploadErr)
 			}
-			//todo 源文件删除
 		}
 	}
 	return nil //todo

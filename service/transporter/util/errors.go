@@ -9,10 +9,12 @@ const (
 )
 
 const (
-	ErrorMsgWrongRequestFormat = "wrong request format"
-	ErrorMsgWrongTaskType      = "task type not implement"
-	ErrorMsgWrongStorageType   = "storage type not implement"
-	ErrorMsgGetFileLockErr     = "can't get file lock"
-	ErrorMsgCantGetFileInfo    = "can't get file info"
-	ErrorMsgWrongCloudNum      = "clouds num miss match"
+	ErrorMsgWrongRequestFormat        = "wrong request format"
+	ErrorMsgWrongTaskType             = "task type not implement"
+	ErrorMsgWrongStorageType          = "storage type not implement"
+	ErrorMsgGetFileLockErr            = "can't get file lock"
+	ErrorMsgCantGetFileInfo           = "can't get file info"
+	ErrorMsgWrongCloudNum             = "clouds num miss match"
+	ErrorMsgProcessMigrateDownloadErr = "process migrate download err"
+	ErrorMsgProcessMigrateUploadErr   = "process migrate Upload err"
 )

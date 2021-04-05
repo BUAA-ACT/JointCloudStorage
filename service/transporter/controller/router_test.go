@@ -414,6 +414,46 @@ func TestEC2ReplicaSync(t *testing.T) {
 	waitUntilAllDone(processor)
 }
 
+func TestReplicaMigrate(t *testing.T) {
+	router, processor := initRouterAndProcessor()
+	dstPath := "tmp/test/Migrate/未命名.png"
+	testECUpload(t, router, processor, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	dstPath = "tmp/test/migrate/test.txt"
+	testECUpload(t, router, processor, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	jsonStr := []byte(`
+{
+  "TaskType": "Migrate",
+   "Uid": "tester",
+   "DestinationPath":"",
+   "SourcePath": "",
+   "SourceStoragePlan":{
+      "StorageMode": "Migrate",
+      "Clouds": [
+         {
+            "CloudID": "aliyun-beijing"
+         }
+      ]
+   },
+   "DestinationStoragePlan":{
+      "StorageMode": "Migrate",
+      "Clouds": [
+         {
+            "CloudID": "ksyun-beijing"
+         }
+      ]
+   }
+}`)
+	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+	var reply RequestTaskReply
+	_ = json.NewDecoder(recorder.Body).Decode(&reply)
+	if reply.Code != http.StatusOK {
+		t.Fatalf("Sync fail :%v", reply.Msg)
+	}
+	waitUntilAllDone(processor)
+}
+
 func TestReplica2ECSync(t *testing.T) {
 	router, processor := initRouterAndProcessor()
 	dstPath := "tmp/test/sync/未命名.png"
