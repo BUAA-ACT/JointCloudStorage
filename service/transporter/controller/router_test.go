@@ -100,8 +100,8 @@ func TestECUploadAndDownload(t *testing.T) {
             "CloudID": "aliyun-beijing"
          }
       ],
-      "N": 2,
-      "K": 1
+      "N": 3,
+      "K": 2
    }
 }`)
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
@@ -147,8 +147,8 @@ func TestECUploadAndDownload(t *testing.T) {
               "CloudID": "aliyun-beijing"
            }
         ],
-        "N": 2,
-        "K": 1
+        "N": 3,
+        "K": 2
      }
   }
 `)
@@ -206,8 +206,8 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
             "CloudID": "txyun-chengdu"
          }
       ],
-      "N": 2,
-      "K": 1
+      "N": 3,
+      "K": 2
    }
 }`)
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
@@ -250,8 +250,8 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
 				"CloudID": "txyun-chengdu"
 			 }
         ],
-        "N": 2,
-        "K": 1
+        "N": 3,
+        "K": 2
      }
   }
 `)
@@ -388,8 +388,8 @@ func TestEC2ReplicaSync(t *testing.T) {
             "CloudID": "aliyun-beijing"
          }
       ],
-      "N": 2,
-      "K": 1
+      "N": 3,
+      "K": 2
    },
    "DestinationStoragePlan":{
       "StorageMode": "Replica",
@@ -490,8 +490,8 @@ func TestReplica2ECSync(t *testing.T) {
             "CloudID": "aliyun-beijing"
          }
       ],
-      "N": 2,
-      "K": 1
+      "N": 3,
+      "K": 2
    }
 }`)
 	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
@@ -563,8 +563,8 @@ func TestECUploadAndDelete(t *testing.T) {
             "CloudID": "aliyun-beijing"
          }
       ],
-      "N": 2,
-      "K": 1
+      "N": 3,
+      "K": 2
    }
 }`)
 	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
@@ -658,8 +658,8 @@ func testECUpload(t *testing.T, router *Router, processor *TaskProcessor, dstPat
             "CloudID": "%v"
          }
       ],
-      "N": 2,
-      "K": 1
+      "N": 3,
+      "K": 2
    }
 }
 `, dstPath, cloud, cloud, cloud)

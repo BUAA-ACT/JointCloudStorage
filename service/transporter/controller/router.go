@@ -355,6 +355,11 @@ func RequestTask2Task(reqTask *RequestTask, taskType model.TaskType, state model
 	for _, cloud := range reqTask.DestinationStoragePlan.Clouds {
 		dstCloudsID = append(dstCloudsID, cloud.CloudID)
 	}
+	// 由于传入参数与 transporter 内对于 storagePlan 的 N、K 定义不同，在此需要对 N、K 进行转换
+	realSourceN := reqTask.SourceStoragePlan.K
+	realSourceK := reqTask.SourceStoragePlan.N - realSourceN
+	realDestN := reqTask.DestinationStoragePlan.K
+	realDestK := reqTask.DestinationStoragePlan.N - realDestN
 	task := model.Task{
 		Tid:             primitive.NewObjectID(),
 		TaskType:        taskType,
@@ -367,14 +372,14 @@ func RequestTask2Task(reqTask *RequestTask, taskType model.TaskType, state model
 			SourceStoragePlan: &model.StoragePlan{
 				StorageMode: reqTask.SourceStoragePlan.StorageMode,
 				Clouds:      srcCloudsID,
-				N:           reqTask.SourceStoragePlan.N,
-				K:           reqTask.SourceStoragePlan.K,
+				N:           realSourceN,
+				K:           realSourceK,
 			},
 			DestinationPlan: &model.StoragePlan{
 				StorageMode: reqTask.DestinationStoragePlan.StorageMode,
 				Clouds:      dstCloudsID,
-				N:           reqTask.DestinationStoragePlan.N,
-				K:           reqTask.DestinationStoragePlan.K,
+				N:           realDestN,
+				K:           realDestK,
 			},
 		},
 	}
