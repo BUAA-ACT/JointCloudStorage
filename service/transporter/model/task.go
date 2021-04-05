@@ -15,35 +15,12 @@ const (
 	SYNC_ERASURE        TaskType = "SYNC_ERASURE"
 	DOWNLOAD            TaskType = "DOWNLOAD"
 	DOWNLOAD_REPLICA    TaskType = "DOWNLOAD_REPLICA"
-	UPLOAD              TaskType = "UPLOAD"
-	INDEX               TaskType = "INDEX"
-	SYNC                TaskType = "SYNC"
-	DELETE              TaskType = "DELETE"
+	UPLOAD              TaskType = "Upload"
+	INDEX               TaskType = "Index"
+	SYNC                TaskType = "Sync"
+	DELETE              TaskType = "Delete"
+	MIGRATE             TaskType = "Migrate"
 )
-
-func (taskType TaskType) String() string {
-	switch taskType {
-	case USER_UPLOAD_SIMPLE:
-		return "USER_UPLOAD_SIMPLE"
-	case USER_UPLOAD_ERASURE:
-		return "USER_UPLOAD_ERASURE"
-	case SYNC_SIMPLE:
-		return "SYNC_SIMPLE"
-	case SYNC_ERASURE:
-		return "SYNC_ERASURE"
-	case DOWNLOAD:
-		return "DOWNLOAD"
-	case INDEX:
-		return "INDEX"
-	case UPLOAD:
-		return "UPLOAD"
-	case SYNC:
-		return "SYNC"
-	case DELETE:
-		return "DELETE"
-	}
-	return ""
-}
 
 const (
 	CREATING   TaskState = "CREATING"
@@ -69,6 +46,14 @@ type TaskOptions struct {
 	SourceStoragePlan *StoragePlan
 	DestinationPlan   *StoragePlan
 }
+
+type StorageModel string
+
+const (
+	StorageModelReplica StorageModel = "Replica"
+	StorageModelEC      StorageModel = "EC"
+	StorageModelMigrate StorageModel = "Migrate"
+)
 
 type StoragePlan struct {
 	StorageMode string

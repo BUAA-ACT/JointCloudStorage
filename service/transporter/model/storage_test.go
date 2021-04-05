@@ -38,3 +38,20 @@ func TestAllStorageClient(t *testing.T) {
 		t.Logf("%v download url: %v", cloudID, url)
 	}
 }
+
+func TestIndex(t *testing.T) {
+	err := util.ReadConfigFromFile("../transporter_config.json")
+	if err != nil {
+		t.Fatal("read config file fail")
+	}
+	clientDatabase, _ := NewMongoCloudDatabase()
+	cloudID := "aliyun-beijing"
+	client, err := clientDatabase.GetStorageClientFromName("tester", cloudID)
+	if err != nil {
+		t.Errorf("Cloud:%v not exist", cloudID)
+	}
+	objectsChan := client.Index("", "tester")
+	for object := range objectsChan {
+		t.Log(object.Key)
+	}
+}

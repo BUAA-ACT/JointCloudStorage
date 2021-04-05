@@ -196,6 +196,23 @@ func (router *Router) CreateTask(c *gin.Context) {
 			},
 		}
 		c.JSON(http.StatusOK, requestTaskReply)
+	case "Migrate":
+		task := RequestTask2Task(&reqTask, model.MIGRATE, model.CREATING)
+		tid, err := router.processor.taskStorage.AddTask(task)
+		if err != nil {
+			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
+			return
+		}
+		requestTaskReply := RequestTaskReply{
+			Code: http.StatusOK,
+			Msg:  "Generate delete task OK",
+			Data: TaskResult{
+				Type:   "tid",
+				Result: tid.Hex(),
+			},
+		}
+		c.JSON(http.StatusOK, requestTaskReply)
+
 	default:
 		requestTaskReply := RequestTaskReply{
 			Code: util.ErrorCodeWrongTaskType,

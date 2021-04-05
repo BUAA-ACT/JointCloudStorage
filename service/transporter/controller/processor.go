@@ -101,6 +101,10 @@ func (processor *TaskProcessor) ProcessTasks() {
 				processor.SetProcessResult(t, err)
 				finish <- t.Tid
 			}(task)
+		case model.MIGRATE:
+			go func(t *model.Task) {
+				finish <- t.Tid
+			}(task)
 		default:
 			logrus.Errorf("ERROR: Process TaskType: %s not implement", task.GetTaskType())
 			finish <- task.Tid
@@ -404,6 +408,35 @@ func (processor *TaskProcessor) ProcessSyncSingleFile(t *model.Task) (err error)
 	}
 	logrus.Debugf("sync task %v finish", t.Tid.Hex())
 	return nil
+}
+
+// 处理简单迁移任务
+func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
+	if len(t.TaskOptions.SourceStoragePlan.Clouds) != len(t.TaskOptions.DestinationPlan.Clouds) {
+		return errors.New(util.ErrorMsgWrongCloudNum)
+	}
+	for i, sourceCloudID := range t.TaskOptions.SourceStoragePlan.Clouds {
+		destCloudID := t.TaskOptions.DestinationPlan.Clouds[i]
+		srcClient, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, sourceCloudID)
+		dstClient, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, destCloudID)
+		if err != nil {
+			return err
+		}
+		objectsChan := srcClient.Index(t.SourcePath, t.Uid)
+		for object := range objectsChan {
+			rebuildPath := util.CONFIG.DownloadFileTempPath + util.GenRandomString(20)
+			err = srcClient.Download(object.Key, rebuildPath, t.Uid)
+			if err != nil {
+				logrus.Errorf("Download Replica %v from %v fail: %v", t.SourcePath, srcClient, err)
+			}
+			err = dstClient.Upload(rebuildPath, object.Key, t.Uid)
+			if err != nil {
+				logrus.Errorf("Upload Replica %v from %v fail: %v", t.SourcePath, srcClient, err)
+			}
+			//todo 源文件删除
+		}
+	}
+	return nil //todo
 }
 
 func (processor *TaskProcessor) CheckTaskType(t *model.Task, taskType model.TaskType) (err error) {
