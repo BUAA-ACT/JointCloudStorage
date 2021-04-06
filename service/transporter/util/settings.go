@@ -27,6 +27,7 @@ var Config = Configuration{
 	Port:                 8083,
 	Host:                 "0.0.0.0",
 	ZookeeperHost:        "192.168.105.13",
+	LocalCloudID:         "aliyun-beijing",
 }
 
 type DBConfiguration struct {

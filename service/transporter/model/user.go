@@ -19,10 +19,20 @@ type User struct {
 	Avatar            string           `bson:"avatar"`
 	LastModified      time.Time        `bson:"last_modified"`
 	Preference        Preference       `bson:"preference"`
-	StoragePlan       StoragePlan      `bson:"storage_plan"`
+	StoragePlan       UserStoragePlan  `bson:"storage_plan"`
 	DataStats         DataStats        `bson:"data_stats"`
 	AccessCredentials AccessCredential `bson:"access_credentials"`
 	Status            string           `bson:"status"`
+}
+
+type UserStoragePlan struct {
+	N            int     `bson:"n"`
+	K            int     `bson:"k"`
+	StorageMode  string  `bson:"storage_mode"`
+	Clouds       []Cloud `bson:"clouds"`
+	StoragePrice float64 `bson:"storage_price"`
+	TrafficPrice float64 `bson:"traffic_price"`
+	Availability float64 `bson:"availability"`
 }
 
 type Preference struct {
@@ -74,32 +84,32 @@ func NewMongoUserDatabase() (*MongoUserDatabase, error) {
 		databaseName:   util.Config.Database.DatabaseName,
 		clientOptions:  clientOptions,
 		client:         client,
-		collectionName: "Task",
+		collectionName: "User",
 	}, nil
 }
 
-func (m *MongoUserDatabase)UpdateUserInfo(user *User) error{
+func (m *MongoUserDatabase) UpdateUserInfo(user *User) error {
 	err := CheckClient(m.client, m.clientOptions)
 	if err != nil {
 		return err
 	}
 
-	filter:=bson.M{
-		"user_id":user.UserId,
+	filter := bson.M{
+		"user_id": user.UserId,
 	}
 	update := bson.D{
 		{"$set", *user},
 	}
 	collection := m.client.Database(m.databaseName).Collection(m.collectionName)
-	_,err=collection.UpdateOne(context.Background(),filter,update)
-	if err!=nil{
+	_, err = collection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
 		return err
-	}else{
+	} else {
 		return nil
 	}
 }
 
-func (m *MongoUserDatabase)GetUserFromID(uid string) (*User, error){
+func (m *MongoUserDatabase) GetUserFromID(uid string) (*User, error) {
 	err := CheckClient(m.client, m.clientOptions)
 	if err != nil {
 		return nil, err
@@ -132,7 +142,7 @@ func NewInMemoryUserDatabase() *InMemoryUserDatabase {
 			Avatar:       "",
 			LastModified: time.Time{},
 			Preference:   Preference{},
-			StoragePlan:  StoragePlan{},
+			StoragePlan:  UserStoragePlan{},
 			DataStats: DataStats{
 				Volume: 0,
 				UploadTraffic: map[string]int64{

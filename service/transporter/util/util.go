@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var Logger *logrus.Logger
+var Logger = logrus.New()
 
 func InitLogger() {
 	Logger = logrus.New()

@@ -32,10 +32,13 @@ type RequestTask struct {
 }
 
 type RequestStoragePlan struct {
-	StorageMode string        `json:"StorageMode"`
-	Clouds      []model.Cloud `json:"Clouds"`
-	N           int           `json:"N"`
-	K           int           `json:"K"`
+	N            int           `bson:"n"`
+	K            int           `bson:"k"`
+	StorageMode  string        `bson:"storage_mode"`
+	Clouds       []model.Cloud `bson:"clouds"`
+	StoragePrice float64       `bson:"storage_price"`
+	TrafficPrice float64       `bson:"traffic_price"`
+	Availability float64       `bson:"availability"`
 }
 
 type RequestCloud struct {

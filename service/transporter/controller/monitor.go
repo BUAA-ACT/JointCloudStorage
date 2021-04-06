@@ -31,11 +31,16 @@ func (monitor TrafficMonitor) updateUserAndUnlock(user *model.User) (err error) 
 	return
 }
 
+func (monitor TrafficMonitor) unlock(uid string) {
+	monitor.kMutex.Unlock(uid)
+}
+
 func (monitor TrafficMonitor) AddVolume(uid string, delta int64) (size int64, err error) {
 	user, err := monitor.getUserAndLock(uid)
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "TrafficMonitor AddVolume", "can't get user",
 			"a user info", "nil", err.Error())
+		monitor.unlock(uid)
 		return 0, err
 	}
 	user.DataStats.Volume = user.DataStats.Volume + delta
@@ -53,6 +58,7 @@ func (monitor TrafficMonitor) AddUploadTraffic(uid string, delta int64) (size in
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "TrafficMonitor AddUploadTraffic", "can't get user",
 			"a user info", "nil", err.Error())
+		monitor.unlock(uid)
 		return 0, err
 	}
 	if user.DataStats.UploadTraffic == nil {
@@ -73,6 +79,7 @@ func (monitor TrafficMonitor) AddDownloadTraffic(uid string, delta int64) (size 
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "TrafficMonitor AddDownloadTraffic", "can't get user",
 			"a user info", "nil", err.Error())
+		defer monitor.unlock(uid)
 		return 0, err
 	}
 	if user.DataStats.DownloadTraffic == nil {
@@ -94,6 +101,7 @@ func (monitor TrafficMonitor) ReduceVolume(uid string, delta int64) (size int64,
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "TrafficMonitor ReduceVolume", "can't get user",
 			"a user info", "nil", err.Error())
+		defer monitor.unlock(uid)
 		return 0, err
 	}
 	user.DataStats.Volume = user.DataStats.Volume - delta
