@@ -281,7 +281,7 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 	}
 	defer file.Close()
 	randStr := util.GenRandomString(10)
-	filePath := util.CONFIG.UploadFileTempPath + handler.Filename + randStr
+	filePath := util.Config.UploadFileTempPath + handler.Filename + randStr
 	// 创建文件，且文件必须不存在
 	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0666) // 此处假设当前目录下已存在test目录
 	if err != nil {

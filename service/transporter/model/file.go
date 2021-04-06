@@ -43,11 +43,11 @@ type MongoFileDatabase struct {
 
 func NewMongoFileDatabase() (*MongoFileDatabase, error) {
 	var clientOptions *options.ClientOptions
-	if util.CONFIG.Database.Username != "" {
-		clientOptions = options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Username + ":" + util.CONFIG.Database.Password + "@" +
-			util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+	if util.Config.Database.Username != "" {
+		clientOptions = options.Client().ApplyURI("mongodb://" + util.Config.Database.Username + ":" + util.Config.Database.Password + "@" +
+			util.Config.Database.Host + ":" + util.Config.Database.Port)
 	} else {
-		clientOptions = options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+		clientOptions = options.Client().ApplyURI("mongodb://" + util.Config.Database.Host + ":" + util.Config.Database.Port)
 	}
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
@@ -56,7 +56,7 @@ func NewMongoFileDatabase() (*MongoFileDatabase, error) {
 	}
 	return &MongoFileDatabase{
 		collectionName: "File",
-		databaseName:   util.CONFIG.Database.DatabaseName,
+		databaseName:   util.Config.Database.DatabaseName,
 		clientOption:   clientOptions,
 		client:         client,
 	}, nil

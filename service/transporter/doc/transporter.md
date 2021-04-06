@@ -1,4 +1,12 @@
-# Transporter 设计文档
+# Transporter 设计文档 v0.2
+
+## 修正内容与注意事项
+
+*2021-04-05*
+
+- 标记 `Sync` task 弃用
+- 新增 `Migrate` task 接口
+- 修正 StoragePlan 中的 `N`、`K` 定义，与 scheduler 保持一致
 
 ## 功能描述
 
@@ -31,7 +39,7 @@
   1. http://transporter.act.sumblog.cn/
   2. http://192.168.105.2:9648/
 - 测试接口 1 仅为接口 2 的反向代理，两者并无区别，若无法使用，请联系张俊华
-- 测试时，cloudID 请填写 `aliyun-beijing` 
+- 测试时，cloudID 请填写 `aliyun-beijing`
 
 ## 历史版本
 
@@ -171,14 +179,14 @@ Content-Length：ContentLength
   }
   ```
 
-  | 名称                   | 值                                           | 是否必选 | 描述                                                         |
-  | ---------------------- | -------------------------------------------- | -------- | ------------------------------------------------------------ |
-  | TaskType               | "Upload" \| "Download" \| "Sync" \| "Delete" | 必选     | 任务类型，当前实现的任务类型有 Upload、Download、Sync、Delete |
-  | SourcePath             | string                                       | 可选     | 任务的作用路径，创建的任务对 SourcePath 路径下（前缀）的文件进行处理 |
-  | DestinationPath        | string                                       | 可选     | 任务的目的路径，任务完成后，生成的目标文件在网盘中的存储位置 |
-  | Uid                    | string                                       | 必选     | 用户 user id，用户指定特定的用户                             |
-  | SourceStoragePlan      | storagePlanStruct                            | 可选     | 任务作用路径的存储方案                                       |
-  | DestinationStoragePlan | storagePlanStruct                            | 可选     | 任务路径的存储方案                                           |
+  | 名称                   | 值                                                           | 是否必选 | 描述                                                         |
+  | ---------------------- | ------------------------------------------------------------ | -------- | ------------------------------------------------------------ |
+  | TaskType               | "Upload" \| "Download" \| "Sync"（弃用） \| "Delete" \|"Migrate" | 必选     | 任务类型，当前实现的任务类型有 Upload、Download、Sync(弃用)、Delete、Migrate |
+  | SourcePath             | string                                                       | 可选     | 任务的作用路径，创建的任务对 SourcePath 路径下（前缀）的文件进行处理 |
+  | DestinationPath        | string                                                       | 可选     | 任务的目的路径，任务完成后，生成的目标文件在网盘中的存储位置 |
+  | Uid                    | string                                                       | 必选     | 用户 user id，用户指定特定的用户                             |
+  | SourceStoragePlan      | storagePlanStruct                                            | 可选     | 任务作用路径的存储方案                                       |
+  | DestinationStoragePlan | storagePlanStruct                                            | 可选     | 任务路径的存储方案                                           |
 
 - storagePlanStruct：
 
@@ -187,16 +195,16 @@ Content-Length：ContentLength
       "StorageMode": "EC",
       "Clouds": [],
       "N": 3,
-      "K": 1
+      "K": 2
   }
   ```
 
-  | 名称        | 值                | 是否必选 | 描述                                      |
-  | ----------- | ----------------- | -------- | ----------------------------------------- |
-  | StorageMode | "Replica" \| "EC" | 必选     | 存储方案类型  多副本：Replica、纠删吗：EC |
-  | Clouds      | [] cloudStruct    | 必选     | 存储方案云服务提供商                      |
-  | N           | int               | 可选     | 文件数据块分块数量                        |
-  | K           | int               | 可选     | 文件校验块数量                            |
+  | 名称        | 值                | 是否必选 | 描述                                                        |
+  | ----------- | ----------------- | -------- | ----------------------------------------------------------- |
+  | StorageMode | "Replica" \| "EC" | 必选     | 存储方案类型  多副本：Replica、纠删码：EC、迁移模式 Migrate |
+  | Clouds      | [] cloudStruct    | 必选     | 存储方案云服务提供商                                        |
+  | N           | int               | 可选     | 文件块总量                                                  |
+  | K           | int               | 可选     | 文件数据块数量                                              |
 
 - cloudStruct：
 
@@ -221,7 +229,7 @@ Content-Length：ContentLength
     "TaskType": "Upload",
      "Uid": "12",
      "Sid": "tttteeeesssstttt",
-     "DestinationPath":"/path/to/upload/",
+     "DestinationPath":"path/to/upload/",
      "DestinationStoragePlan":{
         "StorageMode": "Replica",
         "Clouds": [
@@ -242,7 +250,7 @@ Content-Length：ContentLength
   {
     "TaskType": "Upload",
      "Uid": "12",
-     "DestinationPath":"/path/to/upload/",
+     "DestinationPath":"path/to/upload/",
      "DestinationStoragePlan":{
         "StorageMode": "EC",
         "Clouds": [
@@ -256,8 +264,8 @@ Content-Length：ContentLength
               "ID": "txyun-beijing"
            }
         ],
-        "N": 2,
-        "K": 1
+        "N": 3,
+        "K": 2
      }
   }
   ```
@@ -282,15 +290,41 @@ Content-Length：ContentLength
               "ID": "txyun-beijing"
            }
         ],
-        "N": 2,
-        "K": 1
+        "N": 3,
+        "K": 2
      }
   }
   ```
 
-  请注意，纠删码模式下，云服务提供商数量必须等于 N+K，且按照云服务商在 Clouds 中出现的顺序，依次存储数据分块以及校验分块
+  请注意，纠删码模式下，云服务提供商数量必须等于 N，且按照云服务商在 Clouds 中出现的顺序，依次存储数据分块以及校验分块
 
-- 创建同步任务 （从纠删码同步到多副本）：
+- 创建下载文件 Task （多副本模式）：
+
+  ```json
+    {
+      "TaskType": "Download",
+       "Uid": "tester",
+       "SourcePath":"path/to/jcspantest.txt",
+       "SourceStoragePlan":{
+          "StorageMode": "Replica",
+          "Clouds": [
+             {
+                "CloudID": "aliyun-beijing"
+             },
+             {
+                "CloudID": "txyun-beijing"
+             },
+             {
+                "CloudID": "ksyun-beijing"
+             }
+          ]
+       }
+    }
+  ```
+  
+  请注意，多副本模式下，将按照 Clouds 中的顺序依次尝试生成下载链接，因此，请将优先级较高的云排在前方
+  
+- ~~创建同步任务 （从纠删码同步到多副本）~~**此接口弃用，请使用 Migrate 接口**：
 
   ```json
   {
@@ -311,8 +345,8 @@ Content-Length：ContentLength
               "ID": "aliyun-beijing"
            }
         ],
-        "N": 2,
-        "K": 1
+        "N": 3,
+        "K": 2
      },
      "DestinationStoragePlan":{
         "StorageMode": "Replica",
@@ -349,9 +383,45 @@ Content-Length：ContentLength
   }
   ```
 
+- 创建迁移任务：
+
+  ```json
+  {
+    "TaskType": "Migrate",
+     "Uid": "tester",
+     "DestinationPath":"",
+     "SourcePath": "",
+     "SourceStoragePlan":{
+        "StorageMode": "Migrate",
+        "Clouds": [
+           {
+              "CloudID": "aliyun-beijing"
+           }
+        ]
+     },
+     "DestinationStoragePlan":{
+        "StorageMode": "Migrate",
+        "Clouds": [
+           {
+              "CloudID": "ksyun-beijing"
+           }
+        ]
+     }
+  }
+  ```
+
+  请注意
+
+  - 迁移时，请将两个 StoragePlan 的 StorageMode 都置为 `Migrate`
+  - SourceStoragePlan 中的 Clouds，请填写 scheduler 计算出的 `CloudsOld` 数组
+  - DestinationStoragePlan 中的 Clouds，请填写 scheduler 计算出的 `CloudsNew` 数组
+  - 请保证 `Destionation` 与 `SourcePath` 相同
+  - 当 `DestinationPath` 和 `SourcePath` 为空时，迁移用户所有文件
+  - 若给出了具体的 `DestinationPath` 和`SourcePath` 则只迁移部分目录下的文件
+
 **返回值示例：**
 
-- 异步任务：如Download task (EC 模式)、Sync 
+- 异步任务：如Download task (EC 模式)、Sync
 
   ```
   {
@@ -373,16 +443,16 @@ Content-Length：ContentLength
   ```
   {
   	"Code": 200,
-	"Msg": "Generate download url OK",
+  	"Msg": "Generate download url OK",
   	"Data": {
-		"Type": "url",
+  		"Type": "url",
   		"Result": "http://jcspan-aliyun-bj-test.oss-cn-beijing.aliyuncs.com/tester/path/to/jcspantest.txt?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=LTAI4G3PCfrg7aXQ6EvuDo25%2F20210329%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210329T122646Z\u0026X-Amz-Expires=1800\u0026X-Amz-SignedHeaders=host\u0026X-Amz-Signature=a27c353b0f0e0bcfd1b30435bd39e8110ba731a636667c0ef544df761670515b"
   	}
   }
   ```
-  
+
   如 Upload 生成token：
-  
+
   ```
   {
   	"Code": 200,
@@ -393,7 +463,6 @@ Content-Length：ContentLength
   	}
   }
   ```
-  
 
 ### 4. DownloadCacheFile
 

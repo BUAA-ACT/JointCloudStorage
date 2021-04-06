@@ -61,11 +61,11 @@ type MongoTaskStorage struct {
 //create a struct MongoTaskStorage
 func NewMongoTaskStorage() (*MongoTaskStorage, error) {
 	var clientOptions *options.ClientOptions
-	if util.CONFIG.Database.Username != "" {
-		clientOptions = options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Username + ":" + util.CONFIG.Database.Password + "@" +
-			util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+	if util.Config.Database.Username != "" {
+		clientOptions = options.Client().ApplyURI("mongodb://" + util.Config.Database.Username + ":" + util.Config.Database.Password + "@" +
+			util.Config.Database.Host + ":" + util.Config.Database.Port)
 	} else {
-		clientOptions = options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+		clientOptions = options.Client().ApplyURI("mongodb://" + util.Config.Database.Host + ":" + util.Config.Database.Port)
 	}
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
@@ -73,7 +73,7 @@ func NewMongoTaskStorage() (*MongoTaskStorage, error) {
 		return nil, err
 	}
 	return &MongoTaskStorage{
-		databaseName:   util.CONFIG.Database.DatabaseName,
+		databaseName:   util.Config.Database.DatabaseName,
 		clientOptions:  clientOptions,
 		client:         client,
 		collectionName: "Task",

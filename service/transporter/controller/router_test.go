@@ -21,7 +21,13 @@ const (
 	DB = "Mongo"
 )
 
+var globalRouter *Router
+var globalTaskProcessor *TaskProcessor
+
 func initRouterAndProcessor() (*Router, *TaskProcessor) {
+	if globalRouter != nil && globalTaskProcessor != nil {
+		return globalRouter, globalTaskProcessor
+	}
 	var storage model.TaskStorage
 	var clientDatabase model.CloudDatabase
 	var fileDatabase model.FileDatabase
@@ -30,7 +36,7 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	if err != nil {
 		return nil, nil
 	}
-	if util.CONFIG.Database.Driver == util.MongoDB {
+	if util.Config.Database.Driver == util.MongoDB {
 		util.ClearAll()
 		storage, _ = model.NewMongoTaskStorage()
 		clientDatabase, _ = model.NewMongoCloudDatabase()
@@ -47,7 +53,7 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	// 初始化 FileInfo 数据库
 	processor.FileDatabase = fileDatabase
 	// 初始化 Lock
-	lock, _ := NewLock(util.CONFIG.ZookeeperHost)
+	lock, _ := NewLock(util.Config.ZookeeperHost)
 	processor.Lock = lock
 	processor.Lock.UnLockAll("/tester")
 	// 初始化 Scheduler
@@ -66,6 +72,8 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	logrus.SetFormatter(&logrus.TextFormatter{
 		ForceColors: true,
 	})
+	globalRouter = router
+	globalTaskProcessor = &processor
 	return router, &processor
 }
 
@@ -334,7 +342,6 @@ func TestReplicaUploadAndDownload(t *testing.T) {
   {
     "TaskType": "Download",
      "Uid": "tester",
-     "Sid": "tttteeeesssstttt",
      "SourcePath":"path/to/jcspantest.txt",
      "SourceStoragePlan":{
         "StorageMode": "Replica",

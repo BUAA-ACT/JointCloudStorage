@@ -44,8 +44,8 @@ func StartServe() {
 				return err
 			}
 			router, _ := initRouterAndProcessor()
-			logrus.Infof("Transporter Started v%v at: %v:%v", util.GetVersionStr(), util.CONFIG.Host, util.CONFIG.Port)
-			logrus.Info(http.ListenAndServe(":"+strconv.Itoa(util.CONFIG.Port), router))
+			logrus.Infof("Transporter Started v%v at: %v:%v", util.GetVersionStr(), util.Config.Host, util.Config.Port)
+			logrus.Info(http.ListenAndServe(":"+strconv.Itoa(util.Config.Port), router))
 			return nil
 		},
 	}
@@ -60,12 +60,12 @@ func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
 	var storage model.TaskStorage
 	var clientDatabase model.CloudDatabase
 	var fileDatabase model.FileDatabase
-	if util.CONFIG.DebugMode {
+	if util.Config.DebugMode {
 		logrus.SetLevel(logrus.DebugLevel)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	if util.CONFIG.Database.Driver == util.MongoDB {
+	if util.Config.Database.Driver == util.MongoDB {
 		storage, _ = model.NewMongoTaskStorage()
 		clientDatabase, _ = model.NewMongoCloudDatabase()
 		fileDatabase, _ = model.NewMongoFileDatabase()
@@ -81,13 +81,13 @@ func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
 	// 初始化 FileInfo 数据库
 	processor.FileDatabase = fileDatabase
 	// 初始化 lock
-	lock, _ := controller.NewLock(util.CONFIG.ZookeeperHost)
+	lock, _ := controller.NewLock(util.Config.ZookeeperHost)
 	processor.Lock = lock
 	//processor.lock.UnLockAll("/tester")
 	// 初始化 scheduler
 	scheduler := controller.JcsPanScheduler{
-		LocalCloudID:     util.CONFIG.LocalCloudID,
-		SchedulerHostUrl: util.CONFIG.SchedulerHost,
+		LocalCloudID:     util.Config.LocalCloudID,
+		SchedulerHostUrl: util.Config.SchedulerHost,
 		ReloadCloudInfo:  true,
 		CloudDatabase:    clientDatabase,
 	}

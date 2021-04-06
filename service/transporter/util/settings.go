@@ -13,7 +13,7 @@ const (
 	AwsS3Client = "Aws"
 )
 
-var CONFIG = Configuration{
+var Config = Configuration{
 	DebugMode: true,
 	Database: DBConfiguration{
 		Driver:       MongoDB,
@@ -63,19 +63,19 @@ func ReadConfigFromFile(configFilepath string) error {
 	if err != nil {
 		return err
 	}
-	CONFIG = conf
+	Config = conf
 	err = CheckConfig()
 	return err
 }
 
 func CheckConfig() (err error) {
-	if IsDir(CONFIG.UploadFileTempPath) {
-		err = os.MkdirAll(CONFIG.UploadFileTempPath, os.ModePerm)
+	if IsDir(Config.UploadFileTempPath) {
+		err = os.MkdirAll(Config.UploadFileTempPath, os.ModePerm)
 	}
-	if IsDir(CONFIG.DownloadFileTempPath) {
-		err = os.MkdirAll(CONFIG.DownloadFileTempPath, os.ModePerm)
+	if IsDir(Config.DownloadFileTempPath) {
+		err = os.MkdirAll(Config.DownloadFileTempPath, os.ModePerm)
 	}
-	if CONFIG.Database.Driver != InMemoryDB && CONFIG.Database.Driver != MongoDB {
+	if Config.Database.Driver != InMemoryDB && Config.Database.Driver != MongoDB {
 		err = errors.New("nonsupport database type")
 	}
 	return

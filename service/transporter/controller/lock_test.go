@@ -6,7 +6,7 @@ import (
 )
 
 func TestLock(t *testing.T) {
-	l, err := NewLock(util.CONFIG.ZookeeperHost)
+	l, err := NewLock(util.Config.ZookeeperHost)
 	if err != nil {
 		t.Fatalf("create Lock connect error: %v", err)
 	}

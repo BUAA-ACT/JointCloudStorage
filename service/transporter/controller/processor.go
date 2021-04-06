@@ -200,7 +200,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 			return "", errors.New(util.ErrorMsgCantGetFileInfo)
 		}
-		rebuildPath := util.CONFIG.DownloadFileTempPath + util.GenRandomString(20)
+		rebuildPath := util.Config.DownloadFileTempPath + util.GenRandomString(20)
 		shards := make([]string, N+K)
 		for i := range shards {
 			// 设置临时分块存储路径
@@ -223,7 +223,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 			return "", errors.New(util.ErrorMsgCantGetFileInfo)
 		}
-		rebuildPath := util.CONFIG.DownloadFileTempPath + util.GenRandomString(20)
+		rebuildPath := util.Config.DownloadFileTempPath + util.GenRandomString(20)
 		err = storageClients[0].Download(t.SourcePath, rebuildPath, t.Uid)
 		if err != nil {
 			logrus.Errorf("Download Replica %v from %v fail: %v", t.SourcePath, storageClients[0], err)
@@ -426,7 +426,7 @@ func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
 		}
 		objectsChan := srcClient.Index(t.SourcePath, t.Uid)
 		for object := range objectsChan {
-			rebuildPath := util.CONFIG.DownloadFileTempPath + util.GenRandomString(20)
+			rebuildPath := util.Config.DownloadFileTempPath + util.GenRandomString(20)
 			err = srcClient.Download(object.Key, rebuildPath, t.Uid)
 			if err != nil {
 				logrus.Errorf("Download Replica %v from %v fail: %v", t.SourcePath, srcClient, err)

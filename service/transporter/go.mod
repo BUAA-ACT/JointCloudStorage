@@ -3,6 +3,7 @@ module act.buaa.edu.cn/jcspan/transporter
 go 1.15
 
 require (
+	github.com/alibaba/pouch v0.0.0-20200907055328-bc5839e3c493
 	github.com/aws/aws-sdk-go v1.34.28
 	github.com/aws/aws-sdk-go-v2 v1.3.0 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.1.3 // indirect

@@ -55,11 +55,11 @@ type MongoCloudDatabase struct {
 //get a MongoCloudDatabase
 func NewMongoCloudDatabase() (*MongoCloudDatabase, error) {
 	var clientOptions *options.ClientOptions
-	if util.CONFIG.Database.Username != "" {
-		clientOptions = options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Username + ":" + util.CONFIG.Database.Password + "@" +
-			util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+	if util.Config.Database.Username != "" {
+		clientOptions = options.Client().ApplyURI("mongodb://" + util.Config.Database.Username + ":" + util.Config.Database.Password + "@" +
+			util.Config.Database.Host + ":" + util.Config.Database.Port)
 	} else {
-		clientOptions = options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+		clientOptions = options.Client().ApplyURI("mongodb://" + util.Config.Database.Host + ":" + util.Config.Database.Port)
 	}
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
@@ -67,7 +67,7 @@ func NewMongoCloudDatabase() (*MongoCloudDatabase, error) {
 		return nil, err
 	}
 	return &MongoCloudDatabase{
-		databaseName:   util.CONFIG.Database.DatabaseName,
+		databaseName:   util.Config.Database.DatabaseName,
 		collectionName: "Cloud",
 		clientOptions:  clientOptions,
 		client:         client,
@@ -80,7 +80,7 @@ func NewMongoCloudDatabase() (*MongoCloudDatabase, error) {
 func (m *MongoCloudDatabase) UpdateClient() error {
 	err := m.client.Ping(context.TODO(), nil)
 	if err != nil {
-		clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+		clientOptions := options.Client().ApplyURI("mongodb://" + util.Config.Database.Host + ":" + util.Config.Database.Port)
 		m.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
 			return err
@@ -102,7 +102,7 @@ func (m *MongoCloudDatabase) GetStorageClient(sid string, path string) StorageCl
 func (m *MongoCloudDatabase) GetStorageClientFromName(sid string, name string) (StorageClient, error) {
 	if _, ok := m.ClientMap[name]; ok {
 		if time.Now().Sub(m.ReadTimeMap[name]).Minutes() < 5 {
-			if util.CONFIG.DefaultStorageClient == util.MinioClient {
+			if util.Config.DefaultStorageClient == util.MinioClient {
 				return m.ClientMap[name].(*S3BucketStorageClient), nil
 			} else {
 				return m.ClientMap[name].(*AWSBucketStorageClient), nil
@@ -120,7 +120,7 @@ func (m *MongoCloudDatabase) GetStorageClientFromName(sid string, name string) (
 	var result interface{}
 
 	//get the collection and find by _id
-	collection := m.client.Database(util.CONFIG.Database.DatabaseName).Collection("Cloud")
+	collection := m.client.Database(util.Config.Database.DatabaseName).Collection("Cloud")
 	err = collection.FindOne(context.TODO(), bson.D{{"cloud_id", name}}).Decode(&result)
 	if err != nil {
 		log.Print(err)
@@ -134,7 +134,7 @@ func (m *MongoCloudDatabase) GetStorageClientFromName(sid string, name string) (
 		accessKeyId := res["access_key"].(string)
 		secretAccessKey := res["secret_key"].(string)
 		bucketName := res["bucket"].(string)
-		if util.CONFIG.DefaultStorageClient == util.MinioClient {
+		if util.Config.DefaultStorageClient == util.MinioClient {
 			minioClient, err := GetMinioClient(endpoint, accessKeyId, secretAccessKey)
 			if err != nil {
 				return nil, err
@@ -175,7 +175,7 @@ func (m *MongoCloudDatabase) GetCloudInfoFromCloudID(cloudID string) (*Cloud, er
 	var result Cloud
 
 	//get the collection and find by _id
-	collection := m.client.Database(util.CONFIG.Database.DatabaseName).Collection("Cloud")
+	collection := m.client.Database(util.Config.Database.DatabaseName).Collection("Cloud")
 	err = collection.FindOne(context.TODO(), bson.D{{"cloud_id", cloudID}}).Decode(&result)
 	if err != nil {
 		log.Print(err)
@@ -227,7 +227,7 @@ func NewSimpleInMemoryStorageDatabase() *SimpleInMemoryStorageDatabase {
 
 func (database *SimpleInMemoryStorageDatabase) GetStorageClientFromName(uid string, name string) (StorageClient, error) {
 	bucketName := "jcspan-aliyun-bj-test"
-	if util.CONFIG.DefaultStorageClient == util.MinioClient {
+	if util.Config.DefaultStorageClient == util.MinioClient {
 		return &S3BucketStorageClient{
 			minioClient: database.s3ClientMap[name].minioClient,
 			bucketName:  bucketName,

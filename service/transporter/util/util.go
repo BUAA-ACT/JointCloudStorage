@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"errors"
+	"fmt"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -14,6 +15,25 @@ import (
 	"os"
 	"time"
 )
+
+var Logger *logrus.Logger
+
+func InitLogger() {
+	Logger = logrus.New()
+}
+
+func Log(level logrus.Level, position string, reason string, expect string, got string, detail string) (msg string) {
+	Logger.WithFields(logrus.Fields{
+		"position": position,
+		"reason":   reason,
+		"expect":   expect,
+		"got":      got,
+		"detail":   detail,
+		"level":    level,
+	})
+	msg = fmt.Sprintf("[%s], %s %s Excpect: %v, Got: %v Detail: %v", level, position, reason, expect, got, detail)
+	return
+}
 
 func CheckErr(err error, label string) bool {
 	if err != nil {
@@ -151,15 +171,15 @@ func GetFileContentType(out *os.File) (string, error) {
 }
 
 func ClearAll() {
-	clientOptions := options.Client().ApplyURI("mongodb://" + CONFIG.Database.Host + ":" + CONFIG.Database.Port)
+	clientOptions := options.Client().ApplyURI("mongodb://" + Config.Database.Host + ":" + Config.Database.Port)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	defer client.Disconnect(context.TODO())
 	if err != nil {
 		log.Print(err)
 	}
-	collection := client.Database(CONFIG.Database.DatabaseName).Collection("Task")
+	collection := client.Database(Config.Database.DatabaseName).Collection("Task")
 	collection.Drop(context.TODO())
-	collection = client.Database(CONFIG.Database.DatabaseName).Collection("File")
+	collection = client.Database(Config.Database.DatabaseName).Collection("File")
 	collection.Drop(context.TODO())
 	return
 }
