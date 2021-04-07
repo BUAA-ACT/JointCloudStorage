@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -23,6 +24,24 @@ const (
 
 var globalRouter *Router
 var globalTaskProcessor *TaskProcessor
+var testEnv = "local"
+var hostUrl = "http://192.168.105.13:8083"
+
+func TestMain(m *testing.M) {
+	if !flag.Parsed() {
+		flag.Parse()
+	}
+
+	argList := flag.Args() // flag.Args() 返回 -args 后面的所有参数，以切片表示，每个元素代表一个参数
+	for _, arg := range argList {
+		if arg == "cloud" {
+			testEnv = "cloud"
+		}
+	}
+	initRouterAndProcessor()
+	exitCode := m.Run()
+	os.Exit(exitCode)
+}
 
 func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	if globalRouter != nil && globalTaskProcessor != nil {
@@ -80,6 +99,32 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	return router, &processor
 }
 
+func sendDataAndRecord(method string, url string, data io.Reader) (resp *http.Response) {
+	if testEnv == "local" {
+		req, _ := http.NewRequest(method, url, data)
+		recorder := httptest.NewRecorder()
+		globalRouter.ServeHTTP(recorder, req)
+		return recorder.Result()
+	} else if testEnv == "cloud" {
+		req, _ := http.NewRequest(method, hostUrl+url, data)
+		resp, _ = http.DefaultClient.Do(req)
+		return resp
+	}
+	return nil
+}
+
+func sendRequestAndRecord(req *http.Request) (resp *http.Response) {
+	if testEnv == "local" {
+		recorder := httptest.NewRecorder()
+		globalRouter.ServeHTTP(recorder, req)
+		return recorder.Result()
+	} else if testEnv == "cloud" {
+		resp, _ = http.DefaultClient.Do(req)
+		return resp
+	}
+	return nil
+}
+
 func setCookie(req *http.Request) {
 	expire := time.Now().AddDate(0, 0, 1)
 	cookie := http.Cookie{
@@ -90,8 +135,18 @@ func setCookie(req *http.Request) {
 	req.AddCookie(&cookie)
 }
 
+func waitProcessorAllDone() {
+	for true {
+		time.Sleep(time.Millisecond * 500)
+		if testEnv == "local" {
+			if globalTaskProcessor.taskStorage.IsAllDone() {
+				return
+			}
+		}
+	}
+}
+
 func TestECUploadAndDownload(t *testing.T) {
-	router, processor := initRouterAndProcessor()
 	t.Run("Create EC Upload Task and process", func(t *testing.T) {
 		jsonStr := []byte(`
 {
@@ -115,11 +170,9 @@ func TestECUploadAndDownload(t *testing.T) {
       "K": 2
    }
 }`)
-		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
-		recorder := httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
+		resp := sendDataAndRecord("POST", "/task", bytes.NewBuffer(jsonStr))
 		var reply RequestTaskReply
-		_ = json.NewDecoder(recorder.Body).Decode(&reply)
+		_ = json.NewDecoder(resp.Body).Decode(&reply)
 		if reply.Code != http.StatusOK {
 			t.Fatalf("create upload task fail: %v", reply.Msg)
 		}
@@ -132,11 +185,10 @@ func TestECUploadAndDownload(t *testing.T) {
 			t.Error("Open test file Fail")
 		}
 		defer f.Close()
-		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", token)
+		req, _ := postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", token)
 		setCookie(req)
-		recorder = httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
-		waitUntilAllDone(processor)
+		sendRequestAndRecord(req)
+		waitProcessorAllDone()
 	})
 	t.Run("Create EC Download Task", func(t *testing.T) {
 		jsonStr := []byte(`
@@ -164,17 +216,16 @@ func TestECUploadAndDownload(t *testing.T) {
   }
 `)
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
-		recorder := httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
+		resp := sendRequestAndRecord(req)
 		var reply RequestTaskReply
-		_ = json.NewDecoder(recorder.Body).Decode(&reply)
+		_ = json.NewDecoder(resp.Body).Decode(&reply)
 		tid := reply.Data.Result
 		logrus.Debugf("tid: %v", tid)
-		waitUntilAllDone(processor)
+		waitProcessorAllDone()
 	})
 	var url string
 	t.Run("Check File DB and get download url", func(t *testing.T) {
-		fileInfo, err := processor.FileDatabase.GetFileInfo("tester/path/to/jcspantest.txt")
+		fileInfo, err := globalTaskProcessor.FileDatabase.GetFileInfo("tester/path/to/jcspantest.txt")
 		if err != nil {
 			t.Fatalf("get file info err:%v", err)
 		}
@@ -183,14 +234,15 @@ func TestECUploadAndDownload(t *testing.T) {
 			t.Fatalf("get download url err")
 		}
 		t.Logf("download url: %v", url)
-		waitUntilAllDone(processor)
+		waitProcessorAllDone()
 	})
 	t.Run("Get file", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", url, nil)
-		recorder := httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
-		fmt.Println(recorder.Body)
-		if recorder.Code != http.StatusOK {
+		resp := sendRequestAndRecord(req)
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		fmt.Println(buf.String())
+		if resp.StatusCode != http.StatusOK {
 			t.Error("Get file fail")
 		}
 	})

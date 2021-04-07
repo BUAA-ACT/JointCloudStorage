@@ -68,8 +68,23 @@ func NewRouter(processor TaskProcessor) *Router {
 	router.GET("/index/*path", router.FileIndex)
 	router.POST("/task", router.CreateTask)
 	router.GET("/cache_file", util.JWTAuthMiddleware(), router.GetLocalFileByToken)
+	router.GET("/state/*key", router.GetState)
 	rand.Seed(time.Now().Unix())
 	return &router
+}
+
+func (router *Router) GetState(c *gin.Context) {
+	key := c.Param("key")
+	switch key {
+	case "process_state":
+		if router.processor.taskStorage.IsAllDone() {
+			c.String(http.StatusOK, "done")
+		} else {
+			c.String(http.StatusOK, "working")
+		}
+	default:
+		c.String(http.StatusBadRequest, "key not imply")
+	}
 }
 
 func (router *Router) GetLocalFileByToken(c *gin.Context) {
