@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -24,8 +25,9 @@ const (
 
 var globalRouter *Router
 var globalTaskProcessor *TaskProcessor
-var testEnv = "local"
-var hostUrl = "http://192.168.105.13:8083"
+var testEnv = "cloud"
+var hostUrl = "127.0.0.1:8083"
+var scheme = "http"
 
 func TestMain(m *testing.M) {
 	if !flag.Parsed() {
@@ -38,7 +40,12 @@ func TestMain(m *testing.M) {
 			testEnv = "cloud"
 		}
 	}
-	initRouterAndProcessor()
+	if testEnv == "local" {
+		initRouterAndProcessor()
+	} else if testEnv == "cloud" {
+		sendDataAndRecord("GET", "/debug/unlock_test_user", nil)
+		sendDataAndRecord("GET", "/debug/drop_task_table", nil)
+	}
 	exitCode := m.Run()
 	os.Exit(exitCode)
 }
@@ -99,15 +106,15 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	return router, &processor
 }
 
-func sendDataAndRecord(method string, url string, data io.Reader) (resp *http.Response) {
+func sendDataAndRecord(method string, url string, data io.Reader) *http.Response {
 	if testEnv == "local" {
 		req, _ := http.NewRequest(method, url, data)
 		recorder := httptest.NewRecorder()
 		globalRouter.ServeHTTP(recorder, req)
 		return recorder.Result()
 	} else if testEnv == "cloud" {
-		req, _ := http.NewRequest(method, hostUrl+url, data)
-		resp, _ = http.DefaultClient.Do(req)
+		req, _ := http.NewRequest(method, scheme+"://"+hostUrl+url, data)
+		resp, _ := http.DefaultClient.Do(req)
 		return resp
 	}
 	return nil
@@ -119,7 +126,13 @@ func sendRequestAndRecord(req *http.Request) (resp *http.Response) {
 		globalRouter.ServeHTTP(recorder, req)
 		return recorder.Result()
 	} else if testEnv == "cloud" {
-		resp, _ = http.DefaultClient.Do(req)
+		req.Host = hostUrl
+		req.URL.Scheme = scheme
+		req.URL.Host = hostUrl
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			logrus.Errorf("send request err: %v", err)
+		}
 		return resp
 	}
 	return nil
@@ -142,8 +155,39 @@ func waitProcessorAllDone() {
 			if globalTaskProcessor.taskStorage.IsAllDone() {
 				return
 			}
+		} else if testEnv == "cloud" {
+			resp := sendDataAndRecord("GET", "/state/process_state", nil)
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(resp.Body)
+			result := buf.String()
+			if result == "done" {
+				return
+			}
 		}
 	}
+}
+
+func getDownloadUrl(fileID string) string {
+	if testEnv == "local" {
+		fileInfo, err := globalTaskProcessor.FileDatabase.GetFileInfo(fileID)
+		if err != nil {
+			logrus.Fatalf("get file info err:%v", err)
+		}
+		url := fileInfo.DownloadUrl
+		if url == "" {
+			logrus.Fatalf("get download url err")
+		}
+		return url
+	} else if testEnv == "cloud" {
+		resp := sendDataAndRecord("GET", "/debug/get_file_download_url?id="+fileID, nil)
+		if resp.StatusCode != http.StatusOK {
+			return ""
+		}
+		bodyRes, _ := ioutil.ReadAll(resp.Body)
+		result := string(bodyRes)
+		return result
+	}
+	return ""
 }
 
 func TestECUploadAndDownload(t *testing.T) {
@@ -225,14 +269,7 @@ func TestECUploadAndDownload(t *testing.T) {
 	})
 	var url string
 	t.Run("Check File DB and get download url", func(t *testing.T) {
-		fileInfo, err := globalTaskProcessor.FileDatabase.GetFileInfo("tester/path/to/jcspantest.txt")
-		if err != nil {
-			t.Fatalf("get file info err:%v", err)
-		}
-		url = fileInfo.DownloadUrl
-		if url == "" {
-			t.Fatalf("get download url err")
-		}
+		url = getDownloadUrl("tester/path/to/jcspantest.txt")
 		t.Logf("download url: %v", url)
 		waitProcessorAllDone()
 	})

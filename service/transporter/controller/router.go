@@ -68,9 +68,30 @@ func NewRouter(processor TaskProcessor) *Router {
 	router.GET("/index/*path", router.FileIndex)
 	router.POST("/task", router.CreateTask)
 	router.GET("/cache_file", util.JWTAuthMiddleware(), router.GetLocalFileByToken)
-	router.GET("/state/*key", router.GetState)
+	router.GET("/state/:key", router.GetState)
+	router.GET("/debug/:key", router.Debug)
 	rand.Seed(time.Now().Unix())
 	return &router
+}
+
+func (router *Router) Debug(c *gin.Context) {
+	key := c.Param("key")
+	switch key {
+	case "unlock_test_user":
+		router.processor.Lock.UnLockAll("/tester")
+	case "drop_task_table":
+		util.ClearAll()
+	case "get_file_download_url":
+		fileID := c.Query("id")
+		info, err := router.processor.FileDatabase.GetFileInfo(fileID)
+		if err != nil {
+			c.String(http.StatusBadRequest, "")
+			return
+		}
+		c.String(http.StatusOK, info.DownloadUrl)
+	default:
+		c.String(http.StatusBadRequest, "key not imply")
+	}
 }
 
 func (router *Router) GetState(c *gin.Context) {
@@ -247,7 +268,7 @@ func taskRequestReplyErr(errCode int, errMsg string, c *gin.Context) {
 		Msg:  errMsg,
 		Data: TaskResult{},
 	}
-	c.JSON(util.ErrorCodeWrongTaskType, requestTaskReply)
+	c.JSON(http.StatusBadGateway, requestTaskReply)
 }
 
 func Index(c *gin.Context) {
