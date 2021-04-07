@@ -71,6 +71,13 @@ func ReadConfigFromFile(configFilepath string) error {
 }
 
 func CheckConfig() (err error) {
+	if Config.UploadFileTempPath[len(Config.UploadFileTempPath)-1] != '/' {
+		Config.UploadFileTempPath += "/"
+	}
+	if Config.DownloadFileTempPath[len(Config.DownloadFileTempPath)-1] != '/' {
+		Config.DownloadFileTempPath += "/"
+	}
+
 	if !IsDir(Config.UploadFileTempPath) {
 		Log(logrus.InfoLevel, "CheckConfig", "Create upload Dir", "", "", Config.UploadFileTempPath)
 		err = os.MkdirAll(Config.UploadFileTempPath, os.ModePerm)

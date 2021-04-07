@@ -286,7 +286,6 @@ func TestECUploadAndDownload(t *testing.T) {
 }
 
 func TestECUploadAndDownloadMultiCloud(t *testing.T) {
-	router, processor := initRouterAndProcessor()
 	t.Run("Create EC Upload Task and process", func(t *testing.T) {
 		jsonStr := []byte(`
 {
@@ -310,11 +309,9 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
       "K": 2
    }
 }`)
-		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
-		recorder := httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
+		resp := sendDataAndRecord("POST", "/task", bytes.NewBuffer(jsonStr))
 		var reply RequestTaskReply
-		err := json.NewDecoder(recorder.Body).Decode(&reply)
+		err := json.NewDecoder(resp.Body).Decode(&reply)
 
 		token := reply.Data.Result
 
@@ -324,11 +321,10 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
 			t.Error("Open test file Fail")
 		}
 		defer f.Close()
-		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", token)
+		req, _ := postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", token)
 		setCookie(req)
-		recorder = httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
-		waitUntilAllDone(processor)
+		sendRequestAndRecord(req)
+		waitProcessorAllDone()
 	})
 	t.Run("Create EC Download Task", func(t *testing.T) {
 		jsonStr := []byte(`
@@ -356,39 +352,31 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
   }
 `)
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
-		recorder := httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
+		resp := sendRequestAndRecord(req)
 		var reply RequestTaskReply
-		_ = json.NewDecoder(recorder.Body).Decode(&reply)
+		_ = json.NewDecoder(resp.Body).Decode(&reply)
 		tid := reply.Data.Result
 		logrus.Debugf("tid: %v", tid)
-		waitUntilAllDone(processor)
+		waitProcessorAllDone()
 	})
 	var url string
 	t.Run("Check File DB and get download url", func(t *testing.T) {
-		fileInfo, err := processor.FileDatabase.GetFileInfo("tester/path/to/jcspantest.txt")
-		if err != nil {
-			t.Fatalf("get file info err:%v", err)
-		}
-		url = fileInfo.DownloadUrl
-		if url == "" {
-			t.Fatalf("get download url err")
-		}
+		url = getDownloadUrl("tester/path/to/jcspantest.txt")
 		t.Logf("download url: %v", url)
-		waitUntilAllDone(processor)
+		waitProcessorAllDone()
 	})
 	t.Run("Get file", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", url, nil)
-		recorder := httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
-		fmt.Println(recorder.Body)
-		if recorder.Code != http.StatusOK {
+		resp := sendRequestAndRecord(req)
+		if resp.StatusCode != http.StatusOK {
 			t.Error("Get file fail")
 		}
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		fmt.Println(buf.String())
 	})
 }
 func TestReplicaUploadAndDownload(t *testing.T) {
-	router, processor := initRouterAndProcessor()
 	t.Run("Create Replica Upload Task and process", func(t *testing.T) {
 		jsonStr := []byte(`{
    "TaskType": "Upload",
@@ -407,10 +395,9 @@ func TestReplicaUploadAndDownload(t *testing.T) {
    }
 }`)
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
-		recorder := httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
+		resp := sendRequestAndRecord(req)
 		var reply RequestTaskReply
-		_ = json.NewDecoder(recorder.Body).Decode(&reply)
+		_ = json.NewDecoder(resp.Body).Decode(&reply)
 
 		tid := reply.Data.Result
 
@@ -421,13 +408,10 @@ func TestReplicaUploadAndDownload(t *testing.T) {
 		}
 		defer f.Close()
 
-		//req,_ http.Post("/upload/jcspan/path/to/file", "multipart/form-data", body)
-		//	req, _ = http.NewRequest("POST", "/upload/jcspan/path/to/file", body)
 		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", tid)
 		setCookie(req)
-		recorder = httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
-		waitUntilAllDone(processor)
+		sendRequestAndRecord(req)
+		waitProcessorAllDone()
 	})
 	t.Run("Create Replica Download Task", func(t *testing.T) {
 		jsonStr := []byte(`
@@ -452,22 +436,20 @@ func TestReplicaUploadAndDownload(t *testing.T) {
   }
 `)
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
-		recorder := httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
+		resp := sendRequestAndRecord(req)
 		var reply RequestTaskReply
-		_ = json.NewDecoder(recorder.Body).Decode(&reply)
+		_ = json.NewDecoder(resp.Body).Decode(&reply)
 		downloadUrl := reply.Data.Result
 		t.Logf("tid: %v", downloadUrl)
-		waitUntilAllDone(processor)
+		waitProcessorAllDone()
 	})
 }
 
 func TestEC2ReplicaSync(t *testing.T) {
-	router, processor := initRouterAndProcessor()
 	dstPath := "tmp/test/sync/未命名.png"
-	testECUpload(t, router, processor, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	testECUpload(t, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
 	dstPath = "tmp/test/sync/test.txt"
-	testECUpload(t, router, processor, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	testECUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
 	jsonStr := []byte(`
 {
   "TaskType": "Sync",
@@ -503,22 +485,20 @@ func TestEC2ReplicaSync(t *testing.T) {
    }
 }`)
 	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
-	recorder := httptest.NewRecorder()
-	router.ServeHTTP(recorder, req)
+	resp := sendRequestAndRecord(req)
 	var reply RequestTaskReply
-	_ = json.NewDecoder(recorder.Body).Decode(&reply)
+	_ = json.NewDecoder(resp.Body).Decode(&reply)
 	if reply.Code != http.StatusOK {
 		t.Fatalf("Sync fail :%v", reply.Msg)
 	}
-	waitUntilAllDone(processor)
+	waitProcessorAllDone()
 }
 
 func TestReplicaMigrate(t *testing.T) {
-	router, processor := initRouterAndProcessor()
 	dstPath := "tmp/test/Migrate/未命名.png"
-	testECUpload(t, router, processor, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	testECUpload(t, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
 	dstPath = "tmp/test/migrate/test.txt"
-	testECUpload(t, router, processor, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	testECUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
 	jsonStr := []byte(`
 {
   "TaskType": "Migrate",
@@ -543,22 +523,20 @@ func TestReplicaMigrate(t *testing.T) {
    }
 }`)
 	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
-	recorder := httptest.NewRecorder()
-	router.ServeHTTP(recorder, req)
+	resp := sendRequestAndRecord(req)
 	var reply RequestTaskReply
-	_ = json.NewDecoder(recorder.Body).Decode(&reply)
+	_ = json.NewDecoder(resp.Body).Decode(&reply)
 	if reply.Code != http.StatusOK {
 		t.Fatalf("Sync fail :%v", reply.Msg)
 	}
-	waitUntilAllDone(processor)
+	waitProcessorAllDone()
 }
 
 func TestReplica2ECSync(t *testing.T) {
-	router, processor := initRouterAndProcessor()
 	dstPath := "tmp/test/sync/未命名.png"
-	testReplicaUpload(t, router, processor, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
 	dstPath = "tmp/test/sync/test.txt"
-	testReplicaUpload(t, router, processor, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
 	jsonStr := []byte(`
 {
   "TaskType": "Sync",
@@ -594,22 +572,20 @@ func TestReplica2ECSync(t *testing.T) {
    }
 }`)
 	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
-	recorder := httptest.NewRecorder()
-	router.ServeHTTP(recorder, req)
+	resp := sendRequestAndRecord(req)
 	var reply RequestTaskReply
-	_ = json.NewDecoder(recorder.Body).Decode(&reply)
+	_ = json.NewDecoder(resp.Body).Decode(&reply)
 	if reply.Code != http.StatusOK {
 		t.Fatalf("Sync fail :%v", reply.Msg)
 	}
-	waitUntilAllDone(processor)
+	waitProcessorAllDone()
 }
 
 func TestReplicaUploadAndDelete(t *testing.T) {
-	router, processor := initRouterAndProcessor()
 	dstPath := "tmp/test/sync/未命名.png"
-	testReplicaUpload(t, router, processor, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
 	dstPath = "tmp/test/sync/test.txt"
-	testReplicaUpload(t, router, processor, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
 	jsonStr := []byte(`
 {
   "TaskType": "Delete",
@@ -628,22 +604,20 @@ func TestReplicaUploadAndDelete(t *testing.T) {
    }
 }`)
 	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
-	recorder := httptest.NewRecorder()
-	router.ServeHTTP(recorder, req)
+	resp := sendRequestAndRecord(req)
 	var reply RequestTaskReply
-	_ = json.NewDecoder(recorder.Body).Decode(&reply)
+	_ = json.NewDecoder(resp.Body).Decode(&reply)
 	if reply.Code != http.StatusOK {
 		t.Fatalf("task fail :%v", reply.Msg)
 	}
-	waitUntilAllDone(processor)
+	waitProcessorAllDone()
 }
 
 func TestECUploadAndDelete(t *testing.T) {
-	router, processor := initRouterAndProcessor()
 	dstPath := "tmp/test/del/未命名.png"
-	testECUpload(t, router, processor, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	testECUpload(t, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
 	dstPath = "tmp/test/del/test.txt"
-	testECUpload(t, router, processor, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	testECUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
 	jsonStr := []byte(`
 {
   "TaskType": "Delete",
@@ -667,22 +641,20 @@ func TestECUploadAndDelete(t *testing.T) {
    }
 }`)
 	req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonStr))
-	recorder := httptest.NewRecorder()
-	router.ServeHTTP(recorder, req)
+	resp := sendRequestAndRecord(req)
 	var reply RequestTaskReply
-	_ = json.NewDecoder(recorder.Body).Decode(&reply)
+	_ = json.NewDecoder(resp.Body).Decode(&reply)
 	if reply.Code != http.StatusOK {
 		t.Fatalf("task fail :%v", reply.Msg)
 	}
-	waitUntilAllDone(processor)
+	waitProcessorAllDone()
 }
 
 func TestMultiUpload(t *testing.T) {
-	router, processor := initRouterAndProcessor()
 	dstPath := "tmp/test/upload/未命名.png"
-	testReplicaUpload(t, router, processor, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
 	dstPath = "tmp/test/upload/未命名.png"
-	testReplicaUpload(t, router, processor, dstPath, "../test/tmp/未命名1.png", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/未命名1.png", "aliyun-beijing")
 }
 
 func postFile(filename string, filepath string, target_url string, token string) (*http.Request, error) {
@@ -737,7 +709,7 @@ func waitUntilAllDone(processor *TaskProcessor) {
 	}
 }
 
-func testECUpload(t *testing.T, router *Router, processor *TaskProcessor, dstPath string, localPath string, cloud string) {
+func testECUpload(t *testing.T, dstPath string, localPath string, cloud string) {
 	t.Run("Create EC Upload Task and process", func(t *testing.T) {
 		jsonStr := fmt.Sprintf(`
 {
@@ -765,10 +737,9 @@ func testECUpload(t *testing.T, router *Router, processor *TaskProcessor, dstPat
 		jsonByte := []byte(jsonStr)
 
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonByte))
-		recorder := httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
+		resp := sendRequestAndRecord(req)
 		var reply RequestTaskReply
-		_ = json.NewDecoder(recorder.Body).Decode(&reply)
+		_ = json.NewDecoder(resp.Body).Decode(&reply)
 		if reply.Code != http.StatusOK {
 			t.Fatalf("task fail :%v", reply.Msg)
 		}
@@ -776,14 +747,12 @@ func testECUpload(t *testing.T, router *Router, processor *TaskProcessor, dstPat
 		url := fmt.Sprintf("/upload/%v", dstPath)
 
 		req, _ = postFile("test.txt", localPath, url, tid)
-		setCookie(req)
-		recorder = httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
-		waitUntilAllDone(processor)
+		sendRequestAndRecord(req)
+		waitProcessorAllDone()
 	})
 }
 
-func testReplicaUpload(t *testing.T, router *Router, processor *TaskProcessor, dstPath string, localPath string, cloud string) {
+func testReplicaUpload(t *testing.T, dstPath string, localPath string, cloud string) {
 	t.Run("Create Replica Upload Task and process", func(t *testing.T) {
 		jsonStr := fmt.Sprintf(`
 {
@@ -809,10 +778,9 @@ func testReplicaUpload(t *testing.T, router *Router, processor *TaskProcessor, d
 		jsonByte := []byte(jsonStr)
 
 		req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(jsonByte))
-		recorder := httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
+		resp := sendRequestAndRecord(req)
 		var reply RequestTaskReply
-		_ = json.NewDecoder(recorder.Body).Decode(&reply)
+		_ = json.NewDecoder(resp.Body).Decode(&reply)
 		if reply.Code != http.StatusOK {
 			t.Fatalf("task fail :%v", reply.Msg)
 		}
@@ -822,8 +790,7 @@ func testReplicaUpload(t *testing.T, router *Router, processor *TaskProcessor, d
 
 		req, _ = postFile("test.txt", localPath, url, tid)
 		setCookie(req)
-		recorder = httptest.NewRecorder()
-		router.ServeHTTP(recorder, req)
-		waitUntilAllDone(processor)
+		sendRequestAndRecord(req)
+		waitProcessorAllDone()
 	})
 }
