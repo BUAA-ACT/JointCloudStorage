@@ -5,6 +5,7 @@ import (
 	"act.buaa.edu.cn/jcspan/transporter/util"
 	"github.com/alibaba/pouch/pkg/kmutex"
 	"github.com/sirupsen/logrus"
+	"os"
 )
 
 type TrafficMonitor struct {
@@ -53,6 +54,19 @@ func (monitor TrafficMonitor) AddVolume(uid string, delta int64) (size int64, er
 	return user.DataStats.Volume, nil
 }
 
+func (monitor TrafficMonitor) AddUploadTrafficFromFile(uid string, path string) {
+	go func() {
+		fi, err := os.Stat(path)
+		if err != nil {
+			util.Log(logrus.ErrorLevel,
+				"TrafficMonitor AddUploadFromFile",
+				"can't get file state", "", "", err.Error())
+			return
+		}
+		_, _ = monitor.AddUploadTraffic(uid, fi.Size())
+	}()
+}
+
 func (monitor TrafficMonitor) AddUploadTraffic(uid string, delta int64) (size int64, err error) {
 	user, err := monitor.getUserAndLock(uid)
 	if err != nil {
@@ -73,6 +87,18 @@ func (monitor TrafficMonitor) AddUploadTraffic(uid string, delta int64) (size in
 		return 0, err
 	}
 	return user.DataStats.UploadTraffic[util.Config.LocalCloudID], nil
+}
+func (monitor TrafficMonitor) AddDownloadTrafficFromFile(uid string, path string) {
+	go func() {
+		fi, err := os.Stat(path)
+		if err != nil {
+			util.Log(logrus.ErrorLevel,
+				"TrafficMonitor AddDownloadFromFile",
+				"can't get file state", "", "", err.Error())
+			return
+		}
+		_, _ = monitor.AddDownloadTraffic(uid, fi.Size())
+	}()
 }
 func (monitor TrafficMonitor) AddDownloadTraffic(uid string, delta int64) (size int64, err error) {
 	user, err := monitor.getUserAndLock(uid)

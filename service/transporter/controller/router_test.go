@@ -64,6 +64,9 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 		CloudDatabase:    clientDatabase,
 	}
 	processor.Scheduler = &scheduler
+	// 初始化 Monitor
+	userDB, err := model.NewMongoUserDatabase()
+	processor.Monitor = NewTrafficMonitor(userDB)
 	// 初始化路由
 	router := NewTestRouter(processor)
 	// 启动 processor

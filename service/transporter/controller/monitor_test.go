@@ -30,7 +30,7 @@ func TestTrafficMonitor(t *testing.T) {
 
 	t.Run("test AddVolume", func(t *testing.T) {
 		var wg sync.WaitGroup
-		for i := 0; i < 100; i++ {
+		for i := 0; i < 20; i++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -44,13 +44,13 @@ func TestTrafficMonitor(t *testing.T) {
 		}
 		wg.Wait()
 		user, _ := db.GetUserFromID("tester")
-		if user.DataStats.Volume != 320*100 {
+		if user.DataStats.Volume != 320*20 {
 			t.Fatalf("teat AddVolum fail, expect 32000, got %v", user.DataStats.Volume)
 		}
 	})
 	t.Run("test AddUpload", func(t *testing.T) {
 		var wg sync.WaitGroup
-		for i := 0; i < 100; i++ {
+		for i := 0; i < 20; i++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -64,8 +64,8 @@ func TestTrafficMonitor(t *testing.T) {
 		}
 		wg.Wait()
 		user, _ := db.GetUserFromID("tester")
-		if user.DataStats.UploadTraffic[util.Config.LocalCloudID] != 320*1000 {
-			t.Fatalf("teat AddVolum fail, expect 200, got %v", user.DataStats.UploadTraffic[util.Config.LocalCloudID])
+		if user.DataStats.UploadTraffic[util.Config.LocalCloudID] != 320*20 {
+			t.Fatalf("teat AddVolum fail, expect 3200, got %v", user.DataStats.UploadTraffic[util.Config.LocalCloudID])
 		}
 	})
 }

@@ -175,6 +175,9 @@ func NewInMemoryFileDatabase() *InMemoryFileDatabase {
 
 func NewFileInfoFromPath(path string, uid string, fileName string) (file *File, err error) {
 	fi, err := os.Stat(path)
+	if fileName == "" {
+		return nil, errors.New(util.ErrorMsgEmptyFilename)
+	}
 	if fileName[0] != '/' {
 		fileName = "/" + fileName
 	}

@@ -17,4 +17,5 @@ const (
 	ErrorMsgWrongCloudNum             = "clouds num miss match"
 	ErrorMsgProcessMigrateDownloadErr = "process migrate download err"
 	ErrorMsgProcessMigrateUploadErr   = "process migrate Upload err"
+	ErrorMsgEmptyFilename             = "empty file name"
 )

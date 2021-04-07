@@ -22,6 +22,7 @@ type TaskProcessor struct {
 	FileDatabase  model.FileDatabase
 	Lock          *Lock
 	Scheduler     Scheduler
+	Monitor       *TrafficMonitor
 }
 
 func (processor *TaskProcessor) SetTaskStorage(storage model.TaskStorage) {
@@ -168,6 +169,10 @@ func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string)
 	fileInfo.ReconstructStatus = "Done"
 	fileInfo.LastReconstructed = time.Now()
 	err = processor.FileDatabase.UpdateFileInfo(fileInfo)
+	if err != nil {
+		return err
+	}
+	_, err = processor.Monitor.AddDownloadTraffic(t.Uid, fileInfo.Size)
 	return err
 }
 
@@ -245,6 +250,9 @@ func (processor *TaskProcessor) ProcessGetTmpDownloadUrl(t *model.Task) (url str
 		return "", err
 	}
 	url, err = storageClient.GetTmpDownloadUrl(t.GetSourcePath(), t.Uid, time.Minute*30)
+	if err != nil {
+		return "", err
+	}
 	return url, err
 }
 
@@ -270,12 +278,13 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 		}
 		switch storageModel {
 		case "Replica":
-			for _, client := range storageClients {
-				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath(), t.Uid)
-			}
 			fileInfo, err = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
 			if util.CheckErr(err, "New File Info") {
 				return err
+			}
+			for _, client := range storageClients {
+				_, err = processor.Monitor.AddUploadTraffic(t.Uid, fileInfo.Size)
+				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath(), t.Uid)
 			}
 			fileInfo.LastModified = time.Now()
 			if fileInfoErr != nil { // 文件之前不存在
@@ -286,7 +295,8 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			if util.CheckErr(err, "Create File Info") {
 				return err
 			}
-			err := processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo)
+			_, err = processor.Monitor.AddVolume(t.Uid, fileInfo.Size)
+			err = processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo)
 			util.CheckErr(err, "File Metadata sync")
 		case "EC": // 纠删码模式
 			N := t.TaskOptions.DestinationPlan.N
@@ -308,6 +318,12 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			// 开始上传
 			for i, client := range storageClients {
 				err = client.Upload(shards[i], t.GetDestinationPath()+"."+strconv.Itoa(i), t.Uid)
+				if err != nil {
+					util.Log(logrus.ErrorLevel, "process upload EC",
+						"client upload fail", "", "", err.Error())
+					continue
+				}
+				processor.Monitor.AddUploadTrafficFromFile(t.Uid, shards[i])
 			}
 			if util.CheckErr(err, "Upload EC block") {
 				return err
@@ -324,6 +340,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			if util.CheckErr(err, "Create File Info") {
 				return err
 			}
+			_, err = processor.Monitor.AddVolume(t.Uid, fileInfo.Size)
 			err := processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo)
 			util.CheckErr(err, "File Metadata sync")
 		default:
