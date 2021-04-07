@@ -3,6 +3,7 @@ package util
 import (
 	"encoding/json"
 	"errors"
+	"github.com/sirupsen/logrus"
 	"os"
 )
 
@@ -70,10 +71,12 @@ func ReadConfigFromFile(configFilepath string) error {
 }
 
 func CheckConfig() (err error) {
-	if IsDir(Config.UploadFileTempPath) {
+	if !IsDir(Config.UploadFileTempPath) {
+		Log(logrus.InfoLevel, "CheckConfig", "Create upload Dir", "", "", Config.UploadFileTempPath)
 		err = os.MkdirAll(Config.UploadFileTempPath, os.ModePerm)
 	}
-	if IsDir(Config.DownloadFileTempPath) {
+	if !IsDir(Config.DownloadFileTempPath) {
+		Log(logrus.InfoLevel, "CheckConfig", "Create download Dir", "", "", Config.UploadFileTempPath)
 		err = os.MkdirAll(Config.DownloadFileTempPath, os.ModePerm)
 	}
 	if Config.Database.Driver != InMemoryDB && Config.Database.Driver != MongoDB {

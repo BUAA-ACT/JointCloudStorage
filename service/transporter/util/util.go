@@ -16,21 +16,13 @@ import (
 	"time"
 )
 
-var Logger = logrus.New()
-
-func InitLogger() {
-	Logger = logrus.New()
-}
-
 func Log(level logrus.Level, position string, reason string, expect string, got string, detail string) (msg string) {
-	Logger.WithFields(logrus.Fields{
+	logrus.WithFields(logrus.Fields{
 		"position": position,
-		"reason":   reason,
 		"expect":   expect,
 		"got":      got,
 		"detail":   detail,
-		"level":    level,
-	})
+	}).Log(level, reason)
 	msg = fmt.Sprintf("[%s], %s %s Excpect: %v, Got: %v Detail: %v", level, position, reason, expect, got, detail)
 	return
 }
