@@ -4,6 +4,7 @@ stages:
   - build
   - docker_build
   - deploy
+  - after_deploy
 
 before_script:
   - export GOPATH=$GOPATH:/usr/local/${CI_PROJECT_NAME}
@@ -83,5 +84,16 @@ transporter_deploy_job:
     - ssh zhangjh@$DEV_SERVER "docker rm -f transporter-dev-v1"
     - ssh zhangjh@$DEV_SERVER "docker tag harbor.sumblog.cn/pub/transporter:v1-dev transporter:v1-dev"
     - ssh zhangjh@$DEV_SERVER "docker run -d -p 8083:8083 --name transporter-dev-v1 --mount source=transporter-vol,target=/data/transporter --mount type=bind,source=/home/zhangjh/transporter/transporter_config.json.docker,target=/home/jcspan/config/transporter_config.json,readonly transporter:v1-dev"
+  tags:
+    - docker
+
+transporter_deploy_test_job:
+  stage: after_deploy
+  image: golang:1.16.2
+  script:
+    - cd service/transporter/controller
+    - echo '开始测试 transporter'
+    - go test -v -args -env cloud -host $DEV_SERVER:8083
+    - echo 'transporter 测试完成'
   tags:
     - docker
