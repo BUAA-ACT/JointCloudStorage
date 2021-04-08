@@ -671,8 +671,8 @@ func TestECUploadAndDelete(t *testing.T) {
 func TestMultiUpload(t *testing.T) {
 	dstPath := "tmp/test/upload/test.jpeg"
 	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
-	dstPath = "tmp/test/upload/test.jpeg"
-	testReplicaUpload(t, dstPath, "../test/tmp/未命名1.png", "aliyun-beijing")
+	dstPath = "tmp/test/upload/test.txt"
+	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
 }
 
 func postFile(filename string, filepath string, target_url string, token string) (*http.Request, error) {
