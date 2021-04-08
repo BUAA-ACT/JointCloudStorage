@@ -10,7 +10,7 @@ before_script:
   - export GOPATH=$GOPATH:/usr/local/${CI_PROJECT_NAME}
   - export VERSION=`echo ${CI_COMMIT_TAG} | awk -F"_" '{print $1}'`
   - export GO111MODULE=on
-  - export GOPROXY=https://goproxy.cn
+  - export GOPROXY=https://goproxy.cn,direct
 
 # transporter 编译
 transporter_build:
@@ -91,7 +91,9 @@ transporter_deploy_test_job:
   stage: after_deploy
   image: golang:1.16.2
   script:
-    - cd service/transporter/controller
+    - cd service/transporter/
+    - go mod tidy
+    - cd controller
     - echo '开始测试 transporter'
     - go test -v -args -env cloud -host $DEV_SERVER:8083
     - echo 'transporter 测试完成'
