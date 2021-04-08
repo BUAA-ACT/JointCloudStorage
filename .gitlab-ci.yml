@@ -25,6 +25,7 @@ transporter_build:
     - ls
     - cd service/transporter
     - go mod tidy
+    - go mod vendor
     - echo '开始构建'
     - make build
     - echo '构建完成'
@@ -36,8 +37,9 @@ transporter_build:
     when: always
     expire_in: 4 weeks
   cache:
-    key: ${CI_JOB_NAME}
+    key: transporter_go_env
     paths:
+      - service/transporter/vendor
       - /go
 
 transporter_docker_build:
@@ -93,9 +95,16 @@ transporter_deploy_test_job:
   script:
     - cd service/transporter/
     - go mod tidy
+    - go mod vendor
     - cd controller
     - echo '开始测试 transporter'
     - go test -v -args -env cloud -host $DEV_SERVER:8083
     - echo 'transporter 测试完成'
   tags:
     - docker
+  cache:
+    key: transporter_go_env
+    paths:
+      - service/transporter/vendor
+      - /go
+
