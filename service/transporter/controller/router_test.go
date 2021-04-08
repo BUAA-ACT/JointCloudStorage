@@ -9,6 +9,9 @@ import (
 	"flag"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"image"
+	"image/color"
+	"image/jpeg"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -25,29 +28,44 @@ const (
 
 var globalRouter *Router
 var globalTaskProcessor *TaskProcessor
-var testEnv = "cloud"
-var hostUrl = "127.0.0.1:8083"
+var testEnv = flag.String("env", "local", "testEnv")
+var hostUrl = flag.String("host", "127.0.0.1:8083", "host url")
 var scheme = "http"
 
 func TestMain(m *testing.M) {
 	if !flag.Parsed() {
 		flag.Parse()
 	}
-
-	argList := flag.Args() // flag.Args() 返回 -args 后面的所有参数，以切片表示，每个元素代表一个参数
-	for _, arg := range argList {
-		if arg == "cloud" {
-			testEnv = "cloud"
-		}
-	}
-	if testEnv == "local" {
+	_ = flag.Args() // flag.Args() 返回 -args 后面的所有参数，以切片表示，每个元素代表一个参数
+	genTestFile()
+	if *testEnv == "local" {
+		logrus.Warning("test env: Local")
 		initRouterAndProcessor()
-	} else if testEnv == "cloud" {
+	} else if *testEnv == "cloud" {
+		logrus.Warning("test env: cloud")
 		sendDataAndRecord("GET", "/debug/unlock_test_user", nil)
 		sendDataAndRecord("GET", "/debug/drop_task_table", nil)
 	}
 	exitCode := m.Run()
 	os.Exit(exitCode)
+}
+
+func genTestFile() {
+	os.MkdirAll("../test/tmp/", os.ModePerm)
+	buf := new(bytes.Buffer)
+	alpha := image.NewAlpha(image.Rect(0, 0, 1000, 1000))
+	for x := 0; x < 1000; x++ {
+		for y := 0; y < 1000; y++ {
+			alpha.Set(x, y, color.Alpha{uint8(x % 256)}) //设定alpha图片的透明度
+		}
+	}
+	jpeg.Encode(buf, alpha, nil)
+	err := ioutil.WriteFile("../test/tmp/test.jpeg", buf.Bytes(), 0644)
+	content := []byte("jcsPan transporter Test SincereXIA @ " + time.Now().String())
+	err = ioutil.WriteFile("../test/tmp/test.txt", content, 0644)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func initRouterAndProcessor() (*Router, *TaskProcessor) {
@@ -107,13 +125,13 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 }
 
 func sendDataAndRecord(method string, url string, data io.Reader) *http.Response {
-	if testEnv == "local" {
+	if *testEnv == "local" {
 		req, _ := http.NewRequest(method, url, data)
 		recorder := httptest.NewRecorder()
 		globalRouter.ServeHTTP(recorder, req)
 		return recorder.Result()
-	} else if testEnv == "cloud" {
-		req, _ := http.NewRequest(method, scheme+"://"+hostUrl+url, data)
+	} else if *testEnv == "cloud" {
+		req, _ := http.NewRequest(method, scheme+"://"+*hostUrl+url, data)
 		resp, _ := http.DefaultClient.Do(req)
 		return resp
 	}
@@ -121,14 +139,14 @@ func sendDataAndRecord(method string, url string, data io.Reader) *http.Response
 }
 
 func sendRequestAndRecord(req *http.Request) (resp *http.Response) {
-	if testEnv == "local" {
+	if *testEnv == "local" {
 		recorder := httptest.NewRecorder()
 		globalRouter.ServeHTTP(recorder, req)
 		return recorder.Result()
-	} else if testEnv == "cloud" {
-		req.Host = hostUrl
+	} else if *testEnv == "cloud" {
+		req.Host = *hostUrl
 		req.URL.Scheme = scheme
-		req.URL.Host = hostUrl
+		req.URL.Host = *hostUrl
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			logrus.Errorf("send request err: %v", err)
@@ -151,11 +169,11 @@ func setCookie(req *http.Request) {
 func waitProcessorAllDone() {
 	for true {
 		time.Sleep(time.Millisecond * 500)
-		if testEnv == "local" {
+		if *testEnv == "local" {
 			if globalTaskProcessor.taskStorage.IsAllDone() {
 				return
 			}
-		} else if testEnv == "cloud" {
+		} else if *testEnv == "cloud" {
 			resp := sendDataAndRecord("GET", "/state/process_state", nil)
 			buf := new(bytes.Buffer)
 			buf.ReadFrom(resp.Body)
@@ -168,7 +186,7 @@ func waitProcessorAllDone() {
 }
 
 func getDownloadUrl(fileID string) string {
-	if testEnv == "local" {
+	if *testEnv == "local" {
 		fileInfo, err := globalTaskProcessor.FileDatabase.GetFileInfo(fileID)
 		if err != nil {
 			logrus.Fatalf("get file info err:%v", err)
@@ -178,7 +196,7 @@ func getDownloadUrl(fileID string) string {
 			logrus.Fatalf("get download url err")
 		}
 		return url
-	} else if testEnv == "cloud" {
+	} else if *testEnv == "cloud" {
 		resp := sendDataAndRecord("GET", "/debug/get_file_download_url?id="+fileID, nil)
 		if resp.StatusCode != http.StatusOK {
 			return ""
@@ -446,8 +464,8 @@ func TestReplicaUploadAndDownload(t *testing.T) {
 }
 
 func TestEC2ReplicaSync(t *testing.T) {
-	dstPath := "tmp/test/sync/未命名.png"
-	testECUpload(t, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	dstPath := "tmp/test/sync/test.jpeg"
+	testECUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
 	dstPath = "tmp/test/sync/test.txt"
 	testECUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
 	jsonStr := []byte(`
@@ -495,8 +513,8 @@ func TestEC2ReplicaSync(t *testing.T) {
 }
 
 func TestReplicaMigrate(t *testing.T) {
-	dstPath := "tmp/test/Migrate/未命名.png"
-	testECUpload(t, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	dstPath := "tmp/test/Migrate/test.jpeg"
+	testECUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
 	dstPath = "tmp/test/migrate/test.txt"
 	testECUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
 	jsonStr := []byte(`
@@ -533,8 +551,8 @@ func TestReplicaMigrate(t *testing.T) {
 }
 
 func TestReplica2ECSync(t *testing.T) {
-	dstPath := "tmp/test/sync/未命名.png"
-	testReplicaUpload(t, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	dstPath := "tmp/test/sync/test.jpeg"
+	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
 	dstPath = "tmp/test/sync/test.txt"
 	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
 	jsonStr := []byte(`
@@ -582,15 +600,15 @@ func TestReplica2ECSync(t *testing.T) {
 }
 
 func TestReplicaUploadAndDelete(t *testing.T) {
-	dstPath := "tmp/test/sync/未命名.png"
-	testReplicaUpload(t, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	dstPath := "tmp/test/sync/test.jpeg"
+	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
 	dstPath = "tmp/test/sync/test.txt"
 	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
 	jsonStr := []byte(`
 {
   "TaskType": "Delete",
    "Uid": "tester",
-   "SourcePath": "tmp/test/sync/未命名.png",
+   "SourcePath": "tmp/test/sync/test.jpeg",
    "SourceStoragePlan":{
       "StorageMode": "Replica",
       "Clouds": [
@@ -614,15 +632,15 @@ func TestReplicaUploadAndDelete(t *testing.T) {
 }
 
 func TestECUploadAndDelete(t *testing.T) {
-	dstPath := "tmp/test/del/未命名.png"
-	testECUpload(t, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
+	dstPath := "tmp/test/del/test.jpeg"
+	testECUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
 	dstPath = "tmp/test/del/test.txt"
 	testECUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
 	jsonStr := []byte(`
 {
   "TaskType": "Delete",
    "Uid": "tester",
-   "SourcePath": "tmp/test/del/未命名.png",
+   "SourcePath": "tmp/test/del/test.jpeg",
    "SourceStoragePlan":{
       "StorageMode": "EC",
       "Clouds": [
@@ -651,9 +669,9 @@ func TestECUploadAndDelete(t *testing.T) {
 }
 
 func TestMultiUpload(t *testing.T) {
-	dstPath := "tmp/test/upload/未命名.png"
-	testReplicaUpload(t, dstPath, "../test/tmp/未命名.png", "aliyun-beijing")
-	dstPath = "tmp/test/upload/未命名.png"
+	dstPath := "tmp/test/upload/test.jpeg"
+	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
+	dstPath = "tmp/test/upload/test.jpeg"
 	testReplicaUpload(t, dstPath, "../test/tmp/未命名1.png", "aliyun-beijing")
 }
 
