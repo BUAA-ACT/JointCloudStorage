@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -18,6 +19,9 @@ type AWSBucketStorageClient struct {
 }
 
 func (client *AWSBucketStorageClient) realRemotePath(remotePath string, uid string) string {
+	if remotePath == "" {
+		return uid + "/"
+	}
 	if remotePath[0] == '/' {
 		return uid + remotePath
 	} else {
@@ -32,7 +36,7 @@ func GetAWSClient(endpoint, accessKeyID, secretAccessKey string) (*s3.S3, error)
 		return nil, err
 	}
 	config := &aws.Config{
-		Region:      aws.String("us-east-1"),
+		Region:      aws.String("BEIJING"),
 		Endpoint:    aws.String(endpoint),
 		DisableSSL:  aws.Bool(true),
 		Credentials: creds,
@@ -97,8 +101,29 @@ func (client *AWSBucketStorageClient) Copy(srcPath string, dstPath string, uid s
 }
 
 func (client *AWSBucketStorageClient) Index(remotePath string, uid string) <-chan ObjectInfo {
-
-	return nil
+	remotePath = client.realRemotePath(remotePath, uid)
+	input := &s3.ListObjectsV2Input{
+		Bucket: aws.String(client.bucketName),
+		Prefix: aws.String(remotePath),
+	}
+	objectsChan := make(chan ObjectInfo, 3)
+	go func(objectsChan chan ObjectInfo) {
+		defer close(objectsChan)
+		_ = client.awsClient.ListObjectsV2Pages(input, func(page *s3.ListObjectsV2Output, lastPage bool) bool {
+			for _, content := range page.Contents {
+				//fmt.Println(*content.Key)
+				fileName := strings.Replace(*content.Key, uid+"/", "", 1)
+				objectsChan <- ObjectInfo{
+					Key:          fileName,
+					Size:         *content.Size,
+					LastModified: *content.LastModified,
+					ContentType:  *content.ETag,
+				}
+			}
+			return lastPage
+		})
+	}(objectsChan)
+	return objectsChan
 }
 
 // 递归查找

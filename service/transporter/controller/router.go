@@ -32,10 +32,13 @@ type RequestTask struct {
 }
 
 type RequestStoragePlan struct {
-	StorageMode string         `json:"StorageMode"`
-	Clouds      []RequestCloud `json:"Clouds"`
-	N           int            `json:"N"`
-	K           int            `json:"K"`
+	N            int           `bson:"n"`
+	K            int           `bson:"k"`
+	StorageMode  string        `bson:"storage_mode"`
+	Clouds       []model.Cloud `bson:"clouds"`
+	StoragePrice float64       `bson:"storage_price"`
+	TrafficPrice float64       `bson:"traffic_price"`
+	Availability float64       `bson:"availability"`
 }
 
 type RequestCloud struct {
@@ -55,18 +58,62 @@ type TaskResult struct {
 
 func NewRouter(processor TaskProcessor) *Router {
 	var router Router
+	engine := gin.Default()
+	engine.Use(util.CORSMiddleware())
 	router = Router{
-		Engine:    gin.Default(),
+		Engine:    engine,
 		processor: processor,
 	}
 	router.GET("/", Index)
 	router.POST("/upload/*path", util.JWTAuthMiddleware(), router.AddUploadTask)
+	router.POST("/upload", util.JWTAuthMiddleware(), router.AddUploadTask)
 	router.GET("/jcspan/*path", router.GetFile)
 	router.GET("/index/*path", router.FileIndex)
 	router.POST("/task", router.CreateTask)
 	router.GET("/cache_file", util.JWTAuthMiddleware(), router.GetLocalFileByToken)
+	router.GET("/state/:key", router.GetState)
+	router.GET("/debug/:key", router.Debug)
 	rand.Seed(time.Now().Unix())
 	return &router
+}
+
+func (router *Router) crossDomain(c *gin.Context) {
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Methods", "GET, POST, PUT")
+}
+
+func (router *Router) Debug(c *gin.Context) {
+	key := c.Param("key")
+	switch key {
+	case "unlock_test_user":
+		router.processor.Lock.UnLockAll("/tester")
+	case "drop_task_table":
+		util.ClearAll()
+	case "get_file_download_url":
+		fileID := c.Query("id")
+		info, err := router.processor.FileDatabase.GetFileInfo(fileID)
+		if err != nil {
+			c.String(http.StatusBadRequest, "")
+			return
+		}
+		c.String(http.StatusOK, info.DownloadUrl)
+	default:
+		c.String(http.StatusBadRequest, "key not imply")
+	}
+}
+
+func (router *Router) GetState(c *gin.Context) {
+	key := c.Param("key")
+	switch key {
+	case "process_state":
+		if router.processor.taskStorage.IsAllDone() {
+			c.String(http.StatusOK, "done")
+		} else {
+			c.String(http.StatusOK, "working")
+		}
+	default:
+		c.String(http.StatusBadRequest, "key not imply")
+	}
 }
 
 func (router *Router) GetLocalFileByToken(c *gin.Context) {
@@ -93,31 +140,19 @@ func (router *Router) CreateTask(c *gin.Context) {
 
 	switch reqTask.TaskType {
 	case "Upload":
-		var cloudsID []string
-		for _, cloud := range reqTask.DestinationStoragePlan.Clouds {
-			cloudsID = append(cloudsID, cloud.ID)
+		task := RequestTask2Task(&reqTask, model.UPLOAD, model.BLOCKED)
+		if !task.Check() {
+			taskRequestReplyErr(util.ErrorCodeWrongRequestFormat, util.ErrorMsgWrongRequestFormat+": task not pass check", c)
 		}
-		task := model.Task{
-			Tid:             primitive.NewObjectID(),
-			TaskType:        model.UPLOAD,
-			State:           model.BLOCKED,
-			StartTime:       time.Time{},
-			Uid:             reqTask.Uid,
-			SourcePath:      "",
-			DestinationPath: reqTask.DestinationPath,
-			TaskOptions: &model.TaskOptions{
-				SourceStoragePlan: nil,
-				DestinationPlan: &model.StoragePlan{
-					StorageMode: reqTask.DestinationStoragePlan.StorageMode,
-					Clouds:      cloudsID,
-					N:           reqTask.DestinationStoragePlan.N,
-					K:           reqTask.DestinationStoragePlan.K,
-				},
-			},
+		err := router.processor.Lock.Lock(task.GetRealDestinationPath())
+		if err != nil {
+			taskRequestReplyErr(util.ErrorCodeGetFileLockErr, util.ErrorMsgGetFileLockErr+": "+err.Error(), c)
+			return
 		}
-		tid, err := router.processor.taskStorage.AddTask(&task)
+		tid, err := router.processor.taskStorage.AddTask(task)
 		if err != nil {
 			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
+			router.processor.Lock.UnLock(task.GetRealDestinationPath())
 			return
 		}
 		token, _ := util.GenerateTaskAccessToken(tid.Hex(), task.Uid, time.Hour*24)
@@ -132,10 +167,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 		c.JSON(http.StatusOK, requestTaskReply)
 	case "Download":
 		// req Task 转换为 model Task
-		var cloudsID []string
-		for _, cloud := range reqTask.SourceStoragePlan.Clouds {
-			cloudsID = append(cloudsID, cloud.ID)
-		}
+		task := RequestTask2Task(&reqTask, model.DOWNLOAD, model.CREATING)
 		var taskType model.TaskType
 		if reqTask.SourceStoragePlan.StorageMode == "EC" {
 			taskType = model.DOWNLOAD
@@ -146,31 +178,14 @@ func (router *Router) CreateTask(c *gin.Context) {
 			taskRequestReplyErr(util.ErrorCodeWrongStorageType, util.ErrorMsgWrongStorageType, c)
 			return
 		}
-		task := model.Task{
-			Tid:             primitive.NewObjectID(),
-			TaskType:        taskType,
-			State:           model.CREATING,
-			StartTime:       time.Time{},
-			Uid:             reqTask.Uid,
-			SourcePath:      reqTask.SourcePath,
-			DestinationPath: "",
-			TaskOptions: &model.TaskOptions{
-				SourceStoragePlan: &model.StoragePlan{
-					StorageMode: reqTask.SourceStoragePlan.StorageMode,
-					Clouds:      cloudsID,
-					N:           reqTask.SourceStoragePlan.N,
-					K:           reqTask.SourceStoragePlan.K,
-				},
-				DestinationPlan: nil,
-			},
-		}
+		task.TaskType = taskType
 		if task.TaskType == model.DOWNLOAD_REPLICA {
-			url, err := router.processor.ProcessGetTmpDownloadUrl(&task)
+			url, err := router.processor.ProcessGetTmpDownloadUrl(task)
 			if err != nil {
 				taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 				return
 			}
-			err = router.processor.WriteDownloadUrlToDB(&task, url)
+			err = router.processor.WriteDownloadUrlToDB(task, url)
 			if err != nil {
 				logrus.Errorf("write download url to db fail: %v", err)
 			}
@@ -184,7 +199,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 			}
 			c.JSON(http.StatusOK, requestTaskReply)
 		} else {
-			tid, err := router.processor.taskStorage.AddTask(&task)
+			tid, err := router.processor.taskStorage.AddTask(task)
 			if err != nil {
 				taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 				return
@@ -231,6 +246,23 @@ func (router *Router) CreateTask(c *gin.Context) {
 			},
 		}
 		c.JSON(http.StatusOK, requestTaskReply)
+	case "Migrate":
+		task := RequestTask2Task(&reqTask, model.MIGRATE, model.CREATING)
+		tid, err := router.processor.taskStorage.AddTask(task)
+		if err != nil {
+			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
+			return
+		}
+		requestTaskReply := RequestTaskReply{
+			Code: http.StatusOK,
+			Msg:  "Generate delete task OK",
+			Data: TaskResult{
+				Type:   "tid",
+				Result: tid.Hex(),
+			},
+		}
+		c.JSON(http.StatusOK, requestTaskReply)
+
 	default:
 		requestTaskReply := RequestTaskReply{
 			Code: util.ErrorCodeWrongTaskType,
@@ -247,7 +279,7 @@ func taskRequestReplyErr(errCode int, errMsg string, c *gin.Context) {
 		Msg:  errMsg,
 		Data: TaskResult{},
 	}
-	c.JSON(util.ErrorCodeWrongTaskType, requestTaskReply)
+	c.JSON(http.StatusBadGateway, requestTaskReply)
 }
 
 func Index(c *gin.Context) {
@@ -268,13 +300,9 @@ func (router *Router) FileIndex(c *gin.Context) {
 }
 
 func (router *Router) AddUploadTask(c *gin.Context) {
-	destinationPath := c.Param("path")[1:]
+	//destinationPath := c.Param("path")[1:]
 	uid := c.MustGet("tokenUid").(string)
 	tid := c.MustGet("tokenTid").(string)
-
-	log.Printf("upload to :%v", destinationPath)
-	// todo: 文件较小时，不落盘，直接内存上传
-	c.Request.ParseMultipartForm(32 << 20)
 	taskid, err := primitive.ObjectIDFromHex(tid)
 	task, err := router.processor.taskStorage.GetTask(taskid)
 	if err != nil {
@@ -282,6 +310,14 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 		http.Error(c.Writer, err.Error(), http.StatusBadGateway)
 		return
 	}
+	//if task.DestinationPath != destinationPath {
+	//	logrus.Errorf("destination path not equal")
+	//	destinationPath = task.DestinationPath
+	//}
+	destinationPath := task.DestinationPath
+	logrus.Infof("upload to :%v", destinationPath)
+	// todo: 文件较小时，不落盘，直接内存上传
+	c.Request.ParseMultipartForm(32 << 20)
 	// 鉴权
 	if uid != task.Uid {
 		log.Printf("wrong uid")
@@ -296,10 +332,7 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 	}
 	defer file.Close()
 	randStr := util.GenRandomString(10)
-	filePath := util.CONFIG.UploadFileTempPath + handler.Filename + randStr
-	if !util.IsDir(util.CONFIG.UploadFileTempPath) { // todo config 模块负责验证目录存在
-		os.MkdirAll(util.CONFIG.UploadFileTempPath, os.ModePerm)
-	}
+	filePath := util.Config.UploadFileTempPath + handler.Filename + randStr
 	// 创建文件，且文件必须不存在
 	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0666) // 此处假设当前目录下已存在test目录
 	if err != nil {
@@ -368,11 +401,16 @@ func RequestTask2Task(reqTask *RequestTask, taskType model.TaskType, state model
 	var srcCloudsID []string
 	var dstCloudsID []string
 	for _, cloud := range reqTask.SourceStoragePlan.Clouds {
-		srcCloudsID = append(srcCloudsID, cloud.ID)
+		srcCloudsID = append(srcCloudsID, cloud.CloudID)
 	}
 	for _, cloud := range reqTask.DestinationStoragePlan.Clouds {
-		dstCloudsID = append(dstCloudsID, cloud.ID)
+		dstCloudsID = append(dstCloudsID, cloud.CloudID)
 	}
+	// 由于传入参数与 transporter 内对于 storagePlan 的 N、K 定义不同，在此需要对 N、K 进行转换
+	realSourceN := reqTask.SourceStoragePlan.K
+	realSourceK := reqTask.SourceStoragePlan.N - realSourceN
+	realDestN := reqTask.DestinationStoragePlan.K
+	realDestK := reqTask.DestinationStoragePlan.N - realDestN
 	task := model.Task{
 		Tid:             primitive.NewObjectID(),
 		TaskType:        taskType,
@@ -383,16 +421,16 @@ func RequestTask2Task(reqTask *RequestTask, taskType model.TaskType, state model
 		DestinationPath: reqTask.DestinationPath,
 		TaskOptions: &model.TaskOptions{
 			SourceStoragePlan: &model.StoragePlan{
-				StorageMode: reqTask.SourceStoragePlan.StorageMode,
+				StorageMode: model.StorageModel(reqTask.SourceStoragePlan.StorageMode),
 				Clouds:      srcCloudsID,
-				N:           reqTask.SourceStoragePlan.N,
-				K:           reqTask.SourceStoragePlan.K,
+				N:           realSourceN,
+				K:           realSourceK,
 			},
 			DestinationPlan: &model.StoragePlan{
-				StorageMode: reqTask.DestinationStoragePlan.StorageMode,
+				StorageMode: model.StorageModel(reqTask.DestinationStoragePlan.StorageMode),
 				Clouds:      dstCloudsID,
-				N:           reqTask.DestinationStoragePlan.N,
-				K:           reqTask.DestinationStoragePlan.K,
+				N:           realDestN,
+				K:           realDestK,
 			},
 		},
 	}

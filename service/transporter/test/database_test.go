@@ -15,7 +15,7 @@ import (
 func TestDatabase(t *testing.T) {
 	//insert the test data
 	// Set client options
-	clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+	clientOptions := options.Client().ApplyURI("mongodb://" + util.Config.Database.Host + ":" + util.Config.Database.Port)
 
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -44,7 +44,7 @@ func TestDatabase(t *testing.T) {
 		{"location", "116.381252,39.906569"},
 	})
 
-	mongo, err := model.NewMongoStorageDatabase()
+	mongo, err := model.NewMongoCloudDatabase()
 	if err != nil {
 		t.Error(err)
 	}

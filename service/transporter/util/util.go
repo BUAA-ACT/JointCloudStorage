@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"errors"
+	"fmt"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -14,6 +15,17 @@ import (
 	"os"
 	"time"
 )
+
+func Log(level logrus.Level, position string, reason string, expect string, got string, detail string) (msg string) {
+	logrus.WithFields(logrus.Fields{
+		"position": position,
+		"expect":   expect,
+		"got":      got,
+		"detail":   detail,
+	}).Log(level, reason)
+	msg = fmt.Sprintf("[%s], %s %s Excpect: %v, Got: %v Detail: %v", level, position, reason, expect, got, detail)
+	return
+}
 
 func CheckErr(err error, label string) bool {
 	if err != nil {
@@ -132,6 +144,23 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 	}
 }
 
+// 跨域中间件
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
+}
+
 // 获取文件 ContentType
 func GetFileContentType(out *os.File) (string, error) {
 
@@ -151,15 +180,15 @@ func GetFileContentType(out *os.File) (string, error) {
 }
 
 func ClearAll() {
-	clientOptions := options.Client().ApplyURI("mongodb://" + CONFIG.Database.Host + ":" + CONFIG.Database.Port)
+	clientOptions := options.Client().ApplyURI("mongodb://" + Config.Database.Host + ":" + Config.Database.Port)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	defer client.Disconnect(context.TODO())
 	if err != nil {
 		log.Print(err)
 	}
-	collection := client.Database(CONFIG.Database.DatabaseName).Collection("Tasks")
+	collection := client.Database(Config.Database.DatabaseName).Collection("Task")
 	collection.Drop(context.TODO())
-	collection = client.Database(CONFIG.Database.DatabaseName).Collection("File")
-	collection.Drop(context.TODO())
+	//collection = client.Database(Config.Database.DatabaseName).Collection("File")
+	//collection.Drop(context.TODO())
 	return
 }

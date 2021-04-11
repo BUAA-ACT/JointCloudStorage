@@ -3,6 +3,7 @@ package model
 import (
 	"act.buaa.edu.cn/jcspan/transporter/util"
 	"context"
+	"errors"
 	"github.com/minio/minio-go/v7"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -12,6 +13,19 @@ import (
 	"log"
 	"time"
 )
+
+type Cloud struct {
+	CloudID      string  `bson:"cloud_id"`
+	Endpoint     string  `bson:"endpoint"`
+	AccessKey    string  `bson:"access_key" json:"-"`
+	SecretKey    string  `bson:"secret_key" json:"-"`
+	StoragePrice float64 `bson:"storage_price"`
+	TrafficPrice float64 `bson:"traffic_price"`
+	Availability float64 `bson:"availability"`
+	Status       string  `bson:"status"`
+	Location     string  `bson:"location"`
+	Address      string  `bson:"address"`
+}
 
 // S3 客户端结构
 type S3Client struct {
@@ -23,49 +37,50 @@ type S3Client struct {
 }
 
 // Storage 数据库
-type StorageDatabase interface {
+type CloudDatabase interface {
 	// 通过用户的 session id 和访问路径，获取对应的 S3 客户端
 	GetStorageClientFromName(uid string, name string) (StorageClient, error)
+	GetCloudInfoFromCloudID(cloudID string) (*Cloud, error)
 }
 
-type MongoStorageDatabase struct {
-	databaseName string
+type MongoCloudDatabase struct {
+	databaseName   string
 	collectionName string
-	clientOptions *options.ClientOptions
-	ClientMap map[string]StorageClient
-	ReadTimeMap map[string]time.Time
-	client      *mongo.Client
+	clientOptions  *options.ClientOptions
+	ClientMap      map[string]StorageClient
+	ReadTimeMap    map[string]time.Time
+	client         *mongo.Client
 }
 
-//get a MongoStorageDatabase
-func NewMongoStorageDatabase() (*MongoStorageDatabase, error) {
+//get a MongoCloudDatabase
+func NewMongoCloudDatabase() (*MongoCloudDatabase, error) {
 	var clientOptions *options.ClientOptions
-	if util.CONFIG.Database.Username!=""{
-		clientOptions = options.Client().ApplyURI("mongodb://" +util.CONFIG.Database.Username+":"+util.CONFIG.Database.Password+"@"+
-			util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
-	}else{
-		clientOptions = options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+	if util.Config.Database.Username != "" {
+		clientOptions = options.Client().ApplyURI("mongodb://" + util.Config.Database.Username + ":" + util.Config.Database.Password + "@" +
+			util.Config.Database.Host + ":" + util.Config.Database.Port)
+	} else {
+		clientOptions = options.Client().ApplyURI("mongodb://" + util.Config.Database.Host + ":" + util.Config.Database.Port)
 	}
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
 		log.Print(err)
 		return nil, err
 	}
-	return &MongoStorageDatabase{
-		databaseName: util.CONFIG.Database.DatabaseName,
+	return &MongoCloudDatabase{
+		databaseName:   util.Config.Database.DatabaseName,
 		collectionName: "Cloud",
-		clientOptions: clientOptions,
-		client:      client,
-		ClientMap: map[string]StorageClient{},
-		ReadTimeMap: map[string]time.Time{},
+		clientOptions:  clientOptions,
+		client:         client,
+		ClientMap:      map[string]StorageClient{},
+		ReadTimeMap:    map[string]time.Time{},
 	}, nil
 }
 
 //update the client
-func (m *MongoStorageDatabase) UpdateClient() error {
+func (m *MongoCloudDatabase) UpdateClient() error {
 	err := m.client.Ping(context.TODO(), nil)
 	if err != nil {
-		clientOptions := options.Client().ApplyURI("mongodb://" + util.CONFIG.Database.Host + ":" + util.CONFIG.Database.Port)
+		clientOptions := options.Client().ApplyURI("mongodb://" + util.Config.Database.Host + ":" + util.Config.Database.Port)
 		m.client, err = mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
 			return err
@@ -75,29 +90,19 @@ func (m *MongoStorageDatabase) UpdateClient() error {
 }
 
 //close the client
-func (m *MongoStorageDatabase) CloseClient() error {
+func (m *MongoCloudDatabase) CloseClient() error {
 	err := m.client.Disconnect(context.TODO())
 	return err
 }
 
-func (m *MongoStorageDatabase) Clear() error {
-	collection := m.client.Database("dev").Collection("Cloud")
-	collection.Drop(context.TODO())
-	collection = m.client.Database("dev").Collection("Tasks")
-	collection.Drop(context.TODO())
-	collection = m.client.Database("dev").Collection("File")
-	collection.Drop(context.TODO())
+func (m *MongoCloudDatabase) GetStorageClient(sid string, path string) StorageClient {
 	return nil
 }
 
-func (m *MongoStorageDatabase) GetStorageClient(sid string, path string) StorageClient {
-	return nil
-}
-
-func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string) (StorageClient, error) {
+func (m *MongoCloudDatabase) GetStorageClientFromName(sid string, name string) (StorageClient, error) {
 	if _, ok := m.ClientMap[name]; ok {
 		if time.Now().Sub(m.ReadTimeMap[name]).Minutes() < 5 {
-			if util.CONFIG.DefaultStorageClient == util.MinioClient {
+			if util.Config.DefaultStorageClient == util.MinioClient {
 				return m.ClientMap[name].(*S3BucketStorageClient), nil
 			} else {
 				return m.ClientMap[name].(*AWSBucketStorageClient), nil
@@ -106,17 +111,17 @@ func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string)
 	}
 
 	//check the client connection
-	err:=CheckClient(m.client,m.clientOptions)
-	if err!=nil{
+	err := CheckClient(m.client, m.clientOptions)
+	if err != nil {
 		log.Println(err)
-		return nil,err
+		return nil, err
 	}
 
 	var result interface{}
 
 	//get the collection and find by _id
-	collection := m.client.Database(util.CONFIG.Database.DatabaseName).Collection("Cloud")
-	err = collection.FindOne(context.TODO(), bson.D{{"id", name}}).Decode(&result)
+	collection := m.client.Database(util.Config.Database.DatabaseName).Collection("Cloud")
+	err = collection.FindOne(context.TODO(), bson.D{{"cloud_id", name}}).Decode(&result)
 	if err != nil {
 		log.Print(err)
 		return nil, err
@@ -129,51 +134,54 @@ func (m *MongoStorageDatabase) GetStorageClientFromName(sid string, name string)
 		accessKeyId := res["access_key"].(string)
 		secretAccessKey := res["secret_key"].(string)
 		bucketName := res["bucket"].(string)
-		//minioClient, err := GetMinioClient(endpoint, accessKeyId, secretAccessKey)
-		//if err != nil {
-		//	log.Panicf("get minio client fail: %v", err)
-		//	return nil, err
-		//}
-		//s3 := S3Client{
-		//	name:         res["id"].(string),
-		//	endpoint:     res["endpoint"].(string),
-		//	ak:           res["access_key"].(string),
-		//	minioClient:  minioClient,
-		//	lastReadTime: time.Now(),
-		//}
-		//m.s3ClientMap[name] = s3
-		//return &S3BucketStorageClient{
-		//	bucketName:  bucketName,
-		//	minioClient: s3.minioClient,
-		//}, nil
-		if util.CONFIG.DefaultStorageClient == util.MinioClient{
-			minioClient,err:=GetMinioClient(endpoint,accessKeyId,secretAccessKey)
-			if err!=nil{
-				return nil,err
+		if util.Config.DefaultStorageClient == util.MinioClient {
+			minioClient, err := GetMinioClient(endpoint, accessKeyId, secretAccessKey)
+			if err != nil {
+				return nil, err
 			}
-			newClient:= &S3BucketStorageClient{
+			newClient := &S3BucketStorageClient{
 				minioClient: minioClient,
-				bucketName: bucketName,
+				bucketName:  bucketName,
 			}
 
-			return newClient,nil
-		}else{
+			return newClient, nil
+		} else {
 			awsClient, err := GetAWSClient(endpoint, accessKeyId, secretAccessKey)
 			if err != nil {
 				log.Panicf("get minio client fail: %v", err)
 				return nil, err
 			}
-			newClient:=&AWSBucketStorageClient{
+			newClient := &AWSBucketStorageClient{
 				awsClient:  awsClient,
 				bucketName: bucketName,
 			}
-			m.ClientMap["name"]=newClient
-			m.ReadTimeMap["name"]=time.Now()
-			return newClient,nil
+			m.ClientMap["name"] = newClient
+			m.ReadTimeMap["name"] = time.Now()
+			return newClient, nil
 		}
 	} else {
 		return nil, err
 	}
+}
+
+func (m *MongoCloudDatabase) GetCloudInfoFromCloudID(cloudID string) (*Cloud, error) {
+	//check the client connection
+	err := CheckClient(m.client, m.clientOptions)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	var result Cloud
+
+	//get the collection and find by _id
+	collection := m.client.Database(util.Config.Database.DatabaseName).Collection("Cloud")
+	err = collection.FindOne(context.TODO(), bson.D{{"cloud_id", cloudID}}).Decode(&result)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	return &result, nil
 }
 
 // 一个简单的内存 Storage 数据库
@@ -219,7 +227,7 @@ func NewSimpleInMemoryStorageDatabase() *SimpleInMemoryStorageDatabase {
 
 func (database *SimpleInMemoryStorageDatabase) GetStorageClientFromName(uid string, name string) (StorageClient, error) {
 	bucketName := "jcspan-aliyun-bj-test"
-	if util.CONFIG.DefaultStorageClient == util.MinioClient {
+	if util.Config.DefaultStorageClient == util.MinioClient {
 		return &S3BucketStorageClient{
 			minioClient: database.s3ClientMap[name].minioClient,
 			bucketName:  bucketName,
@@ -230,4 +238,8 @@ func (database *SimpleInMemoryStorageDatabase) GetStorageClientFromName(uid stri
 			bucketName: database.awsClientMap[name].bucketName,
 		}, nil
 	}
+}
+
+func (database *SimpleInMemoryStorageDatabase) GetCloudInfoFromCloudID(cloudID string) (*Cloud, error) {
+	return nil, errors.New("not impl")
 }

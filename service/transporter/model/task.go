@@ -15,35 +15,12 @@ const (
 	SYNC_ERASURE        TaskType = "SYNC_ERASURE"
 	DOWNLOAD            TaskType = "DOWNLOAD"
 	DOWNLOAD_REPLICA    TaskType = "DOWNLOAD_REPLICA"
-	UPLOAD              TaskType = "UPLOAD"
-	INDEX               TaskType = "INDEX"
-	SYNC                TaskType = "SYNC"
-	DELETE              TaskType = "DELETE"
+	UPLOAD              TaskType = "Upload"
+	INDEX               TaskType = "Index"
+	SYNC                TaskType = "Sync"
+	DELETE              TaskType = "Delete"
+	MIGRATE             TaskType = "Migrate"
 )
-
-func (taskType TaskType) String() string {
-	switch taskType {
-	case USER_UPLOAD_SIMPLE:
-		return "USER_UPLOAD_SIMPLE"
-	case USER_UPLOAD_ERASURE:
-		return "USER_UPLOAD_ERASURE"
-	case SYNC_SIMPLE:
-		return "SYNC_SIMPLE"
-	case SYNC_ERASURE:
-		return "SYNC_ERASURE"
-	case DOWNLOAD:
-		return "DOWNLOAD"
-	case INDEX:
-		return "INDEX"
-	case UPLOAD:
-		return "UPLOAD"
-	case SYNC:
-		return "SYNC"
-	case DELETE:
-		return "DELETE"
-	}
-	return ""
-}
 
 const (
 	CREATING   TaskState = "CREATING"
@@ -70,11 +47,34 @@ type TaskOptions struct {
 	DestinationPlan   *StoragePlan
 }
 
+type StorageModel string
+
+const (
+	StorageModelReplica StorageModel = "Replica"
+	StorageModelEC      StorageModel = "EC"
+	StorageModelMigrate StorageModel = "Migrate"
+)
+
 type StoragePlan struct {
-	StorageMode string
+	StorageMode StorageModel
 	Clouds      []string
 	N           int
 	K           int
+}
+
+func (t *Task) GetRealSourcePath() string {
+	if t.SourcePath[0] == '/' {
+		return t.Uid + t.SourcePath
+	} else {
+		return t.Uid + "/" + t.SourcePath
+	}
+}
+func (t *Task) GetRealDestinationPath() string {
+	if t.DestinationPath[0] == '/' {
+		return t.Uid + t.DestinationPath
+	} else {
+		return t.Uid + "/" + t.DestinationPath
+	}
 }
 
 func (t *Task) GetTid() primitive.ObjectID {
@@ -112,4 +112,25 @@ func NewTask(taskType TaskType, startTime time.Time, uid string, sourcePath stri
 		SourcePath:      sourcePath,
 		DestinationPath: destinationPath,
 	}
+}
+
+func (t *Task) Check() bool {
+	switch t.TaskType {
+	case UPLOAD:
+		if t.DestinationPath == "" {
+			return false
+		}
+		switch t.TaskOptions.DestinationPlan.StorageMode {
+		case StorageModelReplica:
+		case StorageModelEC:
+		default:
+			return false
+		}
+		if len(t.TaskOptions.DestinationPlan.Clouds) == 0 {
+			return false
+		}
+	default:
+		return true
+	}
+	return true
 }

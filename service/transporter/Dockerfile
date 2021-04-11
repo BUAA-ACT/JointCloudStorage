@@ -1,4 +1,4 @@
-FROM alpine:3.13.4
+FROM harbor.sumblog.cn/pub/alpine:3.13.4
 
 VOLUME /data
 COPY build/bin/transporter /home/jcspan/

@@ -3,7 +3,7 @@
 VERSION := v0.1
 GIT_REV := $(shell git rev-parse --short HEAD)
 BUILD_TIME := $(shell $(date +'%Y-%m-%d_%T'))
-PROJECTNAME := $(shell basename "$(PWD)")
+PROJECT_NAME := $(shell basename "$(PWD)")
 
 
 # Go related variables.

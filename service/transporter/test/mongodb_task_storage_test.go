@@ -14,7 +14,7 @@ func TestMongoTaskStorage_AddTask(t *testing.T) {
 		t.Error("can't connect to the mongodb")
 	}
 	var tid primitive.ObjectID
-	task := model.NewTask(1, time.Now(), "asdf", "asdfasdf", "asdfasdf")
+	task := model.NewTask(model.UPLOAD, time.Now(), "asdf", "asdfasdf", "asdfasdf")
 	task.TaskOptions = &model.TaskOptions{
 		SourceStoragePlan: &model.StoragePlan{
 			StorageMode: "asdfasd",
@@ -60,7 +60,7 @@ func TestMongoTaskStorage_AddTask(t *testing.T) {
 	})
 
 	t.Run("test the isAllDone", func(t *testing.T) {
-		a:= mongots.IsAllDone()
+		a := mongots.IsAllDone()
 		if a {
 			fmt.Println("not all done")
 		}

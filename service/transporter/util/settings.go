@@ -3,6 +3,7 @@ package util
 import (
 	"encoding/json"
 	"errors"
+	"github.com/sirupsen/logrus"
 	"os"
 )
 
@@ -13,7 +14,7 @@ const (
 	AwsS3Client = "Aws"
 )
 
-var CONFIG = Configuration{
+var Config = Configuration{
 	DebugMode: true,
 	Database: DBConfiguration{
 		Driver:       MongoDB,
@@ -26,6 +27,8 @@ var CONFIG = Configuration{
 	DefaultStorageClient: AwsS3Client,
 	Port:                 8083,
 	Host:                 "0.0.0.0",
+	ZookeeperHost:        "192.168.105.13",
+	LocalCloudID:         "aliyun-beijing",
 }
 
 type DBConfiguration struct {
@@ -45,6 +48,9 @@ type Configuration struct {
 	DefaultStorageClient string
 	Port                 int
 	Host                 string
+	ZookeeperHost        string
+	LocalCloudID         string
+	SchedulerHost        string
 }
 
 func ReadConfigFromFile(configFilepath string) error {
@@ -59,19 +65,28 @@ func ReadConfigFromFile(configFilepath string) error {
 	if err != nil {
 		return err
 	}
-	CONFIG = conf
+	Config = conf
 	err = CheckConfig()
 	return err
 }
 
 func CheckConfig() (err error) {
-	if IsDir(CONFIG.UploadFileTempPath) {
-		err = os.MkdirAll(CONFIG.UploadFileTempPath, os.ModePerm)
+	if Config.UploadFileTempPath[len(Config.UploadFileTempPath)-1] != '/' {
+		Config.UploadFileTempPath += "/"
 	}
-	if IsDir(CONFIG.DownloadFileTempPath) {
-		err = os.MkdirAll(CONFIG.DownloadFileTempPath, os.ModePerm)
+	if Config.DownloadFileTempPath[len(Config.DownloadFileTempPath)-1] != '/' {
+		Config.DownloadFileTempPath += "/"
 	}
-	if CONFIG.Database.Driver != InMemoryDB && CONFIG.Database.Driver != MongoDB {
+
+	if !IsDir(Config.UploadFileTempPath) {
+		Log(logrus.InfoLevel, "CheckConfig", "Create upload Dir", "", "", Config.UploadFileTempPath)
+		err = os.MkdirAll(Config.UploadFileTempPath, os.ModePerm)
+	}
+	if !IsDir(Config.DownloadFileTempPath) {
+		Log(logrus.InfoLevel, "CheckConfig", "Create download Dir", "", "", Config.UploadFileTempPath)
+		err = os.MkdirAll(Config.DownloadFileTempPath, os.ModePerm)
+	}
+	if Config.Database.Driver != InMemoryDB && Config.Database.Driver != MongoDB {
 		err = errors.New("nonsupport database type")
 	}
 	return
