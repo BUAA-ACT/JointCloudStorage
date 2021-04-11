@@ -63,9 +63,8 @@ func NewRouter(processor TaskProcessor) *Router {
 		processor: processor,
 	}
 	router.GET("/", Index)
-	router.POST("/upload/*path", util.JWTAuthMiddleware(), router.AddUploadTask)
-	router.POST("/upload", util.JWTAuthMiddleware(), router.AddUploadTask)
-	router.OPTIONS("/upload", router.crossDomain)
+	router.POST("/upload/*path", util.CORSMiddleware(), util.JWTAuthMiddleware(), router.AddUploadTask)
+	router.POST("/upload", util.CORSMiddleware(), util.JWTAuthMiddleware(), router.AddUploadTask)
 	router.GET("/jcspan/*path", router.GetFile)
 	router.GET("/index/*path", router.FileIndex)
 	router.POST("/task", router.CreateTask)

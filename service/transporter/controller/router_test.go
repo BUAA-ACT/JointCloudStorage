@@ -294,9 +294,9 @@ func TestECUploadAndDownload(t *testing.T) {
 	t.Run("Get file", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", url, nil)
 		resp := sendRequestAndRecord(req)
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		fmt.Println(buf.String())
+		bodyRes, _ := ioutil.ReadAll(resp.Body)
+		result := string(bodyRes)
+		fmt.Println(result)
 		if resp.StatusCode != http.StatusOK {
 			t.Error("Get file fail")
 		}
@@ -389,9 +389,9 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
 		if resp.StatusCode != http.StatusOK {
 			t.Error("Get file fail")
 		}
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		fmt.Println(buf.String())
+		bodyRes, _ := ioutil.ReadAll(resp.Body)
+		result := string(bodyRes)
+		fmt.Println(result)
 	})
 }
 func TestReplicaUploadAndDownload(t *testing.T) {
