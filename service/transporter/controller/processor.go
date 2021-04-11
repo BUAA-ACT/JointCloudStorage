@@ -296,7 +296,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 				return err
 			}
 			_, err = processor.Monitor.AddVolume(t.Uid, fileInfo.Size)
-			err = processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo)
+			err := processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo) // todo 此处错误被隐藏
 			util.CheckErr(err, "File Metadata sync")
 		case "EC": // 纠删码模式
 			N := t.TaskOptions.DestinationPlan.N
