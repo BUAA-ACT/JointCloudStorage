@@ -64,6 +64,7 @@ func NewRouter(processor TaskProcessor) *Router {
 	}
 	router.GET("/", Index)
 	router.POST("/upload/*path", util.JWTAuthMiddleware(), router.AddUploadTask)
+	router.POST("/upload", util.JWTAuthMiddleware(), router.AddUploadTask)
 	router.GET("/jcspan/*path", router.GetFile)
 	router.GET("/index/*path", router.FileIndex)
 	router.POST("/task", router.CreateTask)
@@ -289,7 +290,7 @@ func (router *Router) FileIndex(c *gin.Context) {
 }
 
 func (router *Router) AddUploadTask(c *gin.Context) {
-	destinationPath := c.Param("path")[1:]
+	//destinationPath := c.Param("path")[1:]
 	uid := c.MustGet("tokenUid").(string)
 	tid := c.MustGet("tokenTid").(string)
 	taskid, err := primitive.ObjectIDFromHex(tid)
@@ -299,10 +300,11 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 		http.Error(c.Writer, err.Error(), http.StatusBadGateway)
 		return
 	}
-	if task.DestinationPath != destinationPath {
-		logrus.Errorf("destination path not equal")
-		destinationPath = task.DestinationPath
-	}
+	//if task.DestinationPath != destinationPath {
+	//	logrus.Errorf("destination path not equal")
+	//	destinationPath = task.DestinationPath
+	//}
+	destinationPath := task.DestinationPath
 	logrus.Infof("upload to :%v", destinationPath)
 	// todo: 文件较小时，不落盘，直接内存上传
 	c.Request.ParseMultipartForm(32 << 20)
