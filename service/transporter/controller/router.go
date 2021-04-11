@@ -141,6 +141,9 @@ func (router *Router) CreateTask(c *gin.Context) {
 	switch reqTask.TaskType {
 	case "Upload":
 		task := RequestTask2Task(&reqTask, model.UPLOAD, model.BLOCKED)
+		if !task.Check() {
+			taskRequestReplyErr(util.ErrorCodeWrongRequestFormat, util.ErrorMsgWrongRequestFormat+": task not pass check", c)
+		}
 		err := router.processor.Lock.Lock(task.GetRealDestinationPath())
 		if err != nil {
 			taskRequestReplyErr(util.ErrorCodeGetFileLockErr, util.ErrorMsgGetFileLockErr+": "+err.Error(), c)
@@ -418,13 +421,13 @@ func RequestTask2Task(reqTask *RequestTask, taskType model.TaskType, state model
 		DestinationPath: reqTask.DestinationPath,
 		TaskOptions: &model.TaskOptions{
 			SourceStoragePlan: &model.StoragePlan{
-				StorageMode: reqTask.SourceStoragePlan.StorageMode,
+				StorageMode: model.StorageModel(reqTask.SourceStoragePlan.StorageMode),
 				Clouds:      srcCloudsID,
 				N:           realSourceN,
 				K:           realSourceK,
 			},
 			DestinationPlan: &model.StoragePlan{
-				StorageMode: reqTask.DestinationStoragePlan.StorageMode,
+				StorageMode: model.StorageModel(reqTask.DestinationStoragePlan.StorageMode),
 				Clouds:      dstCloudsID,
 				N:           realDestN,
 				K:           realDestK,

@@ -56,7 +56,7 @@ const (
 )
 
 type StoragePlan struct {
-	StorageMode string
+	StorageMode StorageModel
 	Clouds      []string
 	N           int
 	K           int
@@ -112,4 +112,25 @@ func NewTask(taskType TaskType, startTime time.Time, uid string, sourcePath stri
 		SourcePath:      sourcePath,
 		DestinationPath: destinationPath,
 	}
+}
+
+func (t *Task) Check() bool {
+	switch t.TaskType {
+	case UPLOAD:
+		if t.DestinationPath == "" {
+			return false
+		}
+		switch t.TaskOptions.DestinationPlan.StorageMode {
+		case StorageModelReplica:
+		case StorageModelEC:
+		default:
+			return false
+		}
+		if len(t.TaskOptions.DestinationPlan.Clouds) == 0 {
+			return false
+		}
+	default:
+		return true
+	}
+	return true
 }
