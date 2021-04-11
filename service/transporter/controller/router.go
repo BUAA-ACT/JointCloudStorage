@@ -24,7 +24,7 @@ type Router struct {
 
 type RequestTask struct {
 	TaskType               string             `json:"TaskType"`
-	Uid                    string             `json:"Uid"`
+	Uid                    string             `json:"UserID"`
 	DestinationPath        string             `json:"DestinationPath"`
 	SourcePath             string             `json:"SourcePath"`
 	SourceStoragePlan      RequestStoragePlan `json:"SourceStoragePlan"`
