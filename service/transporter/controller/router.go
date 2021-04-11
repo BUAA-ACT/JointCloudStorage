@@ -58,13 +58,15 @@ type TaskResult struct {
 
 func NewRouter(processor TaskProcessor) *Router {
 	var router Router
+	engine := gin.Default()
+	engine.Use(util.CORSMiddleware())
 	router = Router{
-		Engine:    gin.Default(),
+		Engine:    engine,
 		processor: processor,
 	}
 	router.GET("/", Index)
-	router.POST("/upload/*path", util.CORSMiddleware(), util.JWTAuthMiddleware(), router.AddUploadTask)
-	router.POST("/upload", util.CORSMiddleware(), util.JWTAuthMiddleware(), router.AddUploadTask)
+	router.POST("/upload/*path", util.JWTAuthMiddleware(), router.AddUploadTask)
+	router.POST("/upload", util.JWTAuthMiddleware(), router.AddUploadTask)
 	router.GET("/jcspan/*path", router.GetFile)
 	router.GET("/index/*path", router.FileIndex)
 	router.POST("/task", router.CreateTask)
