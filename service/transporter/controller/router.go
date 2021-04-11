@@ -65,6 +65,7 @@ func NewRouter(processor TaskProcessor) *Router {
 	router.GET("/", Index)
 	router.POST("/upload/*path", util.JWTAuthMiddleware(), router.AddUploadTask)
 	router.POST("/upload", util.JWTAuthMiddleware(), router.AddUploadTask)
+	router.OPTIONS("/upload", router.crossDomain)
 	router.GET("/jcspan/*path", router.GetFile)
 	router.GET("/index/*path", router.FileIndex)
 	router.POST("/task", router.CreateTask)
@@ -73,6 +74,11 @@ func NewRouter(processor TaskProcessor) *Router {
 	router.GET("/debug/:key", router.Debug)
 	rand.Seed(time.Now().Unix())
 	return &router
+}
+
+func (router *Router) crossDomain(c *gin.Context) {
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Methods", "GET, POST, PUT")
 }
 
 func (router *Router) Debug(c *gin.Context) {
