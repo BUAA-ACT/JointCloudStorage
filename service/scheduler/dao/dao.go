@@ -40,18 +40,18 @@ type Cloud struct {
 }
 
 type User struct {
-	UserId            string           `bson:"user_id"`
-	Email             string           `bson:"email"`
-	Password          string           `bson:"password"`
-	Nickname          string           `bson:"nickname"`
-	Role              string           `bson:"role"`
-	Avatar            string           `bson:"avatar"`
-	LastModified      time.Time        `bson:"last_modified"`
-	Preference        Preference       `bson:"preference"`
-	StoragePlan       StoragePlan      `bson:"storage_plan"`
-	DataStats         DataStats        `bson:"data_stats"`
-	AccessCredentials AccessCredential `bson:"access_credentials"`
-	Status            string           `bson:"status"`
+	UserId            string             `bson:"user_id"`
+	Email             string             `bson:"email"`
+	Password          string             `bson:"password"`
+	Nickname          string             `bson:"nickname"`
+	Role              string             `bson:"role"`
+	Avatar            string             `bson:"avatar"`
+	LastModified      time.Time          `bson:"last_modified"`
+	Preference        Preference         `bson:"preference"`
+	StoragePlan       StoragePlan        `bson:"storage_plan"`
+	DataStats         DataStats          `bson:"data_stats"`
+	AccessCredentials []AccessCredential `bson:"access_credentials"`
+	Status            string             `bson:"status"`
 }
 
 type Preference struct {

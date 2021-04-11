@@ -4,6 +4,7 @@ import (
 	"cloud-storage-httpserver/model"
 	"cloud-storage-httpserver/service/tools"
 	"context"
+
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -13,9 +14,6 @@ func (d *Dao) ListFiles(userId string, path string, isDir bool) (*[]model.File, 
 	var filter interface{}
 	filterDir := bson.M{
 		"owner": userId,
-		"filename": bson.M{
-			"$regex": "^" + path,
-		},
 	}
 	filterFile := bson.M{
 		"owner":    userId,

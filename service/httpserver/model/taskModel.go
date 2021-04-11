@@ -7,9 +7,9 @@ type Task struct {
 	TaskType               string      `json:"TaskType" bson:"task_type"`
 	TaskState              string      `json:"TaskState" bson:"task_state"`
 	TaskStartTime          time.Time   `json:"TaskStartTime" bson:"task_start_time"`
-	UserId                 string      `json:"UserId" bson:"user_id"`
+	UserId                 string      `json:"UserID" bson:"user_id"`
 	SourcePath             string      `json:"SourcePath,omitempty" bson:"source_path"`
 	DestinationPath        string      `json:"DestinationPath,omitempty" bson:"destination_path"`
 	SourceStoragePlan      StoragePlan `json:"SourceStoragePlan,omitempty" bson:"source_storage_plan"`
-	DestinationStoragePlan StoragePlan `json:"Destination_Storage_Plan,omitempty" bson:"destination_storage_plan"`
+	DestinationStoragePlan StoragePlan `json:"DestinationStoragePlan,omitempty" bson:"destination_storage_plan"`
 }

@@ -8,29 +8,25 @@
     </el-upload>
     <el-table
       v-loading="listLoading"
-      :data="files.filter(data => !search || data.filename.toLowerCase().includes(search.toLowerCase()))"
+      :data="files.filter(data => !search || data.FileInfo.FileName.toLowerCase().includes(search.toLowerCase()))"
       fit
     >
       <el-table-column
         label="文件名"
-        prop="filename"
+        prop="FileInfo.FileName"
         min-width="200"
+        :formatter="filenameFormatter"
       />
       <el-table-column
         label="大小"
-        prop="size"
+        prop="FileInfo.Size"
         :formatter="sizeFormatter"
       />
       <el-table-column
         label="修改时间"
-        prop="last_modified"
+        prop="FileInfo.LastModified"
         :formatter="dateFormatter"
       />
-      <el-table-column class-name="status-col" label="位置">
-        <template slot-scope="scope">
-          <el-tag v-for="loc in scope.row.sites" :key="loc" type="info">{{ loc }}</el-tag>
-        </template>
-      </el-table-column>
       <el-table-column
         align="right"
       >
@@ -45,12 +41,12 @@
           <el-button
             size="mini"
             type="primary"
-            @click="handleDownload(scope.row.filename)"
+            @click="handleDownload(scope.row.FileInfo.FileName)"
           >下载</el-button>
           <el-button
             size="mini"
             type="danger"
-            @click="handleDelete(scope.row.filename)"
+            @click="handleDelete(scope.row.FileInfo.FileName)"
           >删除</el-button>
         </template>
       </el-table-column>
@@ -60,6 +56,7 @@
 
 <script>
 import cloudStorage from "@/api/cloudStorage";
+import { Message } from "element-ui";
 
 export default {
   data() {
@@ -88,21 +85,27 @@ export default {
       var self = this
       cloudStorage.getUploadAddress(item.file.name).then(response => {
         var token = response.Token
-        console.log("token=", token)
         cloudStorage.upload(item, token, "http://localhost:8083/upload").then(() => {
           self.fetchData()
         })
       })
     },
     handleDownload(filename) {
-      var url = genDownloadLink(filename)
-      var link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', filename)
-      document.body.appendChild(link)
-      link.click()
-      URL.revokeObjectURL(link)
-      document.body.removeChild(link)
+      cloudStorage.getDownloadAddress(filename).then(response => {
+        var type = response.Type
+        var url = response.Result
+        if (type == "URL") {
+          var link = document.createElement('a')
+          link.href = url
+          link.setAttribute('download', filename)
+          document.body.appendChild(link)
+          link.click()
+          URL.revokeObjectURL(link)
+          document.body.removeChild(link)
+        } else if(type == "TID") {
+          Message.info("正在重建文件")
+        }
+      })
     },
     handleDelete(filename) {
       var self = this
@@ -127,8 +130,17 @@ export default {
       return bytes.toFixed(1) + ' ' + units[u]
     },
     dateFormatter(row, column, timestamp, index) {
-      var date = new Date(timestamp * 1000)
+      var date = new Date(timestamp)
       return date.toLocaleString('zh-CN')
+    },
+    filenameFormatter(row, column, name, index) {
+      while(name.charAt(0)=='/') {
+        name = name.substring(1);
+      }
+      while(name.charAt(name.length-1)=='/') {
+        name = name.substring(0,name.length-1);
+      }
+      return name
     }
   }
 }

@@ -141,10 +141,5 @@ export default {
         FilePath: path
       }
     })
-  },
-  
-  genDownloadLink(filename) {
-    // TODO: insecure, should use temporary token
-    return process.env.VUE_APP_BASE_API + '/storage/download?filename=' + filename + '&t=' + getToken()
   }
 };
