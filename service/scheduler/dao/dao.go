@@ -120,7 +120,7 @@ func NewDao(mongoURI, database, cloudCollection, userCollection, fileCollection,
 		return nil, err
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	err = client.Ping(ctx, readpref.Primary())
 	if err != nil {
 		return nil, err

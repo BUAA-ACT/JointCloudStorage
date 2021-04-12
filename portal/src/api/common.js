@@ -1,6 +1,6 @@
 import request from "@/utils/request";
 
-const BACKEND_URL = "http://localhost:8081";
+// const BACKEND_URL = "http://localhost:8081";
 export default {
   // create(query) {
   //   return request({
@@ -11,35 +11,35 @@ export default {
   // },
   login(query) {
     return request({
-      url: `${BACKEND_URL}/user/login`,
+      url: `/user/login`,
       method: "post",
       data: query
     });
   },
   register(query) {
     return request({
-      url: `${BACKEND_URL}/user/register`,
+      url: `/user/register`,
       method: "post",
       data: query
     });
   },
   checkToken(AccessToken) {
     return request({
-      url: `${BACKEND_URL}/user/checkValidity`,
+      url: `/user/checkValidity`,
       method: "post",
       data: { AccessToken }
     });
   },
   getUserInfo(AccessToken) {
     return request({
-      url: `${BACKEND_URL}/user/getUserInfo`,
+      url: `/user/getUserInfo`,
       method: "post",
       data: { AccessToken }
     });
   },
   logout(AccessToken) {
     return request({
-      url: `${BACKEND_URL}/user/logout`,
+      url: `/user/logout`,
       method: "post",
       data: { AccessToken }
     });
