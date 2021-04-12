@@ -1,7 +1,7 @@
 import request from "@/utils/request";
 import store from "@/store";
 
-const BACKEND_URL = "http://localhost:8081";
+// const BACKEND_URL = "http://localhost:8081";
 // 云存储接口
 export default {
   makeBucket(query) {
@@ -45,7 +45,7 @@ export default {
   },
   updatePreference(form) {
     return request({
-      url: `${BACKEND_URL}/user/changeUserPreference`,
+      url: `/user/changeUserPreference`,
       method: "post",
       data: {
         AccessToken: store.getters.token,
@@ -55,7 +55,7 @@ export default {
   },
   getStoragePlans() {
     return request({
-      url: `${BACKEND_URL}/plan/getAllStoragePlan`,
+      url: `/plan/getAllStoragePlan`,
       method: "post",
       data: {
         AccessToken: store.getters.token
@@ -64,7 +64,7 @@ export default {
   },
   changeStoragePlan(StoragePlan) {
     return request({
-      url: `${BACKEND_URL}/plan/chooseStoragePlan`,
+      url: `/plan/chooseStoragePlan`,
       method: "post",
       data: {
         AccessToken: store.getters.token,
@@ -75,7 +75,7 @@ export default {
 
   getFiles(path) {
     return request({
-      url: `${BACKEND_URL}/file/getFiles`,
+      url: `/file/getFiles`,
       method: 'post',
       data: {
         AccessToken: store.getters.token,
@@ -86,7 +86,7 @@ export default {
 
   getUploadAddress(path) {
     return request({
-      url: `${BACKEND_URL}/file/preUploadFile`,
+      url: `/file/preUploadFile`,
       method: 'post',
       data: {
         AccessToken: store.getters.token,
@@ -116,7 +116,7 @@ export default {
 
   getDownloadAddress(filename) {
     return request({
-      url: `${BACKEND_URL}/file/downloadFile`,
+      url: `/file/downloadFile`,
       method: 'post',
       data: {
         AccessToken: store.getters.token,
@@ -134,7 +134,7 @@ export default {
   
   deleteFile(filename) {
     return request({
-      url: `${BACKEND_URL}/file/deleteFile`,
+      url: `/file/deleteFile`,
       method: 'post',
       data: {
         AccessToken: store.getters.token,

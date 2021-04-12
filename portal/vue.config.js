@@ -69,21 +69,21 @@ module.exports = {
           }
         })
       );
-      config.plugins.push(
-        new FileManagerPlugin({
-          events: {
-            onEnd: {
-              delete: ["./jointCloud.zip"],
-              archive: [
-                {
-                  source: "./dist",
-                  destination: "./jointCloud.zip"
-                }
-              ]
-            }
-          }
-        })
-      );
+      // config.plugins.push(
+      //   new FileManagerPlugin({
+      //     events: {
+      //       onEnd: {
+      //         delete: ["./jointCloud.zip"],
+      //         archive: [
+      //           {
+      //             source: "./dist",
+      //             destination: "./jointCloud.zip"
+      //           }
+      //         ]
+      //       }
+      //     }
+      //   })
+      // );
     }
   },
   // 配置转发代理
