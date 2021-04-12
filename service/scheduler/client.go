@@ -81,5 +81,5 @@ func sendPostMetadata(param PostMetadataParam, cloud string) error {
 }
 
 func genAddress(address, path string) string {
-	return "http://" + addrMap[address] + path
+	return "http://" + addrMap[address] + ":8083" + path
 }
