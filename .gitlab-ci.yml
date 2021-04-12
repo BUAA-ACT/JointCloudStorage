@@ -121,7 +121,7 @@ transporter_docker_build:
   tags:
     - docker
 
-scheduler_docker_build:
+portal_docker_build:
   stage: docker_build
   image: docker:19.03.0
   services:
@@ -130,21 +130,18 @@ scheduler_docker_build:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375
-  dependencies:
-    - scheduler_build
+  needs: []
   only:
     - master
-    - dev-scheduler
-    - dev-scheduler-2
   before_script:
     - docker info
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_TOKEN $CI_REGISTRY
   script:
-    - echo '构建 scheduler docker 镜像'
-    - cd service/scheduler
-    - docker build -t scheduler:v1-dev .
-    - docker tag scheduler:v1-dev harbor.sumblog.cn/pub/scheduler:v1-dev
-    - docker push harbor.sumblog.cn/pub/scheduler:v1-dev
+    - echo '构建 portal docker 镜像'
+    - cd portal
+    - docker build -t portal:v1-dev .
+    - docker tag portal:v1-dev harbor.sumblog.cn/pub/portal:v1-dev
+    - docker push harbor.sumblog.cn/pub/portal:v1-dev
   tags:
     - docker
 
