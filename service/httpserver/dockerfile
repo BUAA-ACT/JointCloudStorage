@@ -1,0 +1,11 @@
+FROM harbor.sumblog.cn/pub/alpine:3.13.4
+
+VOLUME /data
+COPY build/bin/httpserver /home/jcspan/
+RUN chmod +x /home/jcspan/httpserver
+WORKDIR /home/jcspan
+CMD ["cd", "/home/jcspan"]
+CMD ["ls", "-a"]
+CMD ["./httpserver"]
+
+EXPOSE 8081
