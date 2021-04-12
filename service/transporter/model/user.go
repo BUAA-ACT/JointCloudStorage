@@ -152,7 +152,7 @@ func NewInMemoryUserDatabase() *InMemoryUserDatabase {
 					util.Config.LocalCloudID: 0,
 				},
 			},
-			AccessCredentials: AccessCredential{},
+			AccessCredentials: []AccessCredential{},
 			Status:            "",
 		},
 	}}
