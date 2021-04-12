@@ -84,7 +84,7 @@ func (mf *MongoFileDatabase) DeleteFileInfo(file *File) (err error) {
 
 	//delete the file
 	filter := bson.M{
-		"id": file.FileID,
+		"file_id": file.FileID,
 	}
 	collection := mf.client.Database(mf.databaseName).Collection(mf.collectionName)
 	_, err = collection.DeleteOne(context.TODO(), filter)
