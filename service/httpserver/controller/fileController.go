@@ -252,6 +252,7 @@ func UserDownloadFile(con *gin.Context) {
 func UserDeleteFile(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
+		args.FieldWordFilePath:    true,
 	}
 	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
 	if tools.RequiredFieldNotExist(fieldRequired, existMap) {

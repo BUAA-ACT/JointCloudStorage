@@ -138,7 +138,7 @@ export default {
       method: 'post',
       data: {
         AccessToken: store.getters.token,
-        FilePath: path
+        FilePath: filename
       }
     })
   }

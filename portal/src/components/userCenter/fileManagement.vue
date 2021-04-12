@@ -85,7 +85,7 @@ export default {
       var self = this
       cloudStorage.getUploadAddress(item.file.name).then(response => {
         var token = response.Token
-        cloudStorage.upload(item, token, "http://localhost:8083/upload").then(() => {
+        cloudStorage.upload(item, token, "http://192.168.1.15:8083/upload").then(() => {
           self.fetchData()
         })
       })
@@ -94,7 +94,7 @@ export default {
       cloudStorage.getDownloadAddress(filename).then(response => {
         var type = response.Type
         var url = response.Result
-        if (type == "URL") {
+        if (type == "url") {
           var link = document.createElement('a')
           link.href = url
           link.setAttribute('download', filename)
@@ -102,14 +102,14 @@ export default {
           link.click()
           URL.revokeObjectURL(link)
           document.body.removeChild(link)
-        } else if(type == "TID") {
+        } else if(type == "tid") {
           Message.info("正在重建文件")
         }
       })
     },
     handleDelete(filename) {
       var self = this
-      deleteFile(filename).then(() => {
+      cloudStorage.deleteFile(filename).then(() => {
         self.fetchData()
       })
     },
