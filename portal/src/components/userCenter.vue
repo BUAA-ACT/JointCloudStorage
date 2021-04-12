@@ -12,6 +12,8 @@
           <el-menu-item index="1-7">用户信息</el-menu-item>
         </el-submenu>
         <el-menu-item index="2-1"><i class="el-icon-folder-opened"></i>文件管理</el-menu-item>
+        <el-menu-item index="3-1"><i class="el-icon-map-location"></i>数据分布</el-menu-item>
+        <el-menu-item index="4-1"><i class="el-icon-guide"></i>存储迁移</el-menu-item>
       </el-menu>
     </el-aside>
     <el-main><router-view></router-view></el-main>
@@ -32,6 +34,8 @@ export default {
         "1-6": "storagePlan",
         "1-7": "userInfo",
         "2-1": "fileManagement",
+        "3-1": "dataDistribution",
+        "4-1": "dataMigration",
       }
     };
   },
