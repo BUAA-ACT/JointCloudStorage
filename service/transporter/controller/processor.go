@@ -120,7 +120,7 @@ func (processor *TaskProcessor) ProcessTasks() {
 }
 
 func (processor *TaskProcessor) DeleteSingleFile(t *model.Task) error {
-	fileInfo, err := processor.FileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
+	fileInfo, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
 	if err != nil {
 		logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 		return err
@@ -156,7 +156,7 @@ func (processor *TaskProcessor) DeleteSingleFile(t *model.Task) error {
 }
 
 func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string) error {
-	fileInfo, err := processor.FileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
+	fileInfo, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
 	if err != nil {
 		logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 		return err
@@ -200,7 +200,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		if N < 1 || K < 1 || N+K != len(storageClients) {
 			return "", errors.New("EC storage num wrong")
 		}
-		fileInfo, err := processor.FileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
+		fileInfo, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
 		if err != nil {
 			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 			return "", errors.New(util.ErrorMsgCantGetFileInfo)
@@ -223,7 +223,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		}
 		return rebuildPath, nil
 	case "Replica":
-		_, err := processor.FileDatabase.GetFileInfo(t.Uid + "/" + t.SourcePath)
+		_, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
 		if err != nil {
 			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 			return "", errors.New(util.ErrorMsgCantGetFileInfo)
@@ -373,7 +373,7 @@ func (processor *TaskProcessor) ProcessSync(t *model.Task) (err error) {
 		return err
 	}
 	// 列举所有对象
-	objects, err := processor.FileDatabase.Index(t.Uid + "/" + t.SourcePath)
+	objects, err := processor.FileDatabase.Index(t.GetRealSourcePath())
 	if err != nil {
 		return err
 	}
