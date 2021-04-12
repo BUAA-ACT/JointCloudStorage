@@ -38,6 +38,7 @@ func NewLock(addr string) (*Lock, error) {
 }
 
 func (l *Lock) Lock(path string) error {
+	path = "/jcs" + path
 	// 检查path格式
 	paths := strings.Split(strings.Trim(path, sep), sep)
 	if len(paths) == 0 {
@@ -90,6 +91,7 @@ func (l *Lock) Lock(path string) error {
 }
 
 func (l *Lock) UnLockAll(path string) {
+	path = "/jcs" + path
 	_, _, err := l.c.Get(path)
 	if err != nil {
 		return
@@ -111,6 +113,7 @@ func (l *Lock) UnLockAll(path string) {
 }
 
 func (l *Lock) UnLock(path string) error {
+	path = "/jcs" + path
 	// 检查path格式
 	paths := strings.Split(strings.Trim(path, sep), sep)
 	if len(paths) == 0 {

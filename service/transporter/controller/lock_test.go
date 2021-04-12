@@ -10,6 +10,7 @@ func TestLock(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create Lock connect error: %v", err)
 	}
+	l.UnLockAll("/")
 	t.Run("Lock", func(t *testing.T) {
 		err = l.Lock("/tester/lockTest")
 		if err != nil {

@@ -213,7 +213,7 @@ func TestECUploadAndDownload(t *testing.T) {
 		jsonStr := []byte(`
 {
   "TaskType": "Upload",
-   "Uid": "tester",
+   "UserID": "tester",
    "DestinationPath":"path/to/jcspantest.txt",
    "DestinationStoragePlan":{
       "StorageMode": "EC",
@@ -256,7 +256,7 @@ func TestECUploadAndDownload(t *testing.T) {
 		jsonStr := []byte(`
   {
     "TaskType": "Download",
-     "Uid": "tester",
+     "UserID": "tester",
      "Sid": "tttteeeesssstttt",
      "SourcePath":"path/to/jcspantest.txt",
      "SourceStoragePlan":{
@@ -308,7 +308,7 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
 		jsonStr := []byte(`
 {
   "TaskType": "Upload",
-   "Uid": "tester",
+   "UserID": "tester",
    "DestinationPath": "path/to/jcspantest.txt",
    "DestinationStoragePlan":{
       "StorageMode": "EC",
@@ -348,7 +348,7 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
 		jsonStr := []byte(`
   {
     "TaskType": "Download",
-     "Uid": "tester",
+     "UserID": "tester",
      "Sid": "tttteeeesssstttt",
      "SourcePath":"path/to/jcspantest.txt",
      "SourceStoragePlan":{
@@ -398,7 +398,7 @@ func TestReplicaUploadAndDownload(t *testing.T) {
 	t.Run("Create Replica Upload Task and process", func(t *testing.T) {
 		jsonStr := []byte(`{
    "TaskType": "Upload",
-   "Uid": "tester",
+   "UserID": "tester",
    "DestinationPath":"path/to/jcspantest.txt",
    "DestinationStoragePlan":{
       "StorageMode": "Replica",
@@ -435,7 +435,7 @@ func TestReplicaUploadAndDownload(t *testing.T) {
 		jsonStr := []byte(`
   {
     "TaskType": "Download",
-     "Uid": "tester",
+     "UserID": "tester",
      "SourcePath":"path/to/jcspantest.txt",
      "SourceStoragePlan":{
         "StorageMode": "Replica",
@@ -471,7 +471,7 @@ func TestEC2ReplicaSync(t *testing.T) {
 	jsonStr := []byte(`
 {
   "TaskType": "Sync",
-   "Uid": "tester",
+   "UserID": "tester",
    "DestinationPath":"tmp/test/sync/",
    "SourcePath": "tmp/test/sync/",
    "SourceStoragePlan":{
@@ -520,7 +520,7 @@ func TestReplicaMigrate(t *testing.T) {
 	jsonStr := []byte(`
 {
   "TaskType": "Migrate",
-   "Uid": "tester",
+   "UserID": "tester",
    "DestinationPath":"",
    "SourcePath": "",
    "SourceStoragePlan":{
@@ -558,7 +558,7 @@ func TestReplica2ECSync(t *testing.T) {
 	jsonStr := []byte(`
 {
   "TaskType": "Sync",
-   "Uid": "tester",
+   "UserID": "tester",
    "DestinationPath":"tmp/test/sync/",
    "SourcePath": "tmp/test/sync/",
    "SourceStoragePlan":{
@@ -607,7 +607,7 @@ func TestReplicaUploadAndDelete(t *testing.T) {
 	jsonStr := []byte(`
 {
   "TaskType": "Delete",
-   "Uid": "tester",
+   "UserID": "tester",
    "SourcePath": "tmp/test/sync/test.jpeg",
    "SourceStoragePlan":{
       "StorageMode": "Replica",
@@ -639,7 +639,7 @@ func TestECUploadAndDelete(t *testing.T) {
 	jsonStr := []byte(`
 {
   "TaskType": "Delete",
-   "Uid": "tester",
+   "UserID": "tester",
    "SourcePath": "tmp/test/del/test.jpeg",
    "SourceStoragePlan":{
       "StorageMode": "EC",
@@ -732,7 +732,7 @@ func testECUpload(t *testing.T, dstPath string, localPath string, cloud string) 
 		jsonStr := fmt.Sprintf(`
 {
   "TaskType": "Upload",
-   "Uid": "tester",
+   "UserID": "tester",
    "DestinationPath":"%v",
    "DestinationStoragePlan":{
       "StorageMode": "EC",
@@ -775,7 +775,7 @@ func testReplicaUpload(t *testing.T, dstPath string, localPath string, cloud str
 		jsonStr := fmt.Sprintf(`
 {
   "TaskType": "Upload",
-   "Uid": "tester",
+   "UserID": "tester",
    "DestinationPath":"%v",
    "DestinationStoragePlan":{
       "StorageMode": "Replica",
