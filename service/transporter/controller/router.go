@@ -24,7 +24,7 @@ type Router struct {
 
 type RequestTask struct {
 	TaskType               string             `json:"TaskType"`
-	Uid                    string             `json:"Uid"`
+	Uid                    string             `json:"UserID"`
 	DestinationPath        string             `json:"DestinationPath"`
 	SourcePath             string             `json:"SourcePath"`
 	SourceStoragePlan      RequestStoragePlan `json:"SourceStoragePlan"`
@@ -143,6 +143,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 		task := RequestTask2Task(&reqTask, model.UPLOAD, model.BLOCKED)
 		if !task.Check() {
 			taskRequestReplyErr(util.ErrorCodeWrongRequestFormat, util.ErrorMsgWrongRequestFormat+": task not pass check", c)
+			return
 		}
 		err := router.processor.Lock.Lock(task.GetRealDestinationPath())
 		if err != nil {
@@ -279,6 +280,7 @@ func taskRequestReplyErr(errCode int, errMsg string, c *gin.Context) {
 		Msg:  errMsg,
 		Data: TaskResult{},
 	}
+	util.Log(logrus.WarnLevel, "Router task request", errMsg, "", "", "")
 	c.JSON(http.StatusBadGateway, requestTaskReply)
 }
 
