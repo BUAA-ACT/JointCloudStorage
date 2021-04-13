@@ -293,13 +293,13 @@ deploy_production_job:
   script:
     - echo "部署到 阿里云青岛"
     - export PROD_SERVER="harbor.sumblog.cn"
-    - ssh zhangjh@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose down"
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose down"
     - echo "推送新版配置文件"
     - cd configs
     - scp ./* jcspan@harbor.sumblog.cn:/home/jcspan/jcspan
-    - ssh zhangjh@$PROD_SERVER "cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *"
-    - ssh zhangjh@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
-    - ssh zhangjh@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up"
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *"
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up"
   tags:
     - docker
 
