@@ -299,7 +299,7 @@ deploy_production_job:
     - scp ./* jcspan@harbor.sumblog.cn:/home/jcspan/jcspan
     - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
-    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up"
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up -d"
   tags:
     - docker
 
