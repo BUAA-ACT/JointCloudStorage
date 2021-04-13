@@ -5,6 +5,7 @@ stages:
   - docker_build
   - deploy
   - after_deploy
+  - deploy_production_env
 
 before_script:
   - export GOPATH=$GOPATH:/usr/local/${CI_PROJECT_NAME}
@@ -235,6 +236,7 @@ httpserver_docker_build:
 transporter_deploy_job:
   stage: deploy
   image: kroniak/ssh-client:latest
+  needs: ["transporter_docker_build"]
   only:
     - master
     - dev-transporter
@@ -258,6 +260,7 @@ transporter_deploy_job:
 transporter_deploy_test_job:
   stage: after_deploy
   image: golang:1.16.2
+  needs: ["transporter_deploy_job"]
   script:
     - cd service/transporter/
     - go mod tidy
@@ -274,5 +277,29 @@ transporter_deploy_test_job:
       - service/transporter/vendor
       - /go
 
-
+# 部署到生产环境
+deploy_production_job:
+  stage: deploy_production_env
+  image: kroniak/ssh-client:latest
+  when: manual
+  only:
+    - master
+  before_script:
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+  script:
+    - echo "部署到 阿里云青岛"
+    - export PROD_SERVER="harbor.sumblog.cn"
+    - ssh zhangjh@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose down"
+    - echo "推送新版配置文件"
+    - cd configs
+    - scp ./* jcspan@harbor.sumblog.cn:/home/jcspan/jcspan
+    - ssh zhangjh@$PROD_SERVER "cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *"
+    - ssh zhangjh@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
+    - ssh zhangjh@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up"
+  tags:
+    - docker
 
