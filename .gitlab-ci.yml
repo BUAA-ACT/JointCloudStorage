@@ -96,7 +96,7 @@ transporter_build:
       - service/transporter/vendor
       - /go
 
-# transporter 编译
+# portal 编译
 portal_build:
   image: node@sha256:95de040aa148ca391a29674ca99931bf486e87c33eca566c3f6af984609d1c84
   stage: build
@@ -194,6 +194,8 @@ portal_docker_build:
   script:
     - echo '构建 portal docker 镜像'
     - cd portal
+    - ls
+    - ls dist
     - docker build -t portal:v1-dev .
     - docker tag portal:v1-dev harbor.sumblog.cn/pub/portal:v1-dev
     - docker push harbor.sumblog.cn/pub/portal:v1-dev
