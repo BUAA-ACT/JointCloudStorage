@@ -132,6 +132,7 @@ scheduler_docker_build:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375
+  needs: ["scheduler_build"]
   dependencies:
     - scheduler_build
   only:
@@ -159,6 +160,7 @@ transporter_docker_build:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: tcp://docker:2375
+  needs: ["transporter_build"]
   dependencies:
     - transporter_build
   only:
@@ -196,7 +198,7 @@ portal_docker_build:
   script:
     - echo '构建 portal docker 镜像'
     - cd portal
-    - ls
+    - pwd
     - ls dist
     - docker build -t portal:v1-dev .
     - docker tag portal:v1-dev harbor.sumblog.cn/pub/portal:v1-dev
@@ -271,4 +273,6 @@ transporter_deploy_test_job:
     paths:
       - service/transporter/vendor
       - /go
+
+
 
