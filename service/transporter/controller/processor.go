@@ -299,6 +299,20 @@ func (processor *TaskProcessor) ProcessGetTmpDownloadUrl(t *model.Task) (url str
 	return url, err
 }
 
+// AddFileInfo 增加 fileInfo 到数据库
+func (processor *TaskProcessor) AddFileInfo(t *model.Task) (err error) {
+	_, fileInfoErr := processor.FileDatabase.GetFileInfo(t.GetRealDestinationPath())
+	if fileInfoErr == nil {
+		return nil
+	}
+	fileInfo, err := model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
+	if err != nil {
+		return err
+	}
+	err = processor.FileDatabase.CreateFileInfo(fileInfo)
+	return err
+}
+
 func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	if t.GetTaskType() != model.UPLOAD {
 		return errors.New("wrong task type")

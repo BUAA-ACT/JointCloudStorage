@@ -355,7 +355,8 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 	task.SourcePath = sourcePath
 	task.DestinationPath = destinationPath
 	task.State = model.WAITING
-
+	// 上传文件后同步写入数据库
+	err = router.processor.AddFileInfo(task)
 	router.processor.taskStorage.SetTask(task.Tid, task)
 }
 
