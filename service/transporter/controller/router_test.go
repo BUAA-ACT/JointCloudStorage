@@ -600,7 +600,7 @@ func TestReplica2ECSync(t *testing.T) {
 }
 
 func TestReplicaUploadAndDelete(t *testing.T) {
-	dstPath := "tmp/test/sync/test.jpeg"
+	dstPath := "tmp/test/sync/fail_if_not_delete.jpeg"
 	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
 	dstPath = "tmp/test/sync/test.txt"
 	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
@@ -608,7 +608,7 @@ func TestReplicaUploadAndDelete(t *testing.T) {
 {
   "TaskType": "Delete",
    "UserID": "tester",
-   "SourcePath": "tmp/test/sync/test.jpeg",
+   "SourcePath": "tmp/test/sync/fail_if_not_delete.jpeg",
    "SourceStoragePlan":{
       "StorageMode": "Replica",
       "Clouds": [

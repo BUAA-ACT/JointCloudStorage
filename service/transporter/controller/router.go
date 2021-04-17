@@ -233,6 +233,12 @@ func (router *Router) CreateTask(c *gin.Context) {
 		c.JSON(http.StatusOK, requestTaskReply)
 	case "Delete":
 		task := RequestTask2Task(&reqTask, model.DELETE, model.CREATING)
+		// 删除任务使用同步处理
+		err = router.processor.DeleteFileInfo(task)
+		if err != nil {
+			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
+			return
+		}
 		tid, err := router.processor.taskStorage.AddTask(task)
 		if err != nil {
 			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)

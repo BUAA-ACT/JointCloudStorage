@@ -98,7 +98,7 @@ func (processor *TaskProcessor) ProcessTasks() {
 			}(task)
 		case model.DELETE:
 			go func(t *model.Task) {
-				err := processor.DeleteSingleFile(t)
+				err := processor.DeleteStorageFile(t)
 				processor.SetProcessResult(t, err)
 				finish <- t.Tid
 			}(task)
@@ -119,6 +119,49 @@ func (processor *TaskProcessor) ProcessTasks() {
 	}
 }
 
+// DeleteFileInfo 删除文件元信息
+func (processor *TaskProcessor) DeleteFileInfo(t *model.Task) error {
+	fileInfo, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
+	if err != nil {
+		logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
+		return err
+	}
+	err = processor.FileDatabase.DeleteFileInfo(fileInfo)
+	return err
+}
+
+// DeleteStorageFile 删除文件存储
+func (processor *TaskProcessor) DeleteStorageFile(t *model.Task) (err error) {
+	var storageClients []model.StorageClient
+	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
+	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
+		client, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, cloudName)
+		if err != nil {
+			return err
+		}
+		storageClients = append(storageClients, client)
+	}
+	switch storageModel {
+	case "Replica":
+		for _, client := range storageClients {
+			err = client.Remove(t.SourcePath, t.Uid)
+		}
+	case "EC":
+		N := t.TaskOptions.SourceStoragePlan.N
+		K := t.TaskOptions.SourceStoragePlan.K
+		if len(storageClients) != N+K {
+			return errors.New("storage num not correct")
+		}
+		for i, client := range storageClients {
+			err = client.Remove(t.SourcePath+"."+strconv.Itoa(i), t.Uid)
+		}
+	default:
+		return errors.New("storageModel not support")
+	}
+	return
+}
+
+// 弃用
 func (processor *TaskProcessor) DeleteSingleFile(t *model.Task) error {
 	fileInfo, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
 	if err != nil {
