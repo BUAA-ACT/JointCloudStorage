@@ -33,7 +33,7 @@ type GetDownloadPlanResponse struct {
 /* post storage plan*/
 type PostStoragePlan struct {
 	CloudID     string      `json:"CloudID" bson:"cloud_id"`
-	UserID      string      `json:"UserId" bson:"user_id"`
+	UserID      string      `json:"UserID" bson:"user_id"`
 	StoragePlan StoragePlan `json:"StoragePlan" bson:"storage_plan"`
 }
 
