@@ -7,6 +7,7 @@ import (
 	"cloud-storage-httpserver/service/scheduler"
 	"cloud-storage-httpserver/service/tools"
 	"cloud-storage-httpserver/service/transporter"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -89,6 +90,9 @@ func UserGetAdvice(con *gin.Context) {
 		})
 		return
 	}
+
+	fmt.Print("advices: ")
+	fmt.Println(*advices)
 	// return advices
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
