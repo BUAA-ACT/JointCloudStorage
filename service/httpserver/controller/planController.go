@@ -90,7 +90,6 @@ func UserGetAdvice(con *gin.Context) {
 		})
 		return
 	}
-
 	fmt.Print("advices: ")
 	fmt.Println(*advices)
 	// return advices
