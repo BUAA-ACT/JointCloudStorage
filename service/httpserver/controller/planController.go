@@ -89,12 +89,10 @@ func UserGetAdvice(con *gin.Context) {
 		})
 		return
 	}
-	// check advices
-
 	// return advices
 	con.JSON(http.StatusOK, gin.H{
-		"code": args.CodeDatabaseError,
-		"msg":  "没有找到",
+		"code": args.CodeOK,
+		"msg":  "获取建议成功",
 		"data": gin.H{
 			"Advices": *advices,
 		},
