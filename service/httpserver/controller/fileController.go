@@ -7,6 +7,7 @@ import (
 	"cloud-storage-httpserver/service/scheduler"
 	"cloud-storage-httpserver/service/tools"
 	"cloud-storage-httpserver/service/transporter"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -89,6 +90,8 @@ func UserGetFiles(con *gin.Context) {
 		}
 		integrateFiles = append(integrateFiles, newReturnFile)
 	}
+	fmt.Println("文件内容为:")
+	fmt.Println(integrateFiles)
 	// return ok
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
