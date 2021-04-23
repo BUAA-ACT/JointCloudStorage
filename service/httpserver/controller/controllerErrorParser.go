@@ -4,6 +4,7 @@ import (
 	. "cloud-storage-httpserver/args"
 	"cloud-storage-httpserver/dao"
 	"cloud-storage-httpserver/service/regex"
+	"cloud-storage-httpserver/service/tools"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -15,8 +16,8 @@ func getValueAndExist(con *gin.Context, fields map[string]bool) (map[string]inte
 	existMap := make(map[string]bool)
 	if con.Request.Method == HttpMethodGet {
 		for field := range fields {
-			value, ok := con.GetQuery(field)
-			valueMap[field] = value
+			getValue, ok := con.GetQuery(field)
+			valueMap[field] = getValue
 			existMap[field] = ok
 		}
 		return valueMap, existMap
@@ -24,11 +25,10 @@ func getValueAndExist(con *gin.Context, fields map[string]bool) (map[string]inte
 		httpType := con.GetHeader("Content-Type")
 		if strings.Contains(httpType, HttpContentTypeUrlEncoded) {
 			for field := range fields {
-				value, ok := con.GetPostForm(field)
-				valueMap[field] = value
+				encodeValue, ok := con.GetPostForm(field)
+				valueMap[field] = encodeValue
 				existMap[field] = ok
 			}
-			return valueMap, existMap
 		} else if strings.Contains(httpType, HttpContentTypeJson) {
 			var result map[string]interface{}
 			err := con.ShouldBindJSON(&result)
@@ -39,25 +39,31 @@ func getValueAndExist(con *gin.Context, fields map[string]bool) (map[string]inte
 				fmt.Println(err)
 			}
 			for field := range fields {
-				value, ok := result[field]
-				valueMap[field] = value
+				jsonValue, ok := result[field]
+				valueMap[field] = jsonValue
 				existMap[field] = ok
 			}
-			return valueMap, existMap
 		} else {
 			for field := range fields {
 				valueMap[field] = ""
 				existMap[field] = false
 			}
-			return valueMap, existMap
 		}
 	} else {
 		for field := range fields {
 			valueMap[field] = ""
 			existMap[field] = false
 		}
-		return valueMap, existMap
 	}
+	for field := range fields {
+		if !existMap[field] {
+			cookieValue, err := con.Cookie(field)
+			ok := tools.PrintError(err)
+			valueMap[field] = cookieValue
+			existMap[field] = ok
+		}
+	}
+	return valueMap, existMap
 }
 
 func getQueryAndReturn(con *gin.Context, fields map[string]bool) (map[string]interface{}, map[string]bool) {

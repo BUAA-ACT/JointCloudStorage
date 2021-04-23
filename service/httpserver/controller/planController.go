@@ -204,6 +204,26 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	if !valid {
 		return
 	}
+	// check user status
+	user, success := dao.UserDao.GetUserInfo(userId)
+	if !success {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeDatabaseError,
+			"msg":  "数据库错误",
+			"data": gin.H{},
+		})
+		return
+	}
+	if !user.IsNormalStatus() {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeForbiddenTransport,
+			"msg":  "用户正在迁移",
+			"data": gin.H{},
+		})
+	}
+	// forbid user other transportation
+	dao.UserDao.SetUserStatusWithId(userId, args.UserForbiddenStatus)
+
 	// take advice out
 	newAdvices, success := dao.MigrationAdviceDao.GetNewAdvice(userId)
 	if !success {
@@ -248,6 +268,7 @@ func UserAcceptStoragePlan(con *gin.Context) {
 		StorageMode: "Migrate",
 		Clouds:      nowAdvice.CloudsNew,
 	}
+
 	// use "" to tell transporter migrate all files
 	syncResponse, syncSuccess := transporter.SyncFile("", userId, sourcePlan, destinationPlan)
 	if !syncSuccess {
@@ -267,8 +288,10 @@ func UserAcceptStoragePlan(con *gin.Context) {
 		})
 		return
 	}
-	//delete advice
+	// delete advice
 	dao.MigrationAdviceDao.DeleteAdvice(userId)
+	// recover user status : forbidden -> normal ?
+
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
 		"msg":  "设置存储方案成功",
@@ -279,6 +302,8 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	})
 
 }
+
+/* nonsense
 
 func UserSetStoragePlan(con *gin.Context) {
 	fieldRequired := map[string]bool{
@@ -374,3 +399,5 @@ func UserSetStoragePlan(con *gin.Context) {
 		})
 	}
 }
+
+*/

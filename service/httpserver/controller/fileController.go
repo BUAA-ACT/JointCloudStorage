@@ -7,7 +7,6 @@ import (
 	"cloud-storage-httpserver/service/scheduler"
 	"cloud-storage-httpserver/service/tools"
 	"cloud-storage-httpserver/service/transporter"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -50,7 +49,7 @@ func UserGetFiles(con *gin.Context) {
 	//	})
 	//	return
 	//}
-	var integrateFiles []model.FileAndDir
+	var integrateFiles []model.FileAndDir = make([]model.FileAndDir, 0)
 	dirMap := make(map[string]model.File)
 	for _, file := range *files {
 		remainString := strings.TrimPrefix(file.FileName, filePath)
@@ -90,8 +89,6 @@ func UserGetFiles(con *gin.Context) {
 		}
 		integrateFiles = append(integrateFiles, newReturnFile)
 	}
-	fmt.Println("文件内容为:")
-	fmt.Println(integrateFiles)
 	// return ok
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
@@ -146,6 +143,15 @@ func UserPreUploadFile(con *gin.Context) {
 		})
 		return
 	}
+	// check user status
+	if !user.IsNormalStatus() {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeForbiddenTransport,
+			"msg":  "用户正在迁移",
+			"data": gin.H{},
+		})
+	}
+
 	// preUpload and get a token
 	response, success := transporter.PreUploadFile(filePath, user)
 	if !success {
@@ -216,6 +222,15 @@ func UserDownloadFile(con *gin.Context) {
 			"data": gin.H{},
 		})
 	}
+	// check user status
+	if !user.IsNormalStatus() {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeForbiddenTransport,
+			"msg":  "用户正在迁移",
+			"data": gin.H{},
+		})
+	}
+
 	// use scheduler's download plan to download file with transporter
 	getDownloadPlanResponse, success := scheduler.GetDownloadPlanFromScheduler(userId, filePath)
 	if !success {
@@ -287,6 +302,15 @@ func UserDeleteFile(con *gin.Context) {
 		})
 		return
 	}
+	// check user status
+	if !user.IsNormalStatus() {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeForbiddenTransport,
+			"msg":  "用户正在迁移",
+			"data": gin.H{},
+		})
+	}
+
 	// delete file with transporter
 	success = transporter.DeleteFile(filePath, user)
 	if !success {
