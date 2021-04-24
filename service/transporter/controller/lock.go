@@ -38,6 +38,12 @@ func NewLock(addr string) (*Lock, error) {
 }
 
 func (l *Lock) Lock(path string) error {
+	// 检查前缀格式
+	if len(path) == 0 {
+		return ErrBadKey
+	} else if path[0] != '/' {
+		path = "/" + path
+	}
 	path = "/jcs" + path
 	// 检查path格式
 	paths := strings.Split(strings.Trim(path, sep), sep)
@@ -113,6 +119,12 @@ func (l *Lock) UnLockAll(path string) {
 }
 
 func (l *Lock) UnLock(path string) error {
+	// 检查前缀格式
+	if len(path) == 0 {
+		return ErrBadKey
+	} else if path[0] != '/' {
+		path = "/" + path
+	}
 	path = "/jcs" + path
 	// 检查path格式
 	paths := strings.Split(strings.Trim(path, sep), sep)

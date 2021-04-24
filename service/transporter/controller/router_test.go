@@ -99,7 +99,7 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	// 初始化 Lock
 	lock, _ := NewLock(util.Config.ZookeeperHost)
 	processor.Lock = lock
-	processor.Lock.UnLockAll("/tester")
+	//processor.Lock.UnLockAll("/tester")
 	// 初始化 Scheduler
 	scheduler := JcsPanScheduler{
 		LocalCloudID:     "aliyun-hangzhou",
