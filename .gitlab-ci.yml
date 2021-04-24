@@ -250,10 +250,15 @@ transporter_deploy_job:
     - cd service/transporter
     - echo '登录项目部署服务器，删除旧 docker，拉取新镜像'
     - scp ./transporter_config.json.docker zhangjh@$DEV_SERVER:/home/zhangjh/transporter/transporter_config.json.docker 
+    - scp ./config/* zhangjh@$DEV_SERVER:/home/zhangjh/transporter/config/
     - ssh zhangjh@$DEV_SERVER "docker pull harbor.sumblog.cn/pub/transporter:v1-dev"
-    - ssh zhangjh@$DEV_SERVER "docker rm -f transporter-dev-v1"
+    - ssh zhangjh@$DEV_SERVER "docker rm -f transporter-dev-hohhot || true"
+    - ssh zhangjh@$DEV_SERVER "docker rm -f transporter-dev-hangzhou || true"
+    - ssh zhangjh@$DEV_SERVER "docker rm -f transporter-dev-qingdao || true"
     - ssh zhangjh@$DEV_SERVER "docker tag harbor.sumblog.cn/pub/transporter:v1-dev transporter:v1-dev"
-    - ssh zhangjh@$DEV_SERVER "docker run -d -p 8083:8083 --name transporter-dev-v1 --mount source=transporter-vol,target=/data/transporter --mount type=bind,source=/home/zhangjh/transporter/transporter_config.json.docker,target=/home/jcspan/config/transporter_config.json,readonly transporter:v1-dev"
+    - ssh zhangjh@$DEV_SERVER "docker run -d -p 8083:8083 --name transporter-dev-hohhot --mount source=transporter-hohhot-vol,target=/data/transporter --mount type=bind,source=/home/zhangjh/transporter/config/aliyun-hohhot.json,target=/home/jcspan/config/transporter_config.json,readonly transporter:v1-dev"
+    - ssh zhangjh@$DEV_SERVER "docker run -d -p 8183:8083 --name transporter-dev-hangzhou --mount source=transporter-hangzhou-vol,target=/data/transporter --mount type=bind,source=/home/zhangjh/transporter/config/aliyun-hangzhou.json,target=/home/jcspan/config/transporter_config.json,readonly transporter:v1-dev"
+    - ssh zhangjh@$DEV_SERVER "docker run -d -p 8283:8083 --name transporter-dev-qingdao --mount source=transporter-qingdao-vol,target=/data/transporter --mount type=bind,source=/home/zhangjh/transporter/config/aliyun-qingdao.json,target=/home/jcspan/config/transporter_config.json,readonly transporter:v1-dev"
   tags:
     - docker
 
