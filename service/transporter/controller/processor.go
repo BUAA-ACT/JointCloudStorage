@@ -306,6 +306,7 @@ func (processor *TaskProcessor) AddFileInfo(t *model.Task) (err error) {
 		return nil
 	}
 	fileInfo, err := model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
+	fileInfo.SyncStatus = model.FilePending
 	if err != nil {
 		return err
 	}
@@ -322,6 +323,10 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	}
 	defer processor.Lock.UnLock(t.GetRealDestinationPath())
 	fileInfo, fileInfoErr := processor.FileDatabase.GetFileInfo(t.GetRealDestinationPath())
+	if fileInfoErr == nil { // 更新文件同步状态
+		fileInfo.SyncStatus = model.FileWorking
+		_ = processor.FileDatabase.UpdateFileInfo(fileInfo)
+	}
 	// 判断上传方式
 	var storageClients []model.StorageClient
 	if t.TaskOptions != nil {
@@ -343,19 +348,8 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 				_, err = processor.Monitor.AddUploadTraffic(t.Uid, fileInfo.Size)
 				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath(), t.Uid)
 			}
-			fileInfo.LastModified = time.Now()
-			if fileInfoErr != nil { // 文件之前不存在
-				err = processor.FileDatabase.CreateFileInfo(fileInfo)
-			} else {
-				err = processor.FileDatabase.UpdateFileInfo(fileInfo)
-			}
-			if util.CheckErr(err, "Create File Info") {
-				return err
-			}
-			_, err = processor.Monitor.AddVolume(t.Uid, fileInfo.Size)
-			err := processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo) // todo 此处错误被隐藏
-			util.CheckErr(err, "File Metadata sync")
 		case "EC": // 纠删码模式
+			fileInfo, err = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
 			N := t.TaskOptions.DestinationPlan.N
 			K := t.TaskOptions.DestinationPlan.K
 			if N < 1 || K < 1 || N+K != len(storageClients) {
@@ -382,30 +376,34 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 				}
 				processor.Monitor.AddUploadTrafficFromFile(t.Uid, shards[i])
 			}
-			if util.CheckErr(err, "Upload EC block") {
-				return err
-			}
-			fileInfo, err = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
-			if util.CheckErr(err, "New File Info") {
-				return err
-			}
-			if fileInfoErr != nil { // 文件之前不存在
-				err = processor.FileDatabase.CreateFileInfo(fileInfo)
-			} else {
-				err = processor.FileDatabase.UpdateFileInfo(fileInfo)
-			}
-			if util.CheckErr(err, "Create File Info") {
-				return err
-			}
-			_, err = processor.Monitor.AddVolume(t.Uid, fileInfo.Size)
-			err := processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo)
-			util.CheckErr(err, "File Metadata sync")
 		default:
 			return errors.New("storage model not implement")
 		}
-		return
+		// 上传后，更新 Sync Status， 更新流量统计
+		if util.CheckErr(err, "Upload file to cloud") {
+			return err
+		}
+		fileInfo.LastModified = time.Now()
+		if err != nil {
+			fileInfo.SyncStatus = model.FileFail
+		} else {
+			fileInfo.SyncStatus = model.FileDone
+		}
+		if fileInfoErr != nil { // 文件之前不存在
+			err = processor.FileDatabase.CreateFileInfo(fileInfo)
+		} else {
+			err = processor.FileDatabase.UpdateFileInfo(fileInfo)
+		}
+		if util.CheckErr(err, "Create File Info") {
+			return err
+		}
+		_, err = processor.Monitor.AddVolume(t.Uid, fileInfo.Size)
+		err := processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo) // todo 此处错误被隐藏
+		util.CheckErr(err, "File Metadata sync")
+	} else {
+		return errors.New("no storage plan")
 	}
-	return errors.New("no storage plan")
+	return err
 }
 
 // 获取用户目录信息
