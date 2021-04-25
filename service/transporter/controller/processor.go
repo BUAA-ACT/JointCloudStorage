@@ -23,6 +23,7 @@ type TaskProcessor struct {
 	Lock          *Lock
 	Scheduler     Scheduler
 	Monitor       *TrafficMonitor
+	UserDatabase  model.UserDatabase
 }
 
 func (processor *TaskProcessor) SetTaskStorage(storage model.TaskStorage) {
@@ -442,7 +443,14 @@ func (processor *TaskProcessor) ProcessSync(t *model.Task) (err error) {
 			return err
 		}
 	}
-	return nil
+	user, err := processor.UserDatabase.GetUserFromID(t.Uid)
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "processor", "can't get userInfo when process sync", t.Uid, "", err.Error())
+		return err
+	}
+	user.Status = model.NormalUser
+	err = processor.UserDatabase.UpdateUserInfo(user)
+	return err
 }
 
 // 处理同步任务
