@@ -269,7 +269,6 @@ func (router *Router) CreateTask(c *gin.Context) {
 			},
 		}
 		c.JSON(http.StatusOK, requestTaskReply)
-
 	default:
 		requestTaskReply := RequestTaskReply{
 			Code: util.ErrorCodeWrongTaskType,
