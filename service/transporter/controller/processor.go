@@ -209,7 +209,7 @@ func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string)
 		logrus.Warnf("cant gen access token, err: %v", err)
 	}
 	fileInfo.DownloadUrl = "/cache_file?token=" + accessToken
-	fileInfo.ReconstructStatus = "Done"
+	fileInfo.ReconstructStatus = model.FileDone
 	fileInfo.LastReconstructed = time.Now()
 	err = processor.FileDatabase.UpdateFileInfo(fileInfo)
 	if err != nil {
@@ -224,6 +224,13 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 	if err != nil {
 		return "", err
 	}
+	fileInfo, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "processor", "rebuild can't get fileInfo", t.GetRealSourcePath(), "", err.Error())
+		return "", errors.New(util.ErrorMsgCantGetFileInfo)
+	}
+	fileInfo.ReconstructStatus = model.FileWorking
+	_ = processor.FileDatabase.UpdateFileInfo(fileInfo)
 	var storageClients []model.StorageClient
 	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
 	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
@@ -243,11 +250,6 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		if N < 1 || K < 1 || N+K != len(storageClients) {
 			return "", errors.New("EC storage num wrong")
 		}
-		fileInfo, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
-		if err != nil {
-			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
-			return "", errors.New(util.ErrorMsgCantGetFileInfo)
-		}
 		rebuildPath := util.Config.DownloadFileTempPath + util.GenRandomString(20)
 		shards := make([]string, N+K)
 		for i := range shards {
@@ -266,11 +268,6 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		}
 		return rebuildPath, nil
 	case "Replica":
-		_, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
-		if err != nil {
-			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
-			return "", errors.New(util.ErrorMsgCantGetFileInfo)
-		}
 		rebuildPath := util.Config.DownloadFileTempPath + util.GenRandomString(20)
 		err = storageClients[0].Download(t.SourcePath, rebuildPath, t.Uid)
 		if err != nil {
