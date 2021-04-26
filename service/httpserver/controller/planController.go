@@ -17,11 +17,11 @@ func UserGetAllStoragePlan(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check access token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -72,11 +72,11 @@ func UserGetAdvice(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
 		return
@@ -107,11 +107,11 @@ func UserAbandonAdvice(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
 		return
@@ -130,12 +130,12 @@ func UserChooseStoragePlan(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordStoragePlan: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	storagePlan := valueMap[args.FieldWordStoragePlan].(*model.StoragePlan)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	storagePlan := (*valueMap)[args.FieldWordStoragePlan].(*model.StoragePlan)
 	// check token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -194,11 +194,11 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {

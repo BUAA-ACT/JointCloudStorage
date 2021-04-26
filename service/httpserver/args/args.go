@@ -35,6 +35,12 @@ const (
 	CodeForbiddenTransport     = 1416
 	CodeLoginWithoutVerify     = 1417
 
+	// user status code
+	CodeStatusNormal       = 1501
+	CodeStatusForbidden    = 1502
+	CodeStatusVerify       = 1503
+	CodeStatusTransporting = 1504
+
 	// InternalError
 	CodeInternalError    = 1000
 	CodeDatabaseError    = 2000
@@ -84,13 +90,13 @@ const (
 	UserAdminRole    = "Admin"
 	UserSuperRole    = "Super"
 	UserOrdinaryRole = "Ordinary"
-	UserHostRole     = "host"
-	UserGuestRole    = "guest"
+	UserHostRole     = "HOST"
+	UserGuestRole    = "GUEST"
 
 	/* user status */
-	UserVerifyStatus       = "Verifying"
-	UserForbiddenStatus    = "Forbidden"
-	UserNormalStatus       = "Normal"
+	UserVerifyStatus       = "VERIFYING"
+	UserForbiddenStatus    = "FORBIDDEN"
+	UserNormalStatus       = "NORMAL"
 	UserTransportingStatus = "Transporting"
 )
 

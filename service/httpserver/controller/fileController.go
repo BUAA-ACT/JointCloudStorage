@@ -18,12 +18,12 @@ func UserGetFiles(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordFilePath:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	filePath := valueMap[args.FieldWordFilePath].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	//check token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -113,12 +113,12 @@ func UserPreUploadFile(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordFilePath:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	filePath := valueMap[args.FieldWordFilePath].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	//check access token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -186,12 +186,12 @@ func UserDownloadFile(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordFilePath:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	filePath := valueMap[args.FieldWordFilePath].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
 		return
@@ -272,12 +272,12 @@ func UserDeleteFile(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordFilePath:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	filePath := valueMap[args.FieldWordFilePath].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	// check token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {

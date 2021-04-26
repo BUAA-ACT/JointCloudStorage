@@ -3,7 +3,7 @@ package controller
 import (
 	"cloud-storage-httpserver/args"
 	"cloud-storage-httpserver/dao"
-	. "cloud-storage-httpserver/model"
+	"cloud-storage-httpserver/model"
 	"cloud-storage-httpserver/service/code"
 	"cloud-storage-httpserver/service/tools"
 	"github.com/gin-gonic/gin"
@@ -17,13 +17,13 @@ func UserRegister(con *gin.Context) {
 		args.FieldWordPassword: true,
 		args.FieldWordNickname: false,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	email := valueMap[args.FieldWordEmail].(string)
-	password := valueMap[args.FieldWordPassword].(string)
-	nickname := valueMap[args.FieldWordNickname].(string)
+	email := (*valueMap)[args.FieldWordEmail].(string)
+	password := (*valueMap)[args.FieldWordPassword].(string)
+	nickname := (*valueMap)[args.FieldWordNickname].(string)
 	// check same email
 	if dao.UserDao.CheckSameEmail(email) {
 		con.JSON(http.StatusOK, gin.H{
@@ -37,7 +37,7 @@ func UserRegister(con *gin.Context) {
 	// uuid or email?
 	userId := email
 	// save with dao
-	user := &User{
+	user := &model.User{
 		UserId:       userId,
 		Email:        email,
 		Password:     code.AesEncrypt(password, *args.EncryptKey),
@@ -46,7 +46,7 @@ func UserRegister(con *gin.Context) {
 		Avatar:       "default-avatar.png",
 		CreateTime:   nowTime,
 		LastModified: nowTime,
-		Status:       args.UserVerifyStatus,
+		Status:       args.UserNormalStatus,
 	}
 	dao.UserDao.CreateNewUser(*user)
 	// record verify code
@@ -64,12 +64,12 @@ func UserCheckVerifyCode(con *gin.Context) {
 		args.FieldWordEmail:      true,
 		args.FieldWordVerifyCode: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	email := valueMap[args.FieldWordEmail].(string)
-	verifyCode := valueMap[args.FieldWordVerifyCode].(string)
+	email := (*valueMap)[args.FieldWordEmail].(string)
+	verifyCode := (*valueMap)[args.FieldWordVerifyCode].(string)
 	// check email
 	if !dao.UserDao.CheckSameEmail(email) {
 		con.JSON(http.StatusOK, gin.H{
@@ -104,12 +104,12 @@ func UserLogin(con *gin.Context) {
 		args.FieldWordEmail:    true,
 		args.FieldWordPassword: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	email := valueMap[args.FieldWordEmail].(string)
-	password := valueMap[args.FieldWordPassword].(string)
+	email := (*valueMap)[args.FieldWordEmail].(string)
+	password := (*valueMap)[args.FieldWordPassword].(string)
 	// check email exist
 	if !dao.UserDao.CheckSameEmail(email) {
 		con.JSON(http.StatusOK, gin.H{
@@ -154,11 +154,11 @@ func UserLogout(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token is valid
 	_, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -177,11 +177,11 @@ func UserCheckValidity(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	//check token
 	_, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -203,13 +203,13 @@ func UserChangePassword(con *gin.Context) {
 		args.FieldWordOriginPassword: true,
 		args.FieldWordNewPassword:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	originPassword := valueMap[args.FieldWordOriginPassword].(string)
-	newPassword := valueMap[args.FieldWordNewPassword].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	originPassword := (*valueMap)[args.FieldWordOriginPassword].(string)
+	newPassword := (*valueMap)[args.FieldWordNewPassword].(string)
 	// check token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -258,12 +258,12 @@ func UserChangeEmail(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordNewEmail:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	newEmail := valueMap[args.FieldWordNewEmail].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	newEmail := (*valueMap)[args.FieldWordNewEmail].(string)
 	// check token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -315,12 +315,12 @@ func UserChangeNickname(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordNewNickname: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	newNickname := valueMap[args.FieldWordNickname].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	newNickname := (*valueMap)[args.FieldWordNickname].(string)
 	// check token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -338,11 +338,11 @@ func UserGetInfo(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -375,18 +375,18 @@ func UserSetPreference(con *gin.Context) {
 		args.FieldWordAvailability: true,
 		args.FieldWordLatency:      false,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	vendor := valueMap[args.FieldWordVendor].(uint64)
-	storagePrice := valueMap[args.FieldWordStoragePrice].(float64)
-	trafficPrice := valueMap[args.FieldWordTrafficPrice].(float64)
-	availability := valueMap[args.FieldWordAvailability].(float64)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	vendor := (*valueMap)[args.FieldWordVendor].(uint64)
+	storagePrice := (*valueMap)[args.FieldWordStoragePrice].(float64)
+	trafficPrice := (*valueMap)[args.FieldWordTrafficPrice].(float64)
+	availability := (*valueMap)[args.FieldWordAvailability].(float64)
 	var latency *map[string]uint64
-	if existMap[args.FieldWordLatency] {
-		latency = valueMap[args.FieldWordLatency].(*map[string]uint64)
+	if (*existMap)[args.FieldWordLatency] {
+		latency = (*valueMap)[args.FieldWordLatency].(*map[string]uint64)
 	} else {
 		latency = &map[string]uint64{}
 	}
@@ -395,7 +395,7 @@ func UserSetPreference(con *gin.Context) {
 	if !valid {
 		return
 	}
-	preference := &Preference{
+	preference := &model.Preference{
 		Vendor:       vendor,
 		StoragePrice: storagePrice,
 		TrafficPrice: trafficPrice,
