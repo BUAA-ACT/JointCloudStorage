@@ -90,13 +90,13 @@ module.exports = {
   devServer: {
     proxy: {
       "/file": {
-        target: `http://localhost:8081`
+        target: `http://192.168.105.13:8081`
       },
       "/plan": {
-        target: `http://localhost:8081`
+        target: `http://192.168.105.13:8081`
       },
       "/user": {
-        target: `http://localhost:8081`
+        target: `http://192.168.105.13:8081`
       }
     }
   }

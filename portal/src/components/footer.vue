@@ -32,9 +32,9 @@
         国家重点研发计划——云际计算项目组（仅用于技术验证）
         <!-- 交流合作：（+86）137-0731-2497 -->
       </p>
-      <p>
-        ICP备案号：湘ICP备20015386 Copyright © 2020 All Rights Reserved
-      </p>
+      <a href="http://beian.miit.gov.cn/">
+        ICP备案号：京ICP备2021011189号-1
+      </a>
     </div>
   </div>
 </template>
