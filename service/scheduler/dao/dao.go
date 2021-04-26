@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	RoleHost  = "host"
-	RoleGuest = "guest"
+	RoleHost  = "HOST"
+	RoleGuest = "GUEST"
 )
 
 // Dao encapsulates database operations.
@@ -286,7 +286,7 @@ func (d *Dao) InsertMigrationAdvice(adv MigrationAdvice) error {
 	_, err := col.ReplaceOne(
 		context.TODO(),
 		bson.M{
-			"id": adv.UserId,
+			"user_id": adv.UserId,
 		},
 		adv,
 		&options.ReplaceOptions{Upsert: aws.Bool(true)},

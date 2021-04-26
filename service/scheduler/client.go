@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -80,6 +81,10 @@ func sendPostMetadata(param PostMetadataParam, cloud string) error {
 	return nil
 }
 
-func genAddress(address, path string) string {
-	return "http://" + addrMap[address] + ":8082" + path
+func genAddress(cloudID, path string) string {
+	addr := addrMap[cloudID]
+	if !strings.Contains(addr, ":") {
+		addr = addr + ":8082"
+	}
+	return "http://" + addr + path
 }
