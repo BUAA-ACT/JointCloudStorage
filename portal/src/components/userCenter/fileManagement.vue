@@ -11,10 +11,24 @@
       :data="files.filter(data => !search || data.FileInfo.FileName.toLowerCase().includes(search.toLowerCase()))"
       fit
     >
+      <el-table-column type="expand">
+        <template slot-scope="props">
+          <el-form label-position="left" inline class="demo-table-expand">
+            <el-form-item label="同步状态">
+              <span>{{ props.row.FileInfo.SyncStatus }}</span>
+            </el-form-item>
+            <el-form-item label="重建状态">
+              <span>{{ reconstructStatusFormatter(props.row.FileInfo.ReconstructStatus) }}</span>
+            </el-form-item>
+            <el-form-item label="重建时间">
+              <span>{{ reconstructDateFormatter(props.row.FileInfo.ReconstructStatus, props.row.FileInfo.LastReconstructed) }}</span>
+            </el-form-item>
+          </el-form>
+        </template>
+      </el-table-column>
       <el-table-column
         label="文件名"
         prop="FileInfo.FileName"
-        min-width="200"
         :formatter="filenameFormatter"
       />
       <el-table-column
@@ -81,6 +95,7 @@ export default {
         this.listLoading = false
       })
     },
+
     handleUpload(item) {
       var self = this
       cloudStorage.getUploadAddress(item.file.name).then(response => {
@@ -91,6 +106,7 @@ export default {
         })
       })
     },
+
     handleDownload(filename) {
       cloudStorage.getDownloadAddress(filename).then(response => {
         var type = response.Type
@@ -111,12 +127,14 @@ export default {
         }
       })
     },
+
     handleDelete(filename) {
       var self = this
       cloudStorage.deleteFile(filename).then(() => {
         self.fetchData()
       })
     },
+
     sizeFormatter(row, column, bytes, index) {
       const si = false
       var thresh = si ? 1000 : 1024
@@ -133,10 +151,12 @@ export default {
       } while (Math.abs(bytes) >= thresh && u < units.length - 1)
       return bytes.toFixed(1) + ' ' + units[u]
     },
+
     dateFormatter(row, column, timestamp, index) {
       var date = new Date(timestamp)
       return date.toLocaleString('zh-CN')
     },
+
     filenameFormatter(row, column, name, index) {
       while(name.charAt(0)=='/') {
         name = name.substring(1);
@@ -145,13 +165,42 @@ export default {
         name = name.substring(0,name.length-1);
       }
       return name
+    },
+
+    reconstructStatusFormatter(status) {
+      if (status.length == 0) {
+        return "未执行"
+      } else {
+        return status
+      }
+    },
+
+    reconstructDateFormatter(status, timestamp) {
+      if (status.length == 0) {
+        return "-"
+      }
+      var date = new Date(timestamp)
+      return date.toLocaleString('zh-CN')
     }
   }
 }
 </script>
 
 <style>
-.el-tag+.el-tag{
-  margin-left: 5px;
-}
+  .el-tag+.el-tag{
+    margin-left: 5px;
+  }
+
+  .demo-table-expand {
+    font-size: 0;
+  }
+  .demo-table-expand label {
+    width: 90px;
+    color: #99a9bf;
+  }
+  .demo-table-expand .el-form-item {
+    margin-right: 0;
+    margin-bottom: 0;
+    width: 100%;
+  }
 </style>
