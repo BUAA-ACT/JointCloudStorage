@@ -208,6 +208,9 @@ func reSchedule(interval time.Duration) {
 			}
 
 			reordered, deleted, added := transform(u.StoragePlan.Clouds, plan.Clouds)
+			if len(deleted) == 0 || len(added) == 0 {
+				continue
+			}
 			plan.Clouds = reordered
 			adv := dao.MigrationAdvice{
 				UserId:         u.UserId,

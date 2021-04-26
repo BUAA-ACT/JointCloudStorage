@@ -296,7 +296,9 @@ func PostStoragePlan(c *gin.Context) {
 		passwd := genPassword()
 		user := dao.User{
 			UserId:       param.UserID,
-			Password:     AesDecrypt(passwd, *flagAESKey),
+			Email:        param.UserID,
+			Nickname:     param.UserID,
+			Password:     AesEncrypt(passwd, *flagAESKey),
 			Role:         dao.RoleGuest,
 			LastModified: time.Now(),
 			StoragePlan:  param.StoragePlan,
@@ -314,7 +316,7 @@ func PostStoragePlan(c *gin.Context) {
 
 		cred := dao.AccessCredential{
 			CloudID:  *flagCloudID,
-			UserID:   param.UserID + "@" + *flagCloudID,
+			UserID:   param.UserID,
 			Password: passwd,
 		}
 		c.JSON(http.StatusOK, gin.H{
