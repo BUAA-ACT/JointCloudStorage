@@ -12,7 +12,7 @@ func (d *Dao) GetNewAdvice(userId string) (*[]model.MigrationAdvice, bool) {
 	filter := bson.M{
 		"user_id": userId,
 	}
-	var advices []model.MigrationAdvice
+	var advices = make([]model.MigrationAdvice, 0)
 	result, err := col.Find(context.TODO(), filter)
 	if tools.PrintError(err) {
 		return nil, false

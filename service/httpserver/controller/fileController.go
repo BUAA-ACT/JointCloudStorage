@@ -18,12 +18,12 @@ func UserGetFiles(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordFilePath:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	filePath := valueMap[args.FieldWordFilePath].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	//check token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -49,7 +49,7 @@ func UserGetFiles(con *gin.Context) {
 	//	})
 	//	return
 	//}
-	var integrateFiles []model.FileAndDir
+	var integrateFiles []model.FileAndDir = make([]model.FileAndDir, 0)
 	dirMap := make(map[string]model.File)
 	for _, file := range *files {
 		remainString := strings.TrimPrefix(file.FileName, filePath)
@@ -113,12 +113,12 @@ func UserPreUploadFile(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordFilePath:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	filePath := valueMap[args.FieldWordFilePath].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	//check access token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -143,6 +143,15 @@ func UserPreUploadFile(con *gin.Context) {
 		})
 		return
 	}
+	// check user status
+	if !user.IsNormalStatus() {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeForbiddenTransport,
+			"msg":  "用户正在迁移",
+			"data": gin.H{},
+		})
+	}
+
 	// preUpload and get a token
 	response, success := transporter.PreUploadFile(filePath, user)
 	if !success {
@@ -177,12 +186,12 @@ func UserDownloadFile(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordFilePath:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	filePath := valueMap[args.FieldWordFilePath].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
 		return
@@ -213,6 +222,15 @@ func UserDownloadFile(con *gin.Context) {
 			"data": gin.H{},
 		})
 	}
+	// check user status
+	if !user.IsNormalStatus() {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeForbiddenTransport,
+			"msg":  "用户正在迁移",
+			"data": gin.H{},
+		})
+	}
+
 	// use scheduler's download plan to download file with transporter
 	getDownloadPlanResponse, success := scheduler.GetDownloadPlanFromScheduler(userId, filePath)
 	if !success {
@@ -254,12 +272,12 @@ func UserDeleteFile(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordFilePath:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	filePath := valueMap[args.FieldWordFilePath].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	// check token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -284,6 +302,15 @@ func UserDeleteFile(con *gin.Context) {
 		})
 		return
 	}
+	// check user status
+	if !user.IsNormalStatus() {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeForbiddenTransport,
+			"msg":  "用户正在迁移",
+			"data": gin.H{},
+		})
+	}
+
 	// delete file with transporter
 	success = transporter.DeleteFile(filePath, user)
 	if !success {

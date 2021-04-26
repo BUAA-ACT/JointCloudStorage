@@ -13,13 +13,13 @@ func UserGetTask(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordTaskID:      true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	taskId := valueMap[args.FieldWordTaskID].(string)
-	taskIdExist := existMap[args.FieldWordTaskID]
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	taskId := (*valueMap)[args.FieldWordTaskID].(string)
+	taskIdExist := (*existMap)[args.FieldWordTaskID]
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
 		return

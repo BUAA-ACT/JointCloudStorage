@@ -21,7 +21,7 @@ func (d *Dao) GetTask(taskId string, userId string, isSingle bool) (*[]model.Tas
 	} else {
 		filter = filterAll
 	}
-	var tasks []model.Task
+	var tasks []model.Task = make([]model.Task, 0)
 	result, err := col.Find(context.TODO(), filter)
 	if tools.PrintError(err) {
 		return nil, false
