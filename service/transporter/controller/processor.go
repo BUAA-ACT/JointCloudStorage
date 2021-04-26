@@ -23,6 +23,7 @@ type TaskProcessor struct {
 	Lock          *Lock
 	Scheduler     Scheduler
 	Monitor       *TrafficMonitor
+	UserDatabase  model.UserDatabase
 }
 
 func (processor *TaskProcessor) SetTaskStorage(storage model.TaskStorage) {
@@ -209,7 +210,7 @@ func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string)
 		logrus.Warnf("cant gen access token, err: %v", err)
 	}
 	fileInfo.DownloadUrl = "/cache_file?token=" + accessToken
-	fileInfo.ReconstructStatus = "Done"
+	fileInfo.ReconstructStatus = model.FileDone
 	fileInfo.LastReconstructed = time.Now()
 	err = processor.FileDatabase.UpdateFileInfo(fileInfo)
 	if err != nil {
@@ -224,6 +225,13 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 	if err != nil {
 		return "", err
 	}
+	fileInfo, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "processor", "rebuild can't get fileInfo", t.GetRealSourcePath(), "", err.Error())
+		return "", errors.New(util.ErrorMsgCantGetFileInfo)
+	}
+	fileInfo.ReconstructStatus = model.FileWorking
+	_ = processor.FileDatabase.UpdateFileInfo(fileInfo)
 	var storageClients []model.StorageClient
 	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
 	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
@@ -243,11 +251,6 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		if N < 1 || K < 1 || N+K != len(storageClients) {
 			return "", errors.New("EC storage num wrong")
 		}
-		fileInfo, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
-		if err != nil {
-			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
-			return "", errors.New(util.ErrorMsgCantGetFileInfo)
-		}
 		rebuildPath := util.Config.DownloadFileTempPath + util.GenRandomString(20)
 		shards := make([]string, N+K)
 		for i := range shards {
@@ -266,11 +269,6 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		}
 		return rebuildPath, nil
 	case "Replica":
-		_, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
-		if err != nil {
-			logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
-			return "", errors.New(util.ErrorMsgCantGetFileInfo)
-		}
 		rebuildPath := util.Config.DownloadFileTempPath + util.GenRandomString(20)
 		err = storageClients[0].Download(t.SourcePath, rebuildPath, t.Uid)
 		if err != nil {
@@ -306,6 +304,7 @@ func (processor *TaskProcessor) AddFileInfo(t *model.Task) (err error) {
 		return nil
 	}
 	fileInfo, err := model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
+	fileInfo.SyncStatus = model.FilePending
 	if err != nil {
 		return err
 	}
@@ -322,6 +321,10 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	}
 	defer processor.Lock.UnLock(t.GetRealDestinationPath())
 	fileInfo, fileInfoErr := processor.FileDatabase.GetFileInfo(t.GetRealDestinationPath())
+	if fileInfoErr == nil { // 更新文件同步状态
+		fileInfo.SyncStatus = model.FileWorking
+		_ = processor.FileDatabase.UpdateFileInfo(fileInfo)
+	}
 	// 判断上传方式
 	var storageClients []model.StorageClient
 	if t.TaskOptions != nil {
@@ -343,19 +346,8 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 				_, err = processor.Monitor.AddUploadTraffic(t.Uid, fileInfo.Size)
 				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath(), t.Uid)
 			}
-			fileInfo.LastModified = time.Now()
-			if fileInfoErr != nil { // 文件之前不存在
-				err = processor.FileDatabase.CreateFileInfo(fileInfo)
-			} else {
-				err = processor.FileDatabase.UpdateFileInfo(fileInfo)
-			}
-			if util.CheckErr(err, "Create File Info") {
-				return err
-			}
-			_, err = processor.Monitor.AddVolume(t.Uid, fileInfo.Size)
-			err := processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo) // todo 此处错误被隐藏
-			util.CheckErr(err, "File Metadata sync")
 		case "EC": // 纠删码模式
+			fileInfo, err = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
 			N := t.TaskOptions.DestinationPlan.N
 			K := t.TaskOptions.DestinationPlan.K
 			if N < 1 || K < 1 || N+K != len(storageClients) {
@@ -382,30 +374,34 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 				}
 				processor.Monitor.AddUploadTrafficFromFile(t.Uid, shards[i])
 			}
-			if util.CheckErr(err, "Upload EC block") {
-				return err
-			}
-			fileInfo, err = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
-			if util.CheckErr(err, "New File Info") {
-				return err
-			}
-			if fileInfoErr != nil { // 文件之前不存在
-				err = processor.FileDatabase.CreateFileInfo(fileInfo)
-			} else {
-				err = processor.FileDatabase.UpdateFileInfo(fileInfo)
-			}
-			if util.CheckErr(err, "Create File Info") {
-				return err
-			}
-			_, err = processor.Monitor.AddVolume(t.Uid, fileInfo.Size)
-			err := processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo)
-			util.CheckErr(err, "File Metadata sync")
 		default:
 			return errors.New("storage model not implement")
 		}
-		return
+		// 上传后，更新 Sync Status， 更新流量统计
+		if util.CheckErr(err, "Upload file to cloud") {
+			return err
+		}
+		fileInfo.LastModified = time.Now()
+		if err != nil {
+			fileInfo.SyncStatus = model.FileFail
+		} else {
+			fileInfo.SyncStatus = model.FileDone
+		}
+		if fileInfoErr != nil { // 文件之前不存在
+			err = processor.FileDatabase.CreateFileInfo(fileInfo)
+		} else {
+			err = processor.FileDatabase.UpdateFileInfo(fileInfo)
+		}
+		if util.CheckErr(err, "Create File Info") {
+			return err
+		}
+		_, err = processor.Monitor.AddVolume(t.Uid, fileInfo.Size)
+		err := processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo) // todo 此处错误被隐藏
+		util.CheckErr(err, "File Metadata sync")
+	} else {
+		return errors.New("no storage plan")
 	}
-	return errors.New("no storage plan")
+	return err
 }
 
 // 获取用户目录信息
@@ -447,7 +443,14 @@ func (processor *TaskProcessor) ProcessSync(t *model.Task) (err error) {
 			return err
 		}
 	}
-	return nil
+	user, err := processor.UserDatabase.GetUserFromID(t.Uid)
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "processor", "can't get userInfo when process sync", t.Uid, "", err.Error())
+		return err
+	}
+	user.Status = model.NormalUser
+	err = processor.UserDatabase.UpdateUserInfo(user)
+	return err
 }
 
 // 处理同步任务

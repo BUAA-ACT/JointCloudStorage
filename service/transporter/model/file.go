@@ -14,17 +14,27 @@ import (
 	"time"
 )
 
+type FileStatus string
+
 type File struct {
-	FileID            string    `bson:"file_id"`
-	Filename          string    `bson:"file_name"`
-	Owner             string    `bson:"owner"`
-	Size              int64     `bson:"size"`
-	LastModified      time.Time `bson:"last_modified"`
-	SyncStatus        string    `bson:"sync_status"`
-	ReconstructStatus string    `bson:"reconstruct_status"`
-	DownloadUrl       string    `bson:"download_url"`
-	LastReconstructed time.Time `bson:"last_reconstructed"`
+	FileID            string     `bson:"file_id"`
+	Filename          string     `bson:"file_name"`
+	Owner             string     `bson:"owner"`
+	Size              int64      `bson:"size"`
+	LastModified      time.Time  `bson:"last_modified"`
+	SyncStatus        FileStatus `bson:"sync_status"`
+	ReconstructStatus FileStatus `bson:"reconstruct_status"`
+	DownloadUrl       string     `bson:"download_url"`
+	LastReconstructed time.Time  `bson:"last_reconstructed"`
 }
+
+const (
+	FileWaiting FileStatus = "Waiting"
+	FilePending FileStatus = "Pending"
+	FileWorking FileStatus = "Working"
+	FileDone    FileStatus = "Done"
+	FileFail    FileStatus = "Fail"
+)
 
 type FileDatabase interface {
 	CreateFileInfo(file *File) (err error)

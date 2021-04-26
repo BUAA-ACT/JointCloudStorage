@@ -99,7 +99,7 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	// 初始化 Lock
 	lock, _ := NewLock(util.Config.ZookeeperHost)
 	processor.Lock = lock
-	//processor.Lock.UnLockAll("/tester")
+	processor.Lock.UnLockAll("/tester")
 	// 初始化 Scheduler
 	scheduler := JcsPanScheduler{
 		LocalCloudID:     "aliyun-hangzhou",
@@ -111,6 +111,7 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	// 初始化 Monitor
 	userDB, err := model.NewMongoUserDatabase()
 	processor.Monitor = NewTrafficMonitor(userDB)
+	processor.UserDatabase = userDB
 	// 初始化路由
 	router := NewTestRouter(processor)
 	// 启动 processor

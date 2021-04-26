@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+type UserStatus string
+
 type User struct {
 	UserId            string             `bson:"user_id"`
 	Email             string             `bson:"email"`
@@ -22,8 +24,14 @@ type User struct {
 	StoragePlan       UserStoragePlan    `bson:"storage_plan"`
 	DataStats         DataStats          `bson:"data_stats"`
 	AccessCredentials []AccessCredential `bson:"access_credentials"`
-	Status            string             `bson:"status"`
+	Status            UserStatus         `bson:"status"`
 }
+
+const (
+	NormalUser    UserStatus = "NORMAL"
+	ForbiddenUser UserStatus = "FORBIDDEN"
+	VerifyingUser UserStatus = "VERIFYING"
+)
 
 type UserStoragePlan struct {
 	N            int     `bson:"n"`
