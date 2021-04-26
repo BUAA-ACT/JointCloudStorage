@@ -32,6 +32,14 @@ const (
 	CodeDifferentUser          = 1413
 	CodeFileNotExist           = 1414
 	CodeAlreadyHaveStoragePlan = 1415
+	CodeForbiddenTransport     = 1416
+	CodeLoginWithoutVerify     = 1417
+
+	// user status code
+	CodeStatusNormal       = 1501
+	CodeStatusForbidden    = 1502
+	CodeStatusVerify       = 1503
+	CodeStatusTransporting = 1504
 
 	// InternalError
 	CodeInternalError    = 1000
@@ -82,13 +90,14 @@ const (
 	UserAdminRole    = "Admin"
 	UserSuperRole    = "Super"
 	UserOrdinaryRole = "Ordinary"
-	UserHostRole     = "host"
+	UserHostRole     = "HOST"
+	UserGuestRole    = "GUEST"
 
 	/* user status */
-	UserVerifyStatus    = "Verifying"
-	UserForbiddenStatus = "Forbidden"
-	UserNormalStatus    = "Normal"
-	UserTransporting    = "Transporting"
+	UserVerifyStatus       = "VERIFYING"
+	UserForbiddenStatus    = "FORBIDDEN"
+	UserNormalStatus       = "NORMAL"
+	UserTransportingStatus = "Transporting"
 )
 
 /* task const*/

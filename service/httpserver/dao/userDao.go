@@ -62,7 +62,7 @@ func (d *Dao) SetUserStatusWithId(userId string, status string) {
 	_, _ = col.UpdateMany(context.TODO(), filter, update)
 }
 
-func (d *Dao) LoginWithEmail(email string, password string) (string, bool) {
+func (d *Dao) LoginWithEmail(email string, password string) (*User, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"email":    email,
@@ -70,7 +70,7 @@ func (d *Dao) LoginWithEmail(email string, password string) (string, bool) {
 	}
 	var user User
 	err := col.FindOne(context.TODO(), filter).Decode(&user)
-	return user.UserId, err == nil
+	return &user, err == nil
 }
 
 func (d *Dao) LoginWithId(userId string, password string) bool {

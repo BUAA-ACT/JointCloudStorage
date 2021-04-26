@@ -20,6 +20,7 @@ func setupRouter(r *gin.Engine) {
 	/* test function */
 	r.POST("/testPost", controller.UserTestPost)
 	r.GET("/testGet", controller.UserTestGet)
+	r.GET("/cookie", controller.CookieTestGet)
 
 	/* user function */
 	r.POST("/user/register", controller.UserRegister)

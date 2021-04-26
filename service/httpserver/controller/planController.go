@@ -7,6 +7,7 @@ import (
 	"cloud-storage-httpserver/service/scheduler"
 	"cloud-storage-httpserver/service/tools"
 	"cloud-storage-httpserver/service/transporter"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,11 +17,11 @@ func UserGetAllStoragePlan(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check access token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -71,11 +72,11 @@ func UserGetAdvice(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
 		return
@@ -89,12 +90,12 @@ func UserGetAdvice(con *gin.Context) {
 		})
 		return
 	}
-	// check advices
-
+	fmt.Print("advices: ")
+	fmt.Println(*advices)
 	// return advices
 	con.JSON(http.StatusOK, gin.H{
-		"code": args.CodeDatabaseError,
-		"msg":  "没有找到",
+		"code": args.CodeOK,
+		"msg":  "获取建议成功",
 		"data": gin.H{
 			"Advices": *advices,
 		},
@@ -106,11 +107,11 @@ func UserAbandonAdvice(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
 		return
@@ -129,12 +130,12 @@ func UserChooseStoragePlan(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordStoragePlan: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
-	storagePlan := valueMap[args.FieldWordStoragePlan].(*model.StoragePlan)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	storagePlan := (*valueMap)[args.FieldWordStoragePlan].(*model.StoragePlan)
 	// check token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
@@ -193,16 +194,36 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
-	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
-	accessToken := valueMap[args.FieldWordAccessToken].(string)
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
 	userId, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
 		return
 	}
+	// check user status
+	user, success := dao.UserDao.GetUserInfo(userId)
+	if !success {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeDatabaseError,
+			"msg":  "数据库错误",
+			"data": gin.H{},
+		})
+		return
+	}
+	if !user.IsNormalStatus() {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeForbiddenTransport,
+			"msg":  "用户正在迁移",
+			"data": gin.H{},
+		})
+	}
+	// forbid user other transportation
+	dao.UserDao.SetUserStatusWithId(userId, args.UserForbiddenStatus)
+
 	// take advice out
 	newAdvices, success := dao.MigrationAdviceDao.GetNewAdvice(userId)
 	if !success {
@@ -247,6 +268,7 @@ func UserAcceptStoragePlan(con *gin.Context) {
 		StorageMode: "Migrate",
 		Clouds:      nowAdvice.CloudsNew,
 	}
+
 	// use "" to tell transporter migrate all files
 	syncResponse, syncSuccess := transporter.SyncFile("", userId, sourcePlan, destinationPlan)
 	if !syncSuccess {
@@ -266,8 +288,10 @@ func UserAcceptStoragePlan(con *gin.Context) {
 		})
 		return
 	}
-	//delete advice
+	// delete advice
 	dao.MigrationAdviceDao.DeleteAdvice(userId)
+	// recover user status : forbidden -> normal ?
+
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
 		"msg":  "设置存储方案成功",
@@ -278,6 +302,8 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	})
 
 }
+
+/* nonsense
 
 func UserSetStoragePlan(con *gin.Context) {
 	fieldRequired := map[string]bool{
@@ -373,3 +399,5 @@ func UserSetStoragePlan(con *gin.Context) {
 		})
 	}
 }
+
+*/

@@ -10,7 +10,7 @@ import (
 
 func (d *Dao) ListFiles(userId string, path string, isDir bool) (*[]model.File, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
-	var files []model.File
+	var files []model.File = make([]model.File, 0)
 	var filter interface{}
 	filterDir := bson.M{
 		"owner": userId,
