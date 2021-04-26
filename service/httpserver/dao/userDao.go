@@ -21,6 +21,19 @@ func (d *Dao) GetUserInfo(userId string) (*User, bool) {
 		"user_id": userId,
 	}
 	err := col.FindOne(context.TODO(), filter).Decode(&user)
+	if user.AccessCredentials == nil {
+		user.AccessCredentials = make([]AccessCredential, 0)
+	}
+	if user.DataStats.DownloadTraffic == nil {
+		user.DataStats.DownloadTraffic = make(map[string]uint64)
+		user.DataStats.UploadTraffic = make(map[string]uint64)
+	}
+	if user.Preference.Latency == nil {
+		user.Preference.Latency = make(map[string]uint64)
+	}
+	if user.StoragePlan.Clouds == nil {
+		user.StoragePlan.Clouds = make([]Cloud, 0)
+	}
 	if tools.PrintError(err) {
 		return nil, false
 	}

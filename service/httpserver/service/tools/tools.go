@@ -41,7 +41,7 @@ func UserStatusMessageCode(status string) (int, string) {
 	case args.UserNormalStatus:
 		return args.CodeStatusNormal, "用户状态正常,但就是有点不正常"
 	case args.UserVerifyStatus:
-		return args.CodeStatusVerify, "用户邮箱未验证"
+		return args.CodeStatusVerify, "用户邮箱未进行验证"
 	case args.UserTransportingStatus:
 		return args.CodeStatusTransporting, "暂未定义"
 	default:

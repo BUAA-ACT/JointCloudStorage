@@ -33,7 +33,6 @@ const (
 	CodeFileNotExist           = 1414
 	CodeAlreadyHaveStoragePlan = 1415
 	CodeForbiddenTransport     = 1416
-	CodeLoginWithoutVerify     = 1417
 
 	// user status code
 	CodeStatusNormal       = 1501

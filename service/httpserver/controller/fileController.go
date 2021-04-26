@@ -144,12 +144,13 @@ func UserPreUploadFile(con *gin.Context) {
 		return
 	}
 	// check user status
-	if !user.IsNormalStatus() {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeForbiddenTransport,
-			"msg":  "用户正在迁移",
-			"data": gin.H{},
-		})
+	statusMap := map[string]bool{
+		args.UserForbiddenStatus: false,
+		args.UserVerifyStatus:    false,
+	}
+
+	if !UserCheckStatus(con, user, &statusMap) {
+		return
 	}
 
 	// preUpload and get a token
@@ -223,12 +224,12 @@ func UserDownloadFile(con *gin.Context) {
 		})
 	}
 	// check user status
-	if !user.IsNormalStatus() {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeForbiddenTransport,
-			"msg":  "用户正在迁移",
-			"data": gin.H{},
-		})
+	statusMap := map[string]bool{
+		args.UserForbiddenStatus: false,
+		args.UserVerifyStatus:    false,
+	}
+	if !UserCheckStatus(con, user, &statusMap) {
+		return
 	}
 
 	// use scheduler's download plan to download file with transporter
@@ -303,12 +304,12 @@ func UserDeleteFile(con *gin.Context) {
 		return
 	}
 	// check user status
-	if !user.IsNormalStatus() {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeForbiddenTransport,
-			"msg":  "用户正在迁移",
-			"data": gin.H{},
-		})
+	statusMap := map[string]bool{
+		args.UserForbiddenStatus: false,
+		args.UserVerifyStatus:    false,
+	}
+	if !UserCheckStatus(con, user, &statusMap) {
+		return
 	}
 
 	// delete file with transporter

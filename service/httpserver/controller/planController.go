@@ -214,12 +214,12 @@ func UserAcceptStoragePlan(con *gin.Context) {
 		})
 		return
 	}
-	if !user.IsNormalStatus() {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeForbiddenTransport,
-			"msg":  "用户正在迁移",
-			"data": gin.H{},
-		})
+	statusMap := map[string]bool{
+		args.UserForbiddenStatus: false,
+		args.UserVerifyStatus:    false,
+	}
+	if !UserCheckStatus(con, user, &statusMap) {
+		return
 	}
 	// forbid user other transportation
 	dao.UserDao.SetUserStatusWithId(userId, args.UserForbiddenStatus)

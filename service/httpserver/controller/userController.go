@@ -129,15 +129,13 @@ func UserLogin(con *gin.Context) {
 		})
 		return
 	}
-	if user.IsVerifying() {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeLoginWithoutVerify,
-			"msg":  "未进行验证",
-			"data": gin.H{},
-		})
+	// check user status
+	statusMap := map[string]bool{
+		args.UserVerifyStatus: false,
+	}
+	if !UserCheckStatus(con, user, &statusMap) {
 		return
 	}
-
 	// gen token
 	token := code.GenToken().String()
 	dao.AccessTokenDao.InsertAccessToken(token, user.UserId)

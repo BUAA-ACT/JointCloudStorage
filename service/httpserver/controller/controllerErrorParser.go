@@ -106,16 +106,22 @@ func UserCheckAccessToken(con *gin.Context, accessToken string) (string, bool) {
 	return userId, true
 }
 
-func UserCheckStatus(con *gin.Context, user model.User, statusMap *map[string]bool) bool {
+func UserCheckStatus(con *gin.Context, user *model.User, statusMap *map[string]bool) bool {
 	var code int
 	var message string
+	var flag bool = true
 	for field := range *statusMap {
 		if user.Status == field {
 			code, message = tools.UserStatusMessageCode(field)
+			flag = false
 		}
-		fmt.Println(code, message)
+		con.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"msg":  message,
+			"data": gin.H{},
+		})
 	}
-	return false
+	return flag
 }
 
 func checkDaoError(con *gin.Context, err error) bool {
