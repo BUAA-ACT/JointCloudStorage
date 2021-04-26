@@ -83,8 +83,8 @@ export default {
   data() {
     return {
       loginForm: {
-        username: "a",
-        password: "aaaaaa"
+        username: "",
+        password: ""
       },
       loginRules: {
         username: [{ required: true, trigger: "blur" }],
@@ -130,7 +130,6 @@ export default {
         if (valid) {
           this.loading = true;
           this.$store.dispatch("login", this.loginForm).then(() => {
-            console.log(this.$store.getters.name);
             if (this.$store.getters.name) {
               this.$message.success("登录成功");
               this.$router.push({ path: this.redirect || "/" });

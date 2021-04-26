@@ -331,6 +331,14 @@ const router = [
       {
         path: "fileManagement",
         component: () => import("../components/userCenter/fileManagement")
+      },
+      {
+        path: "dataDistribution",
+        component: () => import("../components/userCenter/dataDistribution")
+      },
+      {
+        path: "dataMigration",
+        component: () => import("../components/userCenter/dataMigration")
       }
     ]
   },

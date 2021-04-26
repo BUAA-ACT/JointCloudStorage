@@ -36,13 +36,6 @@ export default {
       method: "get"
     });
   },
-  deleteFile(query) {
-    return request({
-      url: "/storage/deleteFile",
-      method: "post",
-      params: query
-    });
-  },
   updatePreference(form) {
     return request({
       url: `/user/changeUserPreference`,
@@ -53,93 +46,74 @@ export default {
       }
     });
   },
-  getStoragePlans() {
-    return request({
-      url: `/plan/getAllStoragePlan`,
-      method: "post",
-      data: {
-        AccessToken: store.getters.token
-      }
-    });
-  },
-  changeStoragePlan(StoragePlan) {
-    return request({
-      url: `/plan/chooseStoragePlan`,
-      method: "post",
-      data: {
-        AccessToken: store.getters.token,
-        StoragePlan
-      }
-    });
-  },
 
   getFiles(path) {
     return request({
       url: `/file/getFiles`,
-      method: 'post',
+      method: "post",
       data: {
         AccessToken: store.getters.token,
         FilePath: path
       }
-    })
+    });
   },
 
   getUploadAddress(path) {
     return request({
       url: `/file/preUploadFile`,
-      method: 'post',
+      method: "post",
       data: {
         AccessToken: store.getters.token,
         FilePath: path
       }
-    })
+    });
   },
-  
+
   upload(item, token, url) {
-    var form_data = new FormData()
-    form_data.append('file', item.file, item.filename)
-    form_data.append("token", token)
+    const formData = new FormData();
+    formData.append("file", item.file, item.filename);
+    formData.append("token", token);
     return request({
-      url: url,
-      method: 'post',
+      url,
+      method: "post",
       headers: {
-        'Content-Type': 'multipart/form-data'
+        "Content-Type": "multipart/form-data"
       },
       timeout: 0,
-      data: form_data,
+      data: formData,
       onUploadProgress: progressEvent => {
-        const complete = (progressEvent.loaded / progressEvent.total * 100 | 0)
-        item.onProgress({ percent: complete })
+        const complete = (progressEvent.loaded / progressEvent.total) * 100 || 0;
+        item.onProgress({ percent: complete });
       }
-    })
+    });
   },
 
   getDownloadAddress(filename) {
     return request({
       url: `/file/downloadFile`,
-      method: 'post',
+      method: "post",
       data: {
         AccessToken: store.getters.token,
         FilePath: filename
       }
-    })
+    });
   },
 
   download(url) {
     return request({
-      url: url,
-      method: 'get',
-    })
+      url,
+      method: "get"
+    });
   },
-  
+
   deleteFile(filename) {
     return request({
       url: `/file/deleteFile`,
-      method: 'post',
+      method: "post",
       data: {
         AccessToken: store.getters.token,
         FilePath: filename
       }
-    })
+    });
   }
 };
