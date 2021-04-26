@@ -26,12 +26,12 @@
         </div>
       </el-card>
     </div>
-    <location-viewer :clouds="formattedClouds" class="location-viewer" />
+    <location-viewer v-if="plansLoaded" :clouds="candidates[storagePlanIndex].Clouds" class="location-viewer" />
   </div>
 </template>
 
 <script>
-import cloudStorage from "@/api/cloudStorage";
+import Plan from "@/api/plan";
 import locationViewer from "@/components/viewer/locationViewer.vue";
 
 export default {
@@ -74,7 +74,14 @@ export default {
   methods: {
     async getStoragePlans() {
       this.plansLoaded = false;
-      await cloudStorage.getStoragePlans().then(resp => {
+      await Plan.getStoragePlans().then(resp => {
+        this.storagePlans = resp;
+        Object.keys(this.storagePlans).forEach(index => {
+          console.log(index);
+          if (index === "StoragePriceFirst" || index === "TrafficPriceFirst") {
+            this.storagePlans[index].StorageMode += `(N:${this.storagePlans[index].N}, K:${this.storagePlans[index].K})`;
+          }
+        });
         const { StoragePriceFirst, TrafficPriceFirst } = resp;
         this.candidates = [StoragePriceFirst, TrafficPriceFirst];
         // { name: "China", value: [104.195397, 35.86166, Caption] }
@@ -112,8 +119,7 @@ export default {
     },
     async submit() {
       this.submitLoading = true;
-      cloudStorage
-        .changeStoragePlan(this.candidates[this.storagePlanIndex])
+      Plan.changeStoragePlan(this.candidates[this.storagePlanIndex])
         .then(resp => {
           if (resp) this.$message.success("更新存储方案成功！");
           this.submitLoading = false;
@@ -125,7 +131,7 @@ export default {
   },
   watch: {
     storagePlanIndex() {
-      this.formatClouds();
+      // this.formatClouds();
     }
   }
 };
@@ -150,7 +156,7 @@ export default {
 }
 
 .box-card {
-  width: 200px;
+  width: 250px;
   display: inline-block;
   margin: 0 100px;
 }
@@ -164,10 +170,12 @@ export default {
   -webkit-justify-content: space-between;
   -ms-flex-pack: justify;
   justify-content: space-between;
-  width: 800px;
+  width: 50vw;
+  min-width: 800px;
 }
 .location-viewer {
-  width: 800px;
+  width: 50vw;
+  min-width: 800px;
   height: 400px;
 }
 </style>

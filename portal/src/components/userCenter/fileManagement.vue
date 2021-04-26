@@ -85,7 +85,7 @@ export default {
       var self = this
       cloudStorage.getUploadAddress(item.file.name).then(response => {
         var token = response.Token
-        var addr = window.location.protocol + "//" + window.location.host + ":8083/upload"
+        var addr = window.location.protocol + "//" + window.location.hostname + ":8083/upload"
         cloudStorage.upload(item, token, addr).then(() => {
           self.fetchData()
         })
@@ -97,7 +97,7 @@ export default {
         var url = response.Result
         if (type == "url") {
           if (!url.startsWith("http")) {
-            url = window.location.protocol + "//" + window.location.host + ":8083" + url
+            url = window.location.protocol + "//" + window.location.hostname + ":8083" + url
           }
           var link = document.createElement('a')
           link.href = url
