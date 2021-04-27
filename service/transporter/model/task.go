@@ -1,6 +1,8 @@
 package model
 
 import (
+	"act.buaa.edu.cn/jcspan/transporter/util"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
@@ -115,6 +117,7 @@ func NewTask(taskType TaskType, startTime time.Time, uid string, sourcePath stri
 }
 
 func (t *Task) Check() bool {
+	logrus.Tracef("%+v", t)
 	switch t.TaskType {
 	case UPLOAD:
 		if t.DestinationPath == "" {
@@ -124,9 +127,11 @@ func (t *Task) Check() bool {
 		case StorageModelReplica:
 		case StorageModelEC:
 		default:
+			util.Log(logrus.ErrorLevel, "task check", "wrong task type", "", string(t.TaskType), "")
 			return false
 		}
 		if len(t.TaskOptions.DestinationPlan.Clouds) == 0 {
+			util.Log(logrus.ErrorLevel, "task check", "no destination cloud", "", "", "")
 			return false
 		}
 	default:

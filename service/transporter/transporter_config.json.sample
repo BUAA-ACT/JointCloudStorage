@@ -1,5 +1,6 @@
 {
   "debugMode": true,
+  "debugLevel": "Trace",
   "UploadFileTempPath": "./tmp/Upload",
   "DownloadFileTempPath": "./tmp/Download",
   "Database": {

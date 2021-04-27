@@ -15,7 +15,8 @@ const (
 )
 
 var Config = Configuration{
-	DebugMode: true,
+	DebugMode:  true,
+	DebugLevel: "Trace",
 	Database: DBConfiguration{
 		Driver:       MongoDB,
 		Host:         "192.168.105.8",
@@ -42,6 +43,7 @@ type DBConfiguration struct {
 
 type Configuration struct {
 	DebugMode            bool
+	DebugLevel           string
 	Database             DBConfiguration
 	UploadFileTempPath   string
 	DownloadFileTempPath string

@@ -61,7 +61,14 @@ func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
 	var clientDatabase model.CloudDatabase
 	var fileDatabase model.FileDatabase
 	if util.Config.DebugMode {
-		logrus.SetLevel(logrus.DebugLevel)
+		logrus.Warning("Run in debug mode")
+		switch util.Config.DebugLevel {
+		case "Trace":
+			logrus.SetLevel(logrus.TraceLevel)
+			logrus.Warning("DebugLevel: Trace")
+		default:
+			logrus.SetLevel(logrus.DebugLevel)
+		}
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
