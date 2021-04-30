@@ -17,8 +17,8 @@ func (d *Dao) ListFiles(userId string, path string, isDir bool) (*[]model.File, 
 		"owner": userId,
 	}
 	filterFile := bson.M{
-		"owner":    userId,
-		"filename": path,
+		"owner":     userId,
+		"file_name": path,
 	}
 	if isDir {
 		filter = filterDir
@@ -43,8 +43,7 @@ func (d *Dao) ListFiles(userId string, path string, isDir bool) (*[]model.File, 
 func (d *Dao) CheckFileStatus(userId string, path string) (*[]model.File, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
-		"owner":    userId,
-		"filename": path,
+		"file_id": userId + path,
 	}
 	files := make([]model.File, 0)
 	result, err := col.Find(context.TODO(), filter)
