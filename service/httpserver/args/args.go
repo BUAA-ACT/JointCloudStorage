@@ -33,7 +33,6 @@ const (
 	CodeFileNotExist           = 1414
 	CodeAlreadyHaveStoragePlan = 1415
 	CodeForbiddenTransport     = 1416
-	CodeLoginWithoutVerify     = 1417
 
 	// user status code
 	CodeStatusNormal       = 1501
@@ -114,10 +113,14 @@ const (
 	TaskStateDone      = "Done"
 )
 
-/* file type const */
+/* file const */
 const (
 	FileTypeDir  = "DIR"
 	FileTypeFile = "FILE"
+
+	FileReconstructStatusPending = "Pending"
+	FileReconstructStatusWorking = "Working"
+	FileReconstructStatusDone    = "Done"
 )
 
 /* properties */
