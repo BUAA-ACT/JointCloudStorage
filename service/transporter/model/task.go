@@ -118,6 +118,7 @@ func NewTask(taskType TaskType, startTime time.Time, uid string, sourcePath stri
 
 func (t *Task) Check() bool {
 	logrus.Tracef("%+v", t)
+	logrus.Tracef("%+v", t.TaskOptions)
 	switch t.TaskType {
 	case UPLOAD:
 		if t.DestinationPath == "" {
