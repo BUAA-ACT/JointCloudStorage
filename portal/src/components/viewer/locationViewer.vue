@@ -40,6 +40,10 @@ export default {
           };
         });
       }
+    },
+    dynamic: {
+      type: Boolean,
+      default: false
     }
   },
   methods: {
@@ -130,6 +134,9 @@ export default {
   watch: {
     clouds() {
       this.initCharts();
+    },
+    dynamic() {
+      this.initCharts();
     }
   },
   computed: {
@@ -193,10 +200,13 @@ export default {
           symbolSize: 10
         },
         lineStyle: {
-          normal: { type: "dotted", color: "#B2DFDB", width: 2, curveness: 0.2 }
+          normal: { type: "dotted", color: "#0077ff", width: 2, curveness: 0.2 }
         },
         data: migrationLines
       };
+      if (!this.dynamic) {
+        return [newCloudsObj];
+      }
       return [newCloudsObj, migrationObj];
     },
     formattedClouds() {

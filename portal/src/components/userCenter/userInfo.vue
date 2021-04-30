@@ -17,7 +17,7 @@
         <div slot="header" class="clearfix">
           <span>{{ AccessCredential.CloudID }}</span>
         </div>
-        <div v-for="AccessCredential in UserInfo.AccessCredentials" :key="AccessCredential.CloudID" class="text item">
+        <div class="text item">
           访问用户：{{ AccessCredential.UserID }}<br />
           访问密码：{{ AccessCredential.Password }}<br />
         </div>
