@@ -7,6 +7,7 @@ import (
 	"cloud-storage-httpserver/service/scheduler"
 	"cloud-storage-httpserver/service/tools"
 	"cloud-storage-httpserver/service/transporter"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -144,12 +145,13 @@ func UserPreUploadFile(con *gin.Context) {
 		return
 	}
 	// check user status
-	if !user.IsNormalStatus() {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeForbiddenTransport,
-			"msg":  "用户正在迁移",
-			"data": gin.H{},
-		})
+	statusMap := map[string]bool{
+		args.UserForbiddenStatus: false,
+		args.UserVerifyStatus:    false,
+	}
+
+	if !UserCheckStatus(con, user, &statusMap) {
+		return
 	}
 
 	// preUpload and get a token
@@ -164,6 +166,9 @@ func UserPreUploadFile(con *gin.Context) {
 	}
 	// error in transporter
 	if response.Code != args.CodeOK {
+		fmt.Println("transporter fault:")
+		fmt.Println("Code: ", response.Code)
+		fmt.Println("Msg: ", response.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": response.Code,
 			"msg":  response.Msg,
@@ -223,15 +228,43 @@ func UserDownloadFile(con *gin.Context) {
 		})
 	}
 	// check user status
-	if !user.IsNormalStatus() {
+	statusMap := map[string]bool{
+		args.UserForbiddenStatus: false,
+		args.UserVerifyStatus:    false,
+	}
+	if !UserCheckStatus(con, user, &statusMap) {
+		return
+	}
+	// check file status if done -> return url
+	files, success := dao.FileDao.CheckFileStatus(userId, filePath)
+	if !success {
 		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeForbiddenTransport,
-			"msg":  "用户正在迁移",
+			"code": args.CodeDatabaseError,
+			"msg":  "数据库错误",
 			"data": gin.H{},
 		})
+		return
 	}
-
-	// use scheduler's download plan to download file with transporter
+	var doneURL string
+	var doneFlag bool = false
+	for _, file := range *files {
+		if file.ReconstructStatus == args.FileReconstructStatusDone {
+			doneFlag = true
+			doneURL = file.DownloadUrl
+		}
+	}
+	if doneFlag {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeOK,
+			"msg":  "解析scheduler-json信息有误",
+			"data": gin.H{
+				"Type":   "url",
+				"Result": doneURL,
+			},
+		})
+		return
+	}
+	// else -> use scheduler's download plan to download file with transporter
 	getDownloadPlanResponse, success := scheduler.GetDownloadPlanFromScheduler(userId, filePath)
 	if !success {
 		con.JSON(http.StatusOK, gin.H{
@@ -252,6 +285,9 @@ func UserDownloadFile(con *gin.Context) {
 	}
 	// error in transporter
 	if downloadResponse.Code != args.CodeOK {
+		fmt.Println("transporter fault:")
+		fmt.Println("Code: ", downloadResponse.Code)
+		fmt.Println("Msg: ", downloadResponse.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": downloadResponse.Code,
 			"msg":  downloadResponse.Msg,
@@ -303,12 +339,12 @@ func UserDeleteFile(con *gin.Context) {
 		return
 	}
 	// check user status
-	if !user.IsNormalStatus() {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeForbiddenTransport,
-			"msg":  "用户正在迁移",
-			"data": gin.H{},
-		})
+	statusMap := map[string]bool{
+		args.UserForbiddenStatus: false,
+		args.UserVerifyStatus:    false,
+	}
+	if !UserCheckStatus(con, user, &statusMap) {
+		return
 	}
 
 	// delete file with transporter

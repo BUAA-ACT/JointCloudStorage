@@ -23,6 +23,12 @@ func (d *Dao) GetNewAdvice(userId string) (*[]model.MigrationAdvice, bool) {
 		if tools.PrintError(err) {
 			return nil, false
 		}
+		if advice.CloudsNew == nil {
+			advice.CloudsNew = make([]model.Cloud, 0)
+		}
+		if advice.CloudsOld == nil {
+			advice.CloudsOld = make([]model.Cloud, 0)
+		}
 		advices = append(advices, advice)
 	}
 	return &advices, true

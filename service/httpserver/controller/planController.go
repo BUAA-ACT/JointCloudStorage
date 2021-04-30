@@ -49,6 +49,9 @@ func UserGetAllStoragePlan(con *gin.Context) {
 	}
 	// wrong in scheduler
 	if response.Code != args.CodeOK {
+		fmt.Println("scheduler fault:")
+		fmt.Println("Code: ", response.Code)
+		fmt.Println("Msg: ", response.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": response.Code,
 			"msg":  response.Msg,
@@ -172,6 +175,9 @@ func UserChooseStoragePlan(con *gin.Context) {
 	}
 	if postPlanResponse.Code != args.CodeOK {
 		// error in scheduler
+		fmt.Println("scheduler fault:")
+		fmt.Println("Code: ", postPlanResponse.Code)
+		fmt.Println("Msg: ", postPlanResponse.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": postPlanResponse.Code,
 			"msg":  postPlanResponse.Msg,
@@ -214,12 +220,12 @@ func UserAcceptStoragePlan(con *gin.Context) {
 		})
 		return
 	}
-	if !user.IsNormalStatus() {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeForbiddenTransport,
-			"msg":  "用户正在迁移",
-			"data": gin.H{},
-		})
+	statusMap := map[string]bool{
+		args.UserForbiddenStatus: false,
+		args.UserVerifyStatus:    false,
+	}
+	if !UserCheckStatus(con, user, &statusMap) {
+		return
 	}
 	// forbid user other transportation
 	dao.UserDao.SetUserStatusWithId(userId, args.UserForbiddenStatus)
@@ -248,6 +254,9 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	}
 	if postPlanResponse.Code != args.CodeOK {
 		// error in scheduler
+		fmt.Println("scheduler fault:")
+		fmt.Println("Code: ", postPlanResponse.Code)
+		fmt.Println("Msg: ", postPlanResponse.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": postPlanResponse.Code,
 			"msg":  postPlanResponse.Msg,
