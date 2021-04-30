@@ -262,6 +262,7 @@ func UserDownloadFile(con *gin.Context) {
 				"Result": doneURL,
 			},
 		})
+		return
 	}
 	// else -> use scheduler's download plan to download file with transporter
 	getDownloadPlanResponse, success := scheduler.GetDownloadPlanFromScheduler(userId, filePath)
