@@ -8,7 +8,7 @@
           <el-radio v-model="storagePlanIndex" :label="0">存储价格优先</el-radio>
         </div>
         <div class="text item">
-          存储模式： {{ storagePlans.StoragePriceFirst.StorageMode }}<br />
+          存储模式： {{ modifyStorageMode(storagePlans.StoragePriceFirst) }}<br />
           存储价格： {{ storagePlans.StoragePriceFirst.StoragePrice }}<br />
           流量价格： {{ storagePlans.StoragePriceFirst.TrafficPrice }}<br />
           可用性：{{ storagePlans.StoragePriceFirst.Availability }}
@@ -19,7 +19,7 @@
           <el-radio v-model="storagePlanIndex" :label="1">流量价格优先</el-radio>
         </div>
         <div class="text item">
-          存储模式： {{ storagePlans.TrafficPriceFirst.StorageMode }}<br />
+          存储模式： {{ modifyStorageMode(storagePlans.TrafficPriceFirst) }}<br />
           存储价格： {{ storagePlans.TrafficPriceFirst.StoragePrice }}<br />
           流量价格： {{ storagePlans.TrafficPriceFirst.TrafficPrice }}<br />
           可用性：{{ storagePlans.TrafficPriceFirst.Availability }}
@@ -72,16 +72,19 @@ export default {
     };
   },
   methods: {
+    modifyStorageMode(storagePlan) {
+      return `${storagePlan.StorageMode}(N:${storagePlan.N}, K:${storagePlan.K})`;
+    },
     async getStoragePlans() {
       this.plansLoaded = false;
       await Plan.getStoragePlans().then(resp => {
         this.storagePlans = resp;
-        Object.keys(this.storagePlans).forEach(index => {
-          console.log(index);
-          if (index === "StoragePriceFirst" || index === "TrafficPriceFirst") {
-            this.storagePlans[index].StorageMode += `(N:${this.storagePlans[index].N}, K:${this.storagePlans[index].K})`;
-          }
-        });
+        // Object.keys(this.storagePlans).forEach(index => {
+        //   console.log(index);
+        //   if (index === "StoragePriceFirst" || index === "TrafficPriceFirst") {
+        //     this.storagePlans[index].StorageMode += `(N:${this.storagePlans[index].N}, K:${this.storagePlans[index].K})`;
+        //   }
+        // });
         const { StoragePriceFirst, TrafficPriceFirst } = resp;
         this.candidates = [StoragePriceFirst, TrafficPriceFirst];
         // { name: "China", value: [104.195397, 35.86166, Caption] }

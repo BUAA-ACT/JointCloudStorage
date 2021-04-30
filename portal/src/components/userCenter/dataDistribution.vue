@@ -1,6 +1,6 @@
 <template>
   <div>
-    <location-viewer class="location-viewer" :clouds="cloudStat" :format-function="formatClouds"></location-viewer>
+    <location-viewer class="location-viewer" :clouds="cloudStat.cloudsDetails" :format-function="formatClouds"></location-viewer>
   </div>
 </template>
 
@@ -24,13 +24,14 @@ export default {
     }
   },
   methods: {
-    formatClouds: Clouds => {
+    formatClouds(Clouds) {
       const { Volume } = this.cloudStat;
       return Clouds.map(value => {
         return {
           name: value.CloudID,
           value: value.Location.split(",").concat([
-            `存储用量：${Utils.formatBytes(Volume)}<br/>
+            `${value.CloudID}<br />
+             存储用量：${Utils.formatBytes(Volume)}<br/>
              上传流量：${Utils.formatBytes(value.UploadTraffic)}<br/>
              下载流量：${Utils.formatBytes(value.DownloadTraffic)}<br/>`
           ])
