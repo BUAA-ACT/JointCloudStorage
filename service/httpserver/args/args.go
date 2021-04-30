@@ -113,10 +113,14 @@ const (
 	TaskStateDone      = "Done"
 )
 
-/* file type const */
+/* file const */
 const (
 	FileTypeDir  = "DIR"
 	FileTypeFile = "FILE"
+
+	FileReconstructStatusPending = "Pending"
+	FileReconstructStatusWorking = "Working"
+	FileReconstructStatusDone    = "Done"
 )
 
 /* properties */

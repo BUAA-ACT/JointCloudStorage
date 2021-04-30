@@ -235,8 +235,35 @@ func UserDownloadFile(con *gin.Context) {
 	if !UserCheckStatus(con, user, &statusMap) {
 		return
 	}
-
-	// use scheduler's download plan to download file with transporter
+	// check file status if done -> return url
+	files, success := dao.FileDao.CheckFileStatus(userId, filePath)
+	if !success {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeDatabaseError,
+			"msg":  "数据库错误",
+			"data": gin.H{},
+		})
+		return
+	}
+	var doneURL string
+	var doneFlag bool = false
+	for _, file := range *files {
+		if file.ReconstructStatus == args.FileReconstructStatusDone {
+			doneFlag = true
+			doneURL = file.DownloadUrl
+		}
+	}
+	if doneFlag {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeOK,
+			"msg":  "解析scheduler-json信息有误",
+			"data": gin.H{
+				"Type":   "url",
+				"Result": doneURL,
+			},
+		})
+	}
+	// else -> use scheduler's download plan to download file with transporter
 	getDownloadPlanResponse, success := scheduler.GetDownloadPlanFromScheduler(userId, filePath)
 	if !success {
 		con.JSON(http.StatusOK, gin.H{
