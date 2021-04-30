@@ -49,6 +49,9 @@ func UserGetAllStoragePlan(con *gin.Context) {
 	}
 	// wrong in scheduler
 	if response.Code != args.CodeOK {
+		fmt.Println("scheduler fault:")
+		fmt.Println("Code: ", response.Code)
+		fmt.Println("Msg: ", response.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": response.Code,
 			"msg":  response.Msg,
@@ -172,6 +175,9 @@ func UserChooseStoragePlan(con *gin.Context) {
 	}
 	if postPlanResponse.Code != args.CodeOK {
 		// error in scheduler
+		fmt.Println("scheduler fault:")
+		fmt.Println("Code: ", postPlanResponse.Code)
+		fmt.Println("Msg: ", postPlanResponse.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": postPlanResponse.Code,
 			"msg":  postPlanResponse.Msg,
@@ -248,6 +254,9 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	}
 	if postPlanResponse.Code != args.CodeOK {
 		// error in scheduler
+		fmt.Println("scheduler fault:")
+		fmt.Println("Code: ", postPlanResponse.Code)
+		fmt.Println("Msg: ", postPlanResponse.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": postPlanResponse.Code,
 			"msg":  postPlanResponse.Msg,

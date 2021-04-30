@@ -7,6 +7,7 @@ import (
 	"cloud-storage-httpserver/service/scheduler"
 	"cloud-storage-httpserver/service/tools"
 	"cloud-storage-httpserver/service/transporter"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -165,6 +166,9 @@ func UserPreUploadFile(con *gin.Context) {
 	}
 	// error in transporter
 	if response.Code != args.CodeOK {
+		fmt.Println("transporter fault:")
+		fmt.Println("Code: ", response.Code)
+		fmt.Println("Msg: ", response.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": response.Code,
 			"msg":  response.Msg,
@@ -253,6 +257,9 @@ func UserDownloadFile(con *gin.Context) {
 	}
 	// error in transporter
 	if downloadResponse.Code != args.CodeOK {
+		fmt.Println("transporter fault:")
+		fmt.Println("Code: ", downloadResponse.Code)
+		fmt.Println("Msg: ", downloadResponse.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": downloadResponse.Code,
 			"msg":  downloadResponse.Msg,
