@@ -37,9 +37,9 @@ export default new Vuex.Store({
         return null;
       }
       let { Volume } = dataStats;
-      const { StorageMode, N, K } = storagePlan;
-      if (StorageMode === "Replica") {
-        Volume = (Volume / K) * N;
+      const { StorageMode, K } = storagePlan;
+      if (StorageMode === "EC") {
+        Volume /= K;
       }
       const cloudsDetails = storagePlan.Clouds.map(val => {
         return {

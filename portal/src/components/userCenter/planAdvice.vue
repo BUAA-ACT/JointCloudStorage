@@ -5,30 +5,32 @@
       <!--      <el-button type="primary" @click="cancel" :loading="cancelLoading" :disabled="!plansLoaded">我再想想</el-button><br />-->
       <el-button type="info" @click="cancel" :loading="submitLoading">取消</el-button><br />
     </div>
-    <div v-if="newPlanAvailable" class="plans-viewer-container">
-      <el-card class="box-card">
-        <div slot="header" class="clearfix">
-          旧存储方案
-        </div>
-        <div class="text item">
-          存储模式： {{ Advices.StoragePlanOld.StorageMode }}<br />
-          存储价格： {{ Advices.StoragePlanOld.StoragePrice }}<br />
-          流量价格： {{ Advices.StoragePlanOld.TrafficPrice }}<br />
-          可用性：{{ Advices.StoragePlanOld.Availability }}
-        </div>
-      </el-card>
-      <el-card class="box-card">
-        <div slot="header" class="clearfix">
-          新存储方案
-        </div>
-        <div class="text item">
-          存储模式： {{ Advices.StoragePlanNew.StorageMode }}<br />
-          存储价格： {{ Advices.StoragePlanNew.StoragePrice }}<br />
-          流量价格： {{ Advices.StoragePlanNew.TrafficPrice }}<br />
-          可用性：{{ Advices.StoragePlanNew.Availability }}
-        </div>
-      </el-card>
-      <location-viewer :clouds="Advices.CloudsOld" :new-clouds="Advices.CloudsNew" class="location-viewer" />
+    <div v-if="newPlanAvailable">
+      <div class="plans-viewer-container">
+        <el-card class="box-card">
+          <div slot="header" class="clearfix">
+            旧存储方案
+          </div>
+          <div class="text item">
+            存储模式： {{ Advices.StoragePlanOld.StorageMode }}<br />
+            存储价格： {{ Advices.StoragePlanOld.StoragePrice }}<br />
+            流量价格： {{ Advices.StoragePlanOld.TrafficPrice }}<br />
+            可用性：{{ Advices.StoragePlanOld.Availability }}
+          </div>
+        </el-card>
+        <el-card class="box-card">
+          <div slot="header" class="clearfix">
+            新存储方案
+          </div>
+          <div class="text item">
+            存储模式： {{ Advices.StoragePlanNew.StorageMode }}<br />
+            存储价格： {{ Advices.StoragePlanNew.StoragePrice }}<br />
+            流量价格： {{ Advices.StoragePlanNew.TrafficPrice }}<br />
+            可用性：{{ Advices.StoragePlanNew.Availability }}
+          </div>
+        </el-card>
+      </div>
+      <location-viewer :clouds="Advices.CloudsOld" :new-clouds="Advices.CloudsNew" :dynamic="migrating" class="location-viewer" ref="viewer" />
     </div>
     <div class="no-new-plan" v-else>
       <i class="el-icon-success tip-icon"></i><br />
@@ -50,7 +52,8 @@ export default {
     return {
       Advices: {},
       submitLoading: false,
-      newPlanAvailable: false
+      newPlanAvailable: false,
+      migrating: false
     };
   },
   methods: {
@@ -69,7 +72,9 @@ export default {
     },
     async accept() {
       this.submitLoading = true;
+      this.migrating = true;
       await Plan.acceptAdvice();
+      // TODO: 轮询
       this.submitLoading = false;
     },
     async cancel() {
