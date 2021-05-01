@@ -318,10 +318,10 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
             "CloudID": "aliyun-beijing"
          },
          {
-            "CloudID": "aliyun-hangzhou"
+            "CloudID": "txyun-chengdu"
          },
          {
-            "CloudID": "txyun-chengdu"
+            "CloudID": "ksyun-beijing"
          }
       ],
       "N": 3,
@@ -359,10 +359,10 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
 				"CloudID": "aliyun-beijing"
 			 },
 			 {
-				"CloudID": "aliyun-hangzhou"
+				"CloudID": "txyun-chengdu"
 			 },
 			 {
-				"CloudID": "txyun-chengdu"
+				"CloudID": "ksyun-beijing"
 			 }
         ],
         "N": 3,

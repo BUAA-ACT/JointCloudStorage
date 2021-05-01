@@ -86,7 +86,7 @@ func (processor *TaskProcessor) ProcessTasks() {
 			go func(t *model.Task) {
 				filePath, err := processor.RebuildFileToDisk(t)
 				if err == nil {
-					err = processor.WriteDownloadUrlToDB(t, filePath)
+					err = processor.WriteDownloadUrlToDB(t, filePath, t.TaskOptions.SourceStoragePlan.Clouds[0])
 				}
 				processor.SetProcessResult(t, err)
 				finish <- t.Tid
@@ -199,7 +199,7 @@ func (processor *TaskProcessor) DeleteSingleFile(t *model.Task) error {
 	return err
 }
 
-func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string) error {
+func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string, cloudID string) error {
 	fileInfo, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
 	if err != nil {
 		logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
@@ -213,10 +213,10 @@ func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string)
 	fileInfo.ReconstructStatus = model.FileDone
 	fileInfo.LastReconstructed = time.Now()
 	err = processor.FileDatabase.UpdateFileInfo(fileInfo)
+	_, err = processor.Monitor.AddDownloadTraffic(t.Uid, fileInfo.Size, cloudID)
 	if err != nil {
 		return err
 	}
-	_, err = processor.Monitor.AddDownloadTraffic(t.Uid, fileInfo.Size)
 	return err
 }
 
@@ -260,7 +260,9 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 			if err != nil {
 				logrus.Errorf("Download EC block %v from %v fail: %v", shards[i], storageClients[i], err)
 				shards[i] = shards[i] + ".fail"
+				continue
 			}
+			processor.Monitor.AddUploadTrafficFromFile(t.Uid, shards[i], t.TaskOptions.SourceStoragePlan.Clouds[i])
 		}
 		err = Decode(rebuildPath, fileInfo.Size, shards, N, K)
 		if err != nil {
@@ -342,8 +344,8 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			if util.CheckErr(err, "New File Info") {
 				return err
 			}
-			for _, client := range storageClients {
-				_, err = processor.Monitor.AddUploadTraffic(t.Uid, fileInfo.Size)
+			for i, client := range storageClients {
+				_, err = processor.Monitor.AddUploadTraffic(t.Uid, fileInfo.Size, t.TaskOptions.DestinationPlan.Clouds[i])
 				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath(), t.Uid)
 			}
 		case "EC": // 纠删码模式
@@ -372,7 +374,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 						"client upload fail", "", "", err.Error())
 					continue
 				}
-				processor.Monitor.AddUploadTrafficFromFile(t.Uid, shards[i])
+				processor.Monitor.AddUploadTrafficFromFile(t.Uid, shards[i], t.TaskOptions.DestinationPlan.Clouds[i])
 			}
 		default:
 			return errors.New("storage model not implement")

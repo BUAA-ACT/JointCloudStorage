@@ -46,9 +46,9 @@ type RequestCloud struct {
 }
 
 type RequestTaskReply struct {
-	Code int
-	Msg  string
-	Data TaskResult
+	Code int        `json:"code"`
+	Msg  string     `json:"msg"`
+	Data TaskResult `json:"data"`
 }
 
 type TaskResult struct {
@@ -186,7 +186,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 				taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 				return
 			}
-			err = router.processor.WriteDownloadUrlToDB(task, url)
+			err = router.processor.WriteDownloadUrlToDB(task, url, task.TaskOptions.SourceStoragePlan.Clouds[0])
 			if err != nil {
 				logrus.Errorf("write download url to db fail: %v", err)
 			}
@@ -357,6 +357,11 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 	// 上传文件后同步写入数据库
 	err = router.processor.AddFileInfo(task)
 	router.processor.taskStorage.SetTask(task.Tid, task)
+	requestTaskReply := RequestTaskReply{
+		Code: http.StatusOK,
+		Msg:  "Upload File to Transporter OK",
+	}
+	c.JSON(http.StatusOK, requestTaskReply)
 }
 
 // 获取网盘文件临时下载链接

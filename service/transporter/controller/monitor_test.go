@@ -54,9 +54,9 @@ func TestTrafficMonitor(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				_, err := monitor.AddUploadTraffic("tester", 100)
-				_, err = monitor.AddUploadTraffic("tester", 100)
-				_, err = monitor.AddUploadTraffic("tester", 120)
+				_, err := monitor.AddUploadTraffic("tester", 100, "test")
+				_, err = monitor.AddUploadTraffic("tester", 100, "test")
+				_, err = monitor.AddUploadTraffic("tester", 120, "test")
 				if err != nil {
 					t.Fatalf("test AddUpload Fail: %v", err)
 				}
@@ -64,8 +64,8 @@ func TestTrafficMonitor(t *testing.T) {
 		}
 		wg.Wait()
 		user, _ := db.GetUserFromID("tester")
-		if user.DataStats.UploadTraffic[util.Config.LocalCloudID] != 320*20 {
-			t.Fatalf("teat AddVolum fail, expect 3200, got %v", user.DataStats.UploadTraffic[util.Config.LocalCloudID])
+		if user.DataStats.UploadTraffic["test"] != 320*20 {
+			t.Fatalf("teat AddVolum fail, expect 3200, got %v", user.DataStats.UploadTraffic["test"])
 		}
 	})
 }

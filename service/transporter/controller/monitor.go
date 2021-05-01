@@ -54,7 +54,7 @@ func (monitor TrafficMonitor) AddVolume(uid string, delta int64) (size int64, er
 	return user.DataStats.Volume, nil
 }
 
-func (monitor TrafficMonitor) AddUploadTrafficFromFile(uid string, path string) {
+func (monitor TrafficMonitor) AddUploadTrafficFromFile(uid string, path string, cloudID string) {
 	go func() {
 		fi, err := os.Stat(path)
 		if err != nil {
@@ -63,11 +63,11 @@ func (monitor TrafficMonitor) AddUploadTrafficFromFile(uid string, path string) 
 				"can't get file state", "", "", err.Error())
 			return
 		}
-		_, _ = monitor.AddUploadTraffic(uid, fi.Size())
+		_, _ = monitor.AddUploadTraffic(uid, fi.Size(), cloudID)
 	}()
 }
 
-func (monitor TrafficMonitor) AddUploadTraffic(uid string, delta int64) (size int64, err error) {
+func (monitor TrafficMonitor) AddUploadTraffic(uid string, delta int64, cloudID string) (size int64, err error) {
 	user, err := monitor.getUserAndLock(uid)
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "TrafficMonitor AddUploadTraffic", "can't get user",
@@ -78,17 +78,17 @@ func (monitor TrafficMonitor) AddUploadTraffic(uid string, delta int64) (size in
 	if user.DataStats.UploadTraffic == nil {
 		user.DataStats.UploadTraffic = map[string]int64{}
 	}
-	uploadTraffic := user.DataStats.UploadTraffic[util.Config.LocalCloudID]
-	user.DataStats.UploadTraffic[util.Config.LocalCloudID] = uploadTraffic + delta
+	uploadTraffic := user.DataStats.UploadTraffic[cloudID]
+	user.DataStats.UploadTraffic[cloudID] = uploadTraffic + delta
 	err = monitor.updateUserAndUnlock(user)
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "TrafficMonitor AddUploadTraffic", "can't set and unlock user",
 			"", "err", err.Error())
 		return 0, err
 	}
-	return user.DataStats.UploadTraffic[util.Config.LocalCloudID], nil
+	return user.DataStats.UploadTraffic[cloudID], nil
 }
-func (monitor TrafficMonitor) AddDownloadTrafficFromFile(uid string, path string) {
+func (monitor TrafficMonitor) AddDownloadTrafficFromFile(uid string, path string, cloudID string) {
 	go func() {
 		fi, err := os.Stat(path)
 		if err != nil {
@@ -97,10 +97,10 @@ func (monitor TrafficMonitor) AddDownloadTrafficFromFile(uid string, path string
 				"can't get file state", "", "", err.Error())
 			return
 		}
-		_, _ = monitor.AddDownloadTraffic(uid, fi.Size())
+		_, _ = monitor.AddDownloadTraffic(uid, fi.Size(), cloudID)
 	}()
 }
-func (monitor TrafficMonitor) AddDownloadTraffic(uid string, delta int64) (size int64, err error) {
+func (monitor TrafficMonitor) AddDownloadTraffic(uid string, delta int64, cloudID string) (size int64, err error) {
 	user, err := monitor.getUserAndLock(uid)
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "TrafficMonitor AddDownloadTraffic", "can't get user",
@@ -111,15 +111,15 @@ func (monitor TrafficMonitor) AddDownloadTraffic(uid string, delta int64) (size 
 	if user.DataStats.DownloadTraffic == nil {
 		user.DataStats.DownloadTraffic = map[string]int64{}
 	}
-	downloadTraffic := user.DataStats.DownloadTraffic[util.Config.LocalCloudID]
-	user.DataStats.DownloadTraffic[util.Config.LocalCloudID] = downloadTraffic + delta
+	downloadTraffic := user.DataStats.DownloadTraffic[cloudID]
+	user.DataStats.DownloadTraffic[cloudID] = downloadTraffic + delta
 	err = monitor.updateUserAndUnlock(user)
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "TrafficMonitor AddDownloadTraffic", "can't set and unlock user",
 			"", "err", err.Error())
 		return 0, err
 	}
-	return user.DataStats.DownloadTraffic[util.Config.LocalCloudID], nil
+	return user.DataStats.DownloadTraffic[cloudID], nil
 }
 
 func (monitor TrafficMonitor) ReduceVolume(uid string, delta int64) (size int64, err error) {
