@@ -199,13 +199,14 @@ func (processor *TaskProcessor) DeleteSingleFile(t *model.Task) error {
 	return err
 }
 
-func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, path string, cloudID string) error {
+func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, localFilePath string, cloudID string) error {
 	fileInfo, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
 	if err != nil {
 		logrus.Warnf("cant get file info: %v%v, err: %v", t.Uid, t.SourcePath, err)
 		return err
 	}
-	accessToken, err := util.GenerateLocalFileAccessToken(path, t.Uid, time.Hour*24)
+	fileName := path.Base(fileInfo.FileID)
+	accessToken, err := util.GenerateLocalFileAccessToken(localFilePath, t.Uid, time.Hour*24, fileName)
 	if err != nil {
 		logrus.Warnf("cant gen access token, err: %v", err)
 	}
