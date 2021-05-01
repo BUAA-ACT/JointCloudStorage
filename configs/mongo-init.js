@@ -2,9 +2,9 @@ db.Cloud.insertMany(
     [
         {
             "cloud_id": "aliyun-hohhot",
-            "storage_price": 0.12,
-            "traffic_price": 0.5,
-            "availability": 0.9999,
+            "storage_price": 0.1,
+            "traffic_price": 0.6,
+            "availability": 0.99995,
             "status": "UP",
             "endpoint": "oss-cn-huhehaote.aliyuncs.com",
             "access_key": "<ak-aliyun>",
@@ -28,8 +28,8 @@ db.Cloud.insertMany(
         },
         {
             "cloud_id": "aliyun-qingdao",
-            "storage_price": 0.12,
-            "traffic_price": 0.5,
+            "storage_price": 0.15,
+            "traffic_price": 0.4,
             "availability": 0.99995,
             "status": "UP",
             "endpoint": "oss-cn-qingdao.aliyuncs.com",
@@ -38,6 +38,32 @@ db.Cloud.insertMany(
             "location": "120.382109,36.075311",
             "bucket": "jcspan-qingdao",
             "address": "aliyun-qingdao.jointcloudstorage.cn",
+        },
+        {
+            "cloud_id": "txyun-chengdu",
+            "storage_price": 0.099,
+            "traffic_price": 0.5,
+            "availability": 0.9999,
+            "status": "UP",
+            "endpoint": "cos.ap-chengdu.myqcloud.com",
+            "access_key": "<ak-txyun>",
+            "secret_key": "<sk-txyun>",
+            "location": "104.072745,30.664271",
+            "bucket": "jcspan-chengdu-1259241028",
+            "address": "txyun-chengdu.jointcloudstorage.cn",
+        },
+        {
+            "cloud_id": "bdyun-guangzhou",
+            "storage_price": 0.119,
+            "traffic_price": 0.49,
+            "availability": 0.9995,
+            "status": "UP",
+            "endpoint": "gz.bcebos.com",
+            "access_key": "<ak-bdyun>",
+            "secret_key": "<sk-bdyun>",
+            "location": "113.260506,23.132943",
+            "bucket": "jcspan-guangzhou",
+            "address": "182.61.24.215",
         }
     ]
 )

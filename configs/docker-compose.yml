@@ -38,7 +38,7 @@ services:
             - "8083:8083"
             
     mongodb:
-        image: mongo
+        image: mongo:4.4.5
         environment:
             MONGO_INITDB_DATABASE: prod
         ports:
