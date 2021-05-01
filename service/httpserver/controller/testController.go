@@ -54,3 +54,15 @@ func UserTestGet(con *gin.Context) {
 		"Data":      gin.H{},
 	})
 }
+
+func CookieTestGet(con *gin.Context) {
+
+	cookie, err := con.Cookie("gin_cookie1")
+	fmt.Println("cookie:" + cookie)
+	if err != nil {
+		cookie = "NotSet"
+		con.SetCookie("gin_cookie2", "test", 3600, "/", "localhost", false, true)
+	}
+	fmt.Printf("Cookie value: %s \n", cookie)
+
+}

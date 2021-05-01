@@ -12,7 +12,12 @@ export default new Vuex.Store({
     token: null,
     name: null,
     nickname: null,
+    status: null,
     preference: { AllowDelay: false, Availability: 0, Choice: 0, StoragePrice: 0, TrafficPrice: 0, Vendor: 0 },
+    storagePlan: { StorageMode: "Replica", N: 0, K: 0 },
+    dataStats: {
+      Volume: 0
+    },
     roles: []
   },
   getters: {
@@ -24,7 +29,28 @@ export default new Vuex.Store({
       return state.token;
     },
     name: state => state.name,
-    vendor: state => state.preference.Vendor
+    vendor: state => state.preference.Vendor,
+    status: state => state.status,
+    dataStats: state => {
+      const { storagePlan, dataStats } = state;
+      if (!dataStats || dataStats === {}) {
+        return null;
+      }
+      let { Volume } = dataStats;
+      const { StorageMode, K } = storagePlan;
+      if (StorageMode === "EC") {
+        Volume /= K;
+      }
+      const cloudsDetails = storagePlan.Clouds.map(val => {
+        return {
+          CloudID: val.CloudID,
+          Location: val.Location,
+          UploadTraffic: dataStats.UploadTraffic[val.CloudID] || 0,
+          DownloadTraffic: dataStats.DownloadTraffic[val.CloudID] || 0
+        };
+      });
+      return { Volume, cloudsDetails };
+    }
   },
   mutations: {
     SET_TOKEN: (state, token) => {
@@ -40,11 +66,24 @@ export default new Vuex.Store({
     SET_PREFERENCE: (state, preference) => {
       state.preference = preference;
     },
+    SET_STORAGE_PLAN: (state, storagePlan) => {
+      state.storagePlan = storagePlan;
+    },
+    SET_DATA_STATS: (state, dataStats) => {
+      state.dataStats = dataStats;
+    },
+    SET_STATUS: (state, status) => {
+      state.status = status;
+    },
     RESET_ALL: state => {
       state.token = null;
       removeToken();
       state.name = null;
       state.nickname = null;
+      state.preference = {};
+      state.storagePlan = {};
+      state.dataStats = {};
+      state.status = null;
     }
   },
   actions: {
@@ -71,10 +110,13 @@ export default new Vuex.Store({
         }
         commit("SET_TOKEN", token);
         await Common.getUserInfo(token).then(data => {
-          const { Email, Nickname, Preference } = data.UserInfo;
+          const { Email, Nickname, Preference, StoragePlan, DataStats, Status } = data.UserInfo;
           commit("SET_NAME", Email);
           commit("SET_NICKNAME", Nickname);
           commit("SET_PREFERENCE", Preference);
+          commit("SET_STORAGE_PLAN", StoragePlan);
+          commit("SET_DATA_STATS", DataStats);
+          commit("SET_STATUS", Status);
         });
       });
     },

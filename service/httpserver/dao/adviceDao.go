@@ -12,7 +12,7 @@ func (d *Dao) GetNewAdvice(userId string) (*[]model.MigrationAdvice, bool) {
 	filter := bson.M{
 		"user_id": userId,
 	}
-	var advices []model.MigrationAdvice
+	var advices = make([]model.MigrationAdvice, 0)
 	result, err := col.Find(context.TODO(), filter)
 	if tools.PrintError(err) {
 		return nil, false
@@ -22,6 +22,12 @@ func (d *Dao) GetNewAdvice(userId string) (*[]model.MigrationAdvice, bool) {
 		err := result.Decode(&advice)
 		if tools.PrintError(err) {
 			return nil, false
+		}
+		if advice.CloudsNew == nil {
+			advice.CloudsNew = make([]model.Cloud, 0)
+		}
+		if advice.CloudsOld == nil {
+			advice.CloudsOld = make([]model.Cloud, 0)
 		}
 		advices = append(advices, advice)
 	}

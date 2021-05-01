@@ -21,6 +21,19 @@ func (d *Dao) GetUserInfo(userId string) (*User, bool) {
 		"user_id": userId,
 	}
 	err := col.FindOne(context.TODO(), filter).Decode(&user)
+	if user.AccessCredentials == nil {
+		user.AccessCredentials = make([]AccessCredential, 0)
+	}
+	if user.DataStats.DownloadTraffic == nil {
+		user.DataStats.DownloadTraffic = make(map[string]uint64)
+		user.DataStats.UploadTraffic = make(map[string]uint64)
+	}
+	if user.Preference.Latency == nil {
+		user.Preference.Latency = make(map[string]uint64)
+	}
+	if user.StoragePlan.Clouds == nil {
+		user.StoragePlan.Clouds = make([]Cloud, 0)
+	}
 	if tools.PrintError(err) {
 		return nil, false
 	}
@@ -62,7 +75,7 @@ func (d *Dao) SetUserStatusWithId(userId string, status string) {
 	_, _ = col.UpdateMany(context.TODO(), filter, update)
 }
 
-func (d *Dao) LoginWithEmail(email string, password string) (string, bool) {
+func (d *Dao) LoginWithEmail(email string, password string) (*User, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"email":    email,
@@ -70,7 +83,7 @@ func (d *Dao) LoginWithEmail(email string, password string) (string, bool) {
 	}
 	var user User
 	err := col.FindOne(context.TODO(), filter).Decode(&user)
-	return user.UserId, err == nil
+	return &user, err == nil
 }
 
 func (d *Dao) LoginWithId(userId string, password string) bool {

@@ -88,22 +88,15 @@ module.exports = {
   },
   // 配置转发代理
   devServer: {
-    // open: true,
-    // port: 8080,
-    // contentBase: "./dist",
-    // compress: true,
-    // disableHostCheck: true,
-    // hot: true,
-    // openPage: 'index.html',
     proxy: {
-      "/api": {
-        ws: false,
-        target: "http://106.53.150.192/"
-        // changeOrigin: true,
+      "/file": {
+        target: `http://192.168.105.13:8081`
       },
-      "/test": {
-        ws: false,
-        target: "http://localhost:8081/"
+      "/plan": {
+        target: `http://192.168.105.13:8081`
+      },
+      "/user": {
+        target: `http://192.168.105.13:8081`
       }
     }
   }

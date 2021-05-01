@@ -1,6 +1,7 @@
 package model
 
 import (
+	"cloud-storage-httpserver/args"
 	"time"
 )
 
@@ -69,4 +70,16 @@ func (user *User) UserHaveStoragePlan() bool {
 
 func (user *User) UserHavePreference() bool {
 	return user.Preference.Vendor > 0
+}
+
+func (user *User) IsNormalStatus() bool {
+	return user.Role == args.UserNormalStatus
+}
+
+func (user *User) IsForbiddenStatus() bool {
+	return user.Role == args.UserForbiddenStatus
+}
+
+func (user *User) IsVerifying() bool {
+	return user.Role == args.UserVerifyStatus
 }

@@ -29,9 +29,9 @@
           />
         </el-form-item>
 
-        <el-form-item prop="Nickname" label="昵称">
-          <el-input ref="nickname" v-model="regForm.Nickname" placeholder="默认为用户名" name="nickname" type="text" tabindex="2" autocomplete="on" />
-        </el-form-item>
+        <!--        <el-form-item prop="Nickname" label="昵称">-->
+        <!--          <el-input ref="nickname" v-model="regForm.Nickname" placeholder="默认为用户名" name="nickname" type="text" tabindex="2" autocomplete="on" />-->
+        <!--        </el-form-item>-->
 
         <!--         <el-form-item prop="email" label="邮箱">
           <el-input ref="email" v-model="regForm.email" placeholder="" name="email" type="text" tabindex="1" autocomplete="on" />
@@ -140,32 +140,32 @@ export default {
     return {
       regForm: {
         Email: "",
-        Password: "",
-        Nickname: ""
+        Password: ""
+        // Nickname: ""
       },
       regRules: {
         Email: [{ required: true, message: "请输入用户名", trigger: "blur" }],
-        Nickname: [
-          {
-            type: "string",
-            trigger: "blur",
-            validator: (rule, value) => {
-              return new Promise((resolve, reject) => {
-                if (value === "") {
-                  this.regForm.Nickname = this.regForm.Email;
-                  if (this.regForm.Email === "") {
-                    reject(new Error("请输入昵称"));
-                  } else {
-                    reject(new Error("已使用用户名作为昵称，你可以继续修改"));
-                  }
-                } else {
-                  resolve();
-                }
-              });
-            }
-          },
-          { required: true, message: "请输入昵称", trigger: "blur" }
-        ],
+        // Nickname: [
+        //   {
+        //     type: "string",
+        //     trigger: "blur",
+        //     validator: (rule, value) => {
+        //       return new Promise((resolve, reject) => {
+        //         if (value === "") {
+        //           this.regForm.Nickname = this.regForm.Email;
+        //           if (this.regForm.Email === "") {
+        //             reject(new Error("请输入昵称"));
+        //           } else {
+        //             reject(new Error("已使用用户名作为昵称，你可以继续修改"));
+        //           }
+        //         } else {
+        //           resolve();
+        //         }
+        //       });
+        //     }
+        //   },
+        //   { required: true, message: "请输入昵称", trigger: "blur" }
+        // ],
         Password: [
           { required: true, message: "请输入密码", trigger: "blur" }
           // { min: 6, max: 16, message: "长度在 6 到 16 个字符", trigger: "blur" }

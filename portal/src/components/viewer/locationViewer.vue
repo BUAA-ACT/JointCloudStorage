@@ -21,11 +21,33 @@ export default {
       type: Array,
       default: () => []
       // [Longitude, Latitude, Caption]
+    },
+    newClouds: {
+      type: Array
+      // [Longitude, Latitude, Caption]
+    },
+    formatFunction: {
+      type: Function,
+      default: Clouds => {
+        return Clouds.map(value => {
+          return {
+            name: value.CloudID,
+            value: value.Location.split(",").concat([
+              `存储价格：${value.StoragePrice}元/GB/月<br/>
+          流量价格：${value.TrafficPrice}元/GB<br/>
+          可用性：${value.Availability}<br />`
+            ])
+          };
+        });
+      }
+    },
+    dynamic: {
+      type: Boolean,
+      default: false
     }
   },
   methods: {
     initCharts() {
-      console.log(this.clouds);
       const chart = echarts.init(this.$refs.previewMap);
 
       // 把配置和数据放这里
@@ -67,10 +89,10 @@ export default {
         },
         series: [
           {
-            name: "Top 5",
+            name: "当前服务器",
             type: "effectScatter",
             coordinateSystem: "geo",
-            data: [...this.clouds],
+            data: [...this.formattedClouds],
             symbolSize: 30,
             encode: {
               value: 2
@@ -93,11 +115,11 @@ export default {
             zlevel: 100,
             tooltip: {
               formatter(params) {
-                console.log(params);
                 return params.data.value[2];
               }
             }
-          }
+          },
+          ...this.cloudMigration
         ]
       });
       window.onresize = () => {
@@ -112,6 +134,86 @@ export default {
   watch: {
     clouds() {
       this.initCharts();
+    },
+    dynamic() {
+      this.initCharts();
+    }
+  },
+  computed: {
+    cloudMigration() {
+      if (!(this.newClouds && this.newClouds.length > 0)) {
+        return [];
+      }
+      const newCloudsObj = {
+        name: "新服务器",
+        type: "effectScatter",
+        coordinateSystem: "geo",
+        data: [...this.formattedNewClouds],
+        symbolSize: 30,
+        encode: {
+          value: 2
+        },
+        showEffectOn: "render",
+        rippleEffect: {
+          brushType: "stroke"
+        },
+        hoverAnimation: true,
+        label: {
+          formatter: "{b}",
+          position: "right",
+          show: true
+        },
+        itemStyle: {
+          color: "#4fb648",
+          shadowBlur: 10,
+          shadowColor: "#ffffff"
+        },
+        zlevel: 101,
+        tooltip: {
+          formatter(params) {
+            return params.data.value[2];
+          }
+        }
+      };
+      const migrationLines = [];
+      // [{
+      //   coord: [116.4551,40.2539]
+      // }, {
+      //   coord: [121.4648,31.2891]
+      // }]
+      for (let i = 0; i < this.clouds.length; i += 1) {
+        migrationLines.push([
+          {
+            coord: this.formattedClouds[i].value.slice(0, 2)
+          },
+          {
+            coord: this.formattedNewClouds[i].value.slice(0, 2)
+          }
+        ]);
+      }
+      const migrationObj = {
+        name: "",
+        type: "lines",
+        zlevel: 102,
+        effect: {
+          show: true,
+          symbolSize: 10
+        },
+        lineStyle: {
+          normal: { type: "dotted", color: "#0077ff", width: 2, curveness: 0.2 }
+        },
+        data: migrationLines
+      };
+      if (!this.dynamic) {
+        return [newCloudsObj];
+      }
+      return [newCloudsObj, migrationObj];
+    },
+    formattedClouds() {
+      return this.formatFunction(this.clouds);
+    },
+    formattedNewClouds() {
+      return this.formatFunction(this.newClouds);
     }
   }
 };
