@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -295,6 +296,9 @@ func TestECUploadAndDownload(t *testing.T) {
 	t.Run("Get file", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", url, nil)
 		resp := sendRequestAndRecord(req)
+		filename := resp.Header.Get("Content-Disposition")
+		filename = filename[strings.Index(filename, "="):]
+		t.Logf("download file name: %v", filename)
 		bodyRes, _ := ioutil.ReadAll(resp.Body)
 		result := string(bodyRes)
 		fmt.Println(result)
@@ -390,6 +394,9 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
 		if resp.StatusCode != http.StatusOK {
 			t.Error("Get file fail")
 		}
+		filename := resp.Header.Get("Content-Disposition")
+		filename = filename[strings.Index(filename, "="):]
+		t.Logf("download file name: %v", filename)
 		bodyRes, _ := ioutil.ReadAll(resp.Body)
 		result := string(bodyRes)
 		fmt.Println(result)

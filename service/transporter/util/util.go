@@ -16,6 +16,12 @@ import (
 	"time"
 )
 
+func Printf(topic string, format string, args ...interface{}) {
+	logrus.WithFields(logrus.Fields{
+		"topic": topic,
+	}).Logf(logrus.InfoLevel, format, args)
+}
+
 func Log(level logrus.Level, position string, reason string, expect string, got string, detail string) (msg string) {
 	logrus.WithFields(logrus.Fields{
 		"position": position,
@@ -40,9 +46,10 @@ const (
 )
 
 type AuthClaims struct {
-	Path string
-	Uid  string
-	Tid  string
+	Path     string
+	Uid      string
+	Tid      string
+	FileName string
 	jwt.StandardClaims
 }
 
@@ -60,11 +67,12 @@ func GenerateTaskAccessToken(tid string, uid string, expireDuration time.Duratio
 	return rs, err
 }
 
-func GenerateLocalFileAccessToken(path string, uid string, expireDuration time.Duration) (string, error) {
+func GenerateLocalFileAccessToken(path string, uid string, expireDuration time.Duration, fileName string) (string, error) {
 	expire := time.Now().Add(expireDuration)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, AuthClaims{
-		Path: path,
-		Uid:  uid,
+		Path:     path,
+		Uid:      uid,
+		FileName: fileName,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expire.Unix(),
 			Issuer:    "transporter",
@@ -140,6 +148,7 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 		c.Set("filePath", mc.Path)
 		c.Set("tokenUid", mc.Uid)
 		c.Set("tokenTid", mc.Tid)
+		c.Set("fileName", mc.FileName)
 		c.Next() // 后续的处理函数可以用过c.Get("filePath")来获取当前请求的用户信息
 	}
 }

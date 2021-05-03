@@ -118,9 +118,17 @@ func (router *Router) GetState(c *gin.Context) {
 
 func (router *Router) GetLocalFileByToken(c *gin.Context) {
 	filePath := c.MustGet("filePath").(string)
-	fmt.Println(filePath)
+	fileName, exist := c.Get("fileName")
+	var fileNameStr string
+	if !exist {
+		fileNameStr = "File"
+	} else {
+		fileNameStr = fileName.(string)
+	}
+	util.Printf("Router", "receive get local file req, file name: %v", fileNameStr)
 	mime, _ := mimetype.DetectFile(filePath)
 	c.Header("Content-Type", mime.String())
+	c.Header("Content-Disposition", "attachment;filename="+fileNameStr)
 	c.File(filePath)
 }
 

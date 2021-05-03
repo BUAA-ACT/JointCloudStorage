@@ -18,6 +18,7 @@ func TestAllStorageClient(t *testing.T) {
 		"ksyun-beijing",
 		"txyun-chengdu",
 		"txyun-guangzhou",
+		"bdyun-guangzhou",
 	}
 	for _, cloudID := range cloudsID {
 		client, err := clientDatabase.GetStorageClientFromName("tester", cloudID)
@@ -36,6 +37,11 @@ func TestAllStorageClient(t *testing.T) {
 			continue
 		}
 		t.Logf("%v download url: %v", cloudID, url)
+		err = client.Download("test.txt", "../test/tmp/test.txt", "dev")
+		if err != nil {
+			t.Errorf("Cloud: %v dowlaod fail, error: %v", cloudID, err)
+			continue
+		}
 	}
 }
 
