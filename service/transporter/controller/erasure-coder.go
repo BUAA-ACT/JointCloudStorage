@@ -85,11 +85,11 @@ func Encode(filename string, shards []string, n, k int) error {
 	return nil
 }
 
-func Decode(filename string, size int64, shards []string, n, k int) error {
+func Decode(filename string, fileSize int64, shards []string, n, k int) error {
 	log.Debugf("filename: %s, shards: %v, n: %d, k: %d", filename, shards, n, k)
 
 	// read shards
-	inputs, size, err := openInput(n, k, shards)
+	inputs, _, err := openInput(n, k, shards)
 
 	// create file
 	file, err := os.Create(filename)
@@ -140,8 +140,8 @@ func Decode(filename string, size int64, shards []string, n, k int) error {
 			return err
 		}
 	}
-	inputs, size, err = openInput(n, k, shards)
-	err = enc.Join(file, inputs, size*int64(n))
+	inputs, _, err = openInput(n, k, shards)
+	err = enc.Join(file, inputs, fileSize)
 	if err != nil {
 		log.WithError(err).Error("reconsruct failed")
 		return err
