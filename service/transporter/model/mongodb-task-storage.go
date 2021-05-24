@@ -199,6 +199,7 @@ func (task *MongoTaskStorage) SetTask(tid primitive.ObjectID, t *Task) error {
 			{"sourcepath", t.SourcePath},
 			{"destinationpath", t.DestinationPath},
 			{"taskoptions", t.TaskOptions},
+			{"progress", t.Progress},
 		}},
 	}
 	collection := task.client.Database(task.databaseName).Collection(task.collectionName)

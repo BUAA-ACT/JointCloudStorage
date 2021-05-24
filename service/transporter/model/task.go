@@ -42,6 +42,7 @@ type Task struct {
 	SourcePath      string
 	DestinationPath string
 	TaskOptions     *TaskOptions
+	Progress        float64
 }
 
 type TaskOptions struct {

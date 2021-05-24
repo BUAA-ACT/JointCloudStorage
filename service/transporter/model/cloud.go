@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -50,6 +51,7 @@ type MongoCloudDatabase struct {
 	ClientMap      map[string]StorageClient
 	ReadTimeMap    map[string]time.Time
 	client         *mongo.Client
+	lock           sync.Mutex
 }
 
 //get a MongoCloudDatabase
@@ -100,6 +102,8 @@ func (m *MongoCloudDatabase) GetStorageClient(sid string, path string) StorageCl
 }
 
 func (m *MongoCloudDatabase) GetStorageClientFromName(sid string, name string) (StorageClient, error) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
 	if _, ok := m.ClientMap[name]; ok {
 		if time.Now().Sub(m.ReadTimeMap[name]).Minutes() < 5 {
 			if util.Config.DefaultStorageClient == util.MinioClient {
