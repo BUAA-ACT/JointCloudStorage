@@ -820,3 +820,19 @@ func testReplicaUpload(t *testing.T, dstPath string, localPath string, cloud str
 		waitProcessorAllDone()
 	})
 }
+
+func TestRouter_GetUserTask(t *testing.T) {
+	dstPath := "tmp/test/upload/test.jpeg"
+	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
+	dstPath = "tmp/test/upload/test.txt"
+	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	req, _ := http.NewRequest("GET", "/task/tester", nil)
+	resp := sendRequestAndRecord(req)
+	var reply RequestGetUserTaskReply
+	_ = json.NewDecoder(resp.Body).Decode(&reply)
+	if reply.Code != http.StatusOK {
+		t.Fatalf("task fail :%v", reply.Msg)
+	}
+	t.Log(reply)
+	waitProcessorAllDone()
+}

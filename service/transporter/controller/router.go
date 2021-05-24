@@ -56,6 +56,12 @@ type TaskResult struct {
 	Result string
 }
 
+type RequestGetUserTaskReply struct {
+	Code  int
+	Msg   string
+	Tasks []*model.Task
+}
+
 func NewRouter(processor TaskProcessor) *Router {
 	var router Router
 	engine := gin.Default()
@@ -73,6 +79,7 @@ func NewRouter(processor TaskProcessor) *Router {
 	router.GET("/cache_file", util.JWTAuthMiddleware(), router.GetLocalFileByToken)
 	router.GET("/state/:key", router.GetState)
 	router.GET("/debug/:key", router.Debug)
+	router.GET("/task/:uid", router.GetUserTask)
 	rand.Seed(time.Now().Unix())
 	return &router
 }
@@ -285,6 +292,17 @@ func (router *Router) CreateTask(c *gin.Context) {
 		}
 		c.JSON(util.ErrorCodeWrongTaskType, requestTaskReply)
 	}
+}
+
+func (router *Router) GetUserTask(c *gin.Context) {
+	uid := c.Param("uid")
+	tasks := router.processor.taskStorage.GetUserTask(uid)
+	requestTaskReply := RequestGetUserTaskReply{
+		Code:  http.StatusOK,
+		Msg:   "get user tasks ok",
+		Tasks: tasks,
+	}
+	c.JSON(http.StatusOK, requestTaskReply)
 }
 
 func taskRequestReplyErr(errCode int, errMsg string, c *gin.Context) {
