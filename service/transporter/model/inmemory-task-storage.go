@@ -91,3 +91,14 @@ func (s *InMemoryTaskStorage) IsAllDone() bool {
 	}
 	return true
 }
+
+func (s *InMemoryTaskStorage) GetUserTask(uid string) (t []*Task) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	for _, task := range s.taskList {
+		if task.Uid == uid {
+			t = append(t, task)
+		}
+	}
+	return
+}

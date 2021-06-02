@@ -199,6 +199,7 @@ func (task *MongoTaskStorage) SetTask(tid primitive.ObjectID, t *Task) error {
 			{"sourcepath", t.SourcePath},
 			{"destinationpath", t.DestinationPath},
 			{"taskoptions", t.TaskOptions},
+			{"progress", t.Progress},
 		}},
 	}
 	collection := task.client.Database(task.databaseName).Collection(task.collectionName)
@@ -247,4 +248,23 @@ func (task *MongoTaskStorage) IsAllDone() bool {
 	}
 	result.Close(context.TODO())
 	return true
+}
+
+func (task *MongoTaskStorage) GetUserTask(uid string) (t []*Task) {
+	//check the client
+	err := CheckClient(task.client, task.clientOptions)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	//get the collection and find by _id
+	collection := task.client.Database(task.databaseName).Collection(task.collectionName)
+	filter := bson.M{"uid": uid}
+	result, err := collection.Find(context.TODO(), filter)
+	if err != nil {
+		return nil
+	}
+	_ = result.All(context.TODO(), &t)
+	return
 }

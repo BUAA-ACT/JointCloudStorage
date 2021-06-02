@@ -73,6 +73,7 @@ func (processor *TaskProcessor) ProcessTasks() {
 	tasks := processor.taskStorage.GetTaskList(0)
 	finish := make(chan primitive.ObjectID)
 	for _, task := range tasks {
+		task.State = model.PROCESSING
 		processor.taskStorage.SetTaskState(task.Tid, model.PROCESSING)
 		switch task.GetTaskType() {
 		case model.UPLOAD:
@@ -504,11 +505,46 @@ func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
 	if len(t.TaskOptions.SourceStoragePlan.Clouds) != len(t.TaskOptions.DestinationPlan.Clouds) {
 		return errors.New(util.ErrorMsgWrongCloudNum)
 	}
+	migrateSize := make(chan int64, 3)
+	done := make(chan bool)
+	defer close(migrateSize)
+	defer close(done)
+
+	go func() {
+		var totalSize int64
+		totalSize = 0
+		for _, sourceCloudID := range t.TaskOptions.SourceStoragePlan.Clouds {
+			srcClient, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, sourceCloudID)
+			if err != nil {
+				return
+			}
+			objectsChan := srcClient.Index(t.SourcePath, t.Uid)
+			for object := range objectsChan {
+				totalSize += object.Size
+			}
+		}
+		alreadyMigrate := int64(0)
+		progress := 0.0
+		for {
+			select {
+			case <-done:
+				return
+			case size := <-migrateSize:
+				alreadyMigrate += size
+				progress = float64(alreadyMigrate) / float64(totalSize) * 100
+				t.Progress = progress
+				_ = processor.taskStorage.SetTask(t.Tid, t)
+				logrus.Debugf("Task %v Process: %v", t.Tid, t.Progress)
+			}
+		}
+	}()
+
 	for i, sourceCloudID := range t.TaskOptions.SourceStoragePlan.Clouds {
 		destCloudID := t.TaskOptions.DestinationPlan.Clouds[i]
 		srcClient, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, sourceCloudID)
 		dstClient, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, destCloudID)
 		if err != nil {
+			done <- true
 			return err
 		}
 		objectsChan := srcClient.Index(t.SourcePath, t.Uid)
@@ -516,16 +552,23 @@ func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
 			rebuildPath := util.Config.DownloadFileTempPath + util.GenRandomString(20)
 			err = srcClient.Download(object.Key, rebuildPath, t.Uid)
 			if err != nil {
+				done <- true
 				logrus.Errorf("Download Replica %v from %v fail: %v", t.SourcePath, srcClient, err)
 				return errors.New(util.ErrorMsgProcessMigrateDownloadErr)
 			}
 			err = dstClient.Upload(rebuildPath, object.Key, t.Uid)
 			if err != nil {
+				done <- true
 				logrus.Errorf("Upload Replica %v from %v fail: %v", t.SourcePath, srcClient, err)
 				return errors.New(util.ErrorMsgProcessMigrateUploadErr)
 			}
+			migrateSize <- object.Size
 		}
 	}
+	done <- true
+	t.Progress = 100.0
+	_ = processor.taskStorage.SetTask(t.Tid, t)
+	logrus.Debugf("Task %v Process: %v", t.Tid, t.Progress)
 	return nil //todo
 }
 
