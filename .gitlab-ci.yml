@@ -3,9 +3,10 @@ image: golang:1.16.2
 stages:
   - build
   - docker_build
+  - deploy_production_env
   - deploy
   - after_deploy
-  - deploy_production_env
+
 
 before_script:
   - export GOPATH=$GOPATH:/usr/local/${CI_PROJECT_NAME}
@@ -301,11 +302,11 @@ deploy_production_job:
     - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
   script:
+    - cd configs
     - echo "部署到 阿里云青岛"
     - export PROD_SERVER="harbor.sumblog.cn"
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose down"
     - echo "推送新版配置文件"
-    - cd configs
     - scp ./* jcspan@harbor.sumblog.cn:/home/jcspan/jcspan
     - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
@@ -315,7 +316,6 @@ deploy_production_job:
     - export PROD_SERVER="aliyun-hohhot.jointcloudstorage.cn"
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose down"
     - echo "推送新版配置文件"
-    - cd configs
     - scp ./* jcspan@$PROD_SERVER:/home/jcspan/jcspan
     - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
@@ -325,7 +325,6 @@ deploy_production_job:
     - export PROD_SERVER="aliyun-hangzhou.jointcloudstorage.cn"
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose down"
     - echo "推送新版配置文件"
-    - cd configs
     - scp ./* jcspan@$PROD_SERVER:/home/jcspan/jcspan
     - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
@@ -335,7 +334,6 @@ deploy_production_job:
     - export PROD_SERVER="txyun-chengdu.jointcloudstorage.cn"
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose down"
     - echo "推送新版配置文件"
-    - cd configs
     - scp ./* jcspan@$PROD_SERVER:/home/jcspan/jcspan
     - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
@@ -345,7 +343,6 @@ deploy_production_job:
     - export PROD_SERVER="bdyun-guangzhou.jointcloudstorage.cn"
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose down"
     - echo "推送新版配置文件"
-    - cd configs
     - scp ./* jcspan@$PROD_SERVER:/home/jcspan/jcspan
     - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
