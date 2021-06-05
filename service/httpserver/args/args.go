@@ -152,8 +152,11 @@ var (
 	CloudID                   = flag.String("CloudID", "", "server's cloud id")
 )
 
-func LoadProperties() {
-	srcFile, err := os.OpenFile("./httpserver.properties", os.O_RDONLY, 0666)
+func LoadProperties(propertiesFilePath string) {
+	if propertiesFilePath == "" {
+		propertiesFilePath = "./httpserver.properties"
+	}
+	srcFile, err := os.OpenFile(propertiesFilePath, os.O_RDONLY, 0666)
 	defer srcFile.Close()
 	if err != nil {
 		fmt.Println("The file not exits.")

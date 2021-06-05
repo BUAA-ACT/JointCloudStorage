@@ -4,3 +4,5 @@ bin/
 **/node_modules/
 *.pb.go
 **/.DS_Store
+configs/private/
+build/
