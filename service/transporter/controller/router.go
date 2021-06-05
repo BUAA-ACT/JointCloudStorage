@@ -201,10 +201,11 @@ func (router *Router) CreateTask(c *gin.Context) {
 				taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 				return
 			}
-			err = router.processor.WriteDownloadUrlToDB(task, url, task.TaskOptions.SourceStoragePlan.Clouds[0])
-			if err != nil {
-				logrus.Errorf("write download url to db fail: %v", err)
-			}
+			// 不需要将下载链接写入数据库
+			//err = router.processor.WriteDownloadUrlToDB(task, url, task.TaskOptions.SourceStoragePlan.Clouds[0])
+			//if err != nil {
+			//	logrus.Errorf("write download url to db fail: %v", err)
+			//}
 			requestTaskReply := RequestTaskReply{
 				Code: http.StatusOK,
 				Msg:  "Generate download url OK",
