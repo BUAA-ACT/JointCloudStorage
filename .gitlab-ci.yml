@@ -310,6 +310,48 @@ deploy_production_job:
     - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up -d"
+    - echo "Done"
+    - echo "部署到 阿里云呼和浩特"
+    - export PROD_SERVER="aliyun-hohhot.jointcloudstorage.cn"
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose down"
+    - echo "推送新版配置文件"
+    - cd configs
+    - scp ./* jcspan@$PROD_SERVER:/home/jcspan/jcspan
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up -d"
+    - echo "Done"
+    - echo "部署到 阿里云杭州"
+    - export PROD_SERVER="aliyun-hangzhou.jointcloudstorage.cn"
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose down"
+    - echo "推送新版配置文件"
+    - cd configs
+    - scp ./* jcspan@$PROD_SERVER:/home/jcspan/jcspan
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up -d"
+    - echo "Done"
+    - echo "部署到 腾讯云成都"
+    - export PROD_SERVER="txyun-chengdu.jointcloudstorage.cn"
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose down"
+    - echo "推送新版配置文件"
+    - cd configs
+    - scp ./* jcspan@$PROD_SERVER:/home/jcspan/jcspan
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up -d"
+    - echo "Done"
+    - echo "部署到 百度云广州"
+    - export PROD_SERVER="bdyun-guangzhou.jointcloudstorage.cn"
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose down"
+    - echo "推送新版配置文件"
+    - cd configs
+    - scp ./* jcspan@$PROD_SERVER:/home/jcspan/jcspan
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
+    - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up -d"
+    - echo "Done"
+    - echo "Done Done Done !!!!"
   tags:
     - docker
 
