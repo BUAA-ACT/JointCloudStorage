@@ -26,10 +26,15 @@ screen_do(){
     screen -x -S "$screen_name" -p 0 -X stuff $'\n' 
 }
 
+echo "等待 mongoDB 启动"
+sleep 5
+
 pushd "$build_dir" || exit
 screen_do "aliyun-hohhot-h" "./httpserver -c ../configs/private/0/httpserver.properties "
 screen_do "aliyun-hohhot-t" "./transporter -c ../configs/private/0/transporter_config.json "
 screen_do "aliyun-hohhot-s" "./scheduler -addr=:8082 -cid=aliyun-hohhot  -env=dev -heartbeat=10s -reschedule=60s "
+
+
 popd || exit
 
 
