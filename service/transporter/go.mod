@@ -9,7 +9,6 @@ require (
 	github.com/gabriel-vasile/mimetype v1.2.0
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-zookeeper/zk v1.0.2
-	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/jinzhu/copier v0.2.8
 	github.com/klauspost/cpuid/v2 v2.0.4 // indirect
 	github.com/klauspost/reedsolomon v1.9.12
@@ -17,4 +16,5 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/urfave/cli/v2 v2.3.0
 	go.mongodb.org/mongo-driver v1.5.0
+	golang.org/x/tools/gopls v0.6.11 // indirect
 )

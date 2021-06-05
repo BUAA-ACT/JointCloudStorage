@@ -6,7 +6,9 @@ import (
 	"cloud-storage-httpserver/dao"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/urfave/cli/v2"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -72,8 +74,8 @@ func Cors() gin.HandlerFunc {
 	}
 }
 
-func main() {
-	args.LoadProperties()
+func StartServe(configFilePath string) {
+	args.LoadProperties(configFilePath)
 	r := gin.Default()
 	//cross
 	r.Use(Cors())
@@ -81,4 +83,34 @@ func main() {
 	setupRouter(r)
 	dao.ConnectInitDao()
 	_ = r.Run(":" + strconv.FormatUint(*args.HttpserverPort, 10))
+}
+
+func main() {
+	flags := []cli.Flag{
+		&cli.PathFlag{
+			Name:    "config",
+			Aliases: []string{"c"},
+			Usage:   "JcsPan httpserver config file",
+			Value:   "./httpserver.properties",
+		},
+	}
+	app := cli.App{
+		Name:    "Jcs-Httpserver",
+		Usage:   "Httpserver backend for JcsPan",
+		Authors: []*cli.Author{&cli.Author{
+			Name:  "Zhang Junhua",
+			Email: "zhangjh@mail.act.buaa.edu.cn",
+		}},
+		Flags: flags,
+		Action: func(c *cli.Context) error {
+			configFilePath := c.Path("config")
+			StartServe(configFilePath)
+			return nil
+		},
+	}
+
+	err := app.Run(os.Args)
+	if err != nil {
+		print(err)
+	}
 }
