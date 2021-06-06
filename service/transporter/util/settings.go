@@ -64,7 +64,7 @@ func ReadConfigFromFile(configFilepath string) error {
 	}
 	defer file.Close()
 	decoder := json.NewDecoder(file)
-	conf := Configuration{}
+	conf := Config
 	err = decoder.Decode(&conf)
 	if err != nil {
 		return err
