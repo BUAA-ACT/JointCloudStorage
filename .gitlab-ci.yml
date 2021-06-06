@@ -309,6 +309,9 @@ deploy_production_job:
     - echo "推送新版配置文件"
     - scp ./* jcspan@harbor.sumblog.cn:/home/jcspan/jcspan
     - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-aliyun>/$(ak_aliyun)/g" *  && sed -i "s/<sk-aliyun>/$(sk_aliyun)/g" * '
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-txyun>/$(ak_txyun)/g" *  && sed -i "s/<sk-txyun>/$(sk_txyun)/g" * '
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-bdyun>/$(ak_bdyun)/g" *  && sed -i "s/<sk-bdyun>/$(sk_bdyun)/g" * '
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up -d"
     - echo "Done"
@@ -318,6 +321,9 @@ deploy_production_job:
     - echo "推送新版配置文件"
     - scp ./* jcspan@$PROD_SERVER:/home/jcspan/jcspan
     - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-aliyun>/$(ak_aliyun)/g" *  && sed -i "s/<sk-aliyun>/$(sk_aliyun)/g" * '
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-txyun>/$(ak_txyun)/g" *  && sed -i "s/<sk-txyun>/$(sk_txyun)/g" * '
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-bdyun>/$(ak_bdyun)/g" *  && sed -i "s/<sk-bdyun>/$(sk_bdyun)/g" * '
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up -d"
     - echo "Done"
@@ -327,6 +333,9 @@ deploy_production_job:
     - echo "推送新版配置文件"
     - scp ./* jcspan@$PROD_SERVER:/home/jcspan/jcspan
     - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-aliyun>/$(ak_aliyun)/g" *  && sed -i "s/<sk-aliyun>/$(sk_aliyun)/g" * '
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-txyun>/$(ak_txyun)/g" *  && sed -i "s/<sk-txyun>/$(sk_txyun)/g" * '
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-bdyun>/$(ak_bdyun)/g" *  && sed -i "s/<sk-bdyun>/$(sk_bdyun)/g" * '
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up -d"
     - echo "Done"
@@ -336,6 +345,9 @@ deploy_production_job:
     - echo "推送新版配置文件"
     - scp ./* jcspan@$PROD_SERVER:/home/jcspan/jcspan
     - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-aliyun>/$(ak_aliyun)/g" *  && sed -i "s/<sk-aliyun>/$(sk_aliyun)/g" * '
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-txyun>/$(ak_txyun)/g" *  && sed -i "s/<sk-txyun>/$(sk_txyun)/g" * '
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-bdyun>/$(ak_bdyun)/g" *  && sed -i "s/<sk-bdyun>/$(sk_bdyun)/g" * '
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up -d"
     - echo "Done"
@@ -345,6 +357,9 @@ deploy_production_job:
     - echo "推送新版配置文件"
     - scp ./* jcspan@$PROD_SERVER:/home/jcspan/jcspan
     - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<this-cloud-id>/$(hostname)/g" *'
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-aliyun>/$(ak_aliyun)/g" *  && sed -i "s/<sk-aliyun>/$(sk_aliyun)/g" * '
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-txyun>/$(ak_txyun)/g" *  && sed -i "s/<sk-txyun>/$(sk_txyun)/g" * '
+    - ssh jcspan@$PROD_SERVER 'cd /home/jcspan/jcspan/ && sed -i "s/<ak-bdyun>/$(ak_bdyun)/g" *  && sed -i "s/<sk-bdyun>/$(sk_bdyun)/g" * '
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose pull "
     - ssh jcspan@$PROD_SERVER "cd /home/jcspan/jcspan/ && docker-compose up -d"
     - echo "Done"
