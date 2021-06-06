@@ -58,7 +58,7 @@ db.Cloud.insertMany(
             "traffic_price": 0.49,
             "availability": 0.9995,
             "status": "UP",
-            "endpoint": "gz.bcebos.com",
+            "endpoint": "s3.gz.bcebos.com",
             "access_key": "<ak-bdyun>",
             "secret_key": "<sk-bdyun>",
             "location": "113.260506,23.132943",
