@@ -14,6 +14,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -206,6 +207,9 @@ func (router *Router) CreateTask(c *gin.Context) {
 			//if err != nil {
 			//	logrus.Errorf("write download url to db fail: %v", err)
 			//}
+			if util.Config.EnableHttps { //防止 https 下，浏览器拦截 http 请求
+				url = strings.Replace(url, "http://", "https://", 1)
+			}
 			requestTaskReply := RequestTaskReply{
 				Code: http.StatusOK,
 				Msg:  "Generate download url OK",

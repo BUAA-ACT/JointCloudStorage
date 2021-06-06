@@ -30,6 +30,7 @@ var Config = Configuration{
 	Host:                 "0.0.0.0",
 	ZookeeperHost:        "192.168.105.13",
 	LocalCloudID:         "aliyun-beijing",
+	EnableHttps:          true,
 }
 
 type DBConfiguration struct {
@@ -53,6 +54,7 @@ type Configuration struct {
 	ZookeeperHost        string
 	LocalCloudID         string
 	SchedulerHost        string
+	EnableHttps          bool
 }
 
 func ReadConfigFromFile(configFilepath string) error {
