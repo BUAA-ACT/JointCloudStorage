@@ -242,8 +242,19 @@ func PostStoragePlan(c *gin.Context) {
 		var users []dao.AccessCredential
 		ch := make(chan *dao.AccessCredential)
 
-		for _, cloud := range param.StoragePlan.Clouds {
-			// 通知存储方案中的其他云
+		clouds, err := db.GetAllClouds()
+		if err != nil {
+			logError(err, requestID, "GetAllCloudInfo failed")
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"RequestID": requestID,
+				"Code":      codeInternalError,
+				"Msg":       errorMsg[codeInternalError],
+			})
+			return
+		}
+
+		for _, cloud := range clouds {
+			// 通知其他可用云
 			if cloud.CloudID == param.CloudID {
 				continue
 			}
@@ -256,15 +267,15 @@ func PostStoragePlan(c *gin.Context) {
 			}(cloud)
 		}
 
-		for i := 0; i < param.StoragePlan.N-1; i++ {
+		for i := 0; i < len(clouds)-1; i++ {
 			u := <-ch
 			if u != nil {
 				users = append(users, *u)
 			}
 		}
 
-		if len(users) < param.StoragePlan.N-1 {
-			logError(nil, requestID, "Some sendPostStoragePlan failed", param.StoragePlan.N-1, len(users))
+		if len(users) < len(clouds)-1 {
+			logError(nil, requestID, "Some sendPostStoragePlan failed", len(clouds)-1, len(users))
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"RequestID": requestID,
 				"Code":      codeInternalError,
@@ -351,8 +362,19 @@ func PostMetadata(c *gin.Context) {
 		var routine int
 		ch := make(chan error)
 
-		for _, cloud := range param.Clouds {
-			// 通知存储方案中的其他云
+		clouds, err := db.GetAllClouds()
+		if err != nil {
+			logError(err, requestID, "GetAllCloudInfo failed")
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"RequestID": requestID,
+				"Code":      codeInternalError,
+				"Msg":       errorMsg[codeInternalError],
+			})
+			return
+		}
+
+		for _, cloud := range clouds {
+			// 通知其他云
 			if cloud.CloudID == param.CloudID {
 				continue
 			}
@@ -452,17 +474,17 @@ func PostMetadata(c *gin.Context) {
 				return
 			}
 		} else if param.Type == "Migrate" {
-			// 删除用户及其文件信息
-			err = db.DeleteUser(param.UserID)
-			if err != nil {
-				logError(err, requestID, "DeleteUser failed", param.UserID)
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"RequestID": requestID,
-					"Code":      codeInternalError,
-					"Msg":       errorMsg[codeInternalError],
-				})
-				return
-			}
+			// 元数据已在重新PostStoragePlan时修改，此时不需要做任何事
+			// err = db.DeleteUser(param.UserID)
+			// if err != nil {
+			// 	logError(err, requestID, "DeleteUser failed", param.UserID)
+			// 	c.JSON(http.StatusInternalServerError, gin.H{
+			// 		"RequestID": requestID,
+			// 		"Code":      codeInternalError,
+			// 		"Msg":       errorMsg[codeInternalError],
+			// 	})
+			// 	return
+			// }
 		} else {
 			logError(err, requestID, errorMsg[codeBadRequest])
 			c.JSON(http.StatusBadRequest, gin.H{
