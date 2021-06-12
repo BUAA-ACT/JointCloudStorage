@@ -108,16 +108,18 @@ portal_build:
     - echo '下载依赖'
     - pwd
     - ls
-    - cd portal
+    - pushd portal
     - SASS_BINARY_SITE=https://npm.taobao.org/mirrors/node-sass/ npm install --registry=https://registry.npm.taobao.org
     - echo '开始构建'
     - npm run build
     - echo '构建完成'
-    - cd navigation
+    - popd
+    - pushd navigation
     - SASS_BINARY_SITE=https://npm.taobao.org/mirrors/node-sass/ npm install --registry=https://registry.npm.taobao.org
     - echo '开始构建'
     - npm run build
     - echo '构建完成'
+    - popd
   tags:
     - docker
   artifacts:
