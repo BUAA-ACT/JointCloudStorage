@@ -1,6 +1,14 @@
 version: "3"
 
 services:
+    navigation:
+        depends_on:
+            - httpserver
+        image: harbor.sumblog.cn/pub/navigation:v1-dev
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf:ro
+        ports:
+            - "8084:80"
     portal:
         depends_on:
             - httpserver
