@@ -58,7 +58,7 @@ export default {
         "type": type[Math.floor(Math.random() * type.length)],
         "title": "website",
         "url_array": [
-          "http://" + this.url+ ":8083",
+          "https://" + this.url,
         ]
       }
       var l = []
