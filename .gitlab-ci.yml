@@ -208,18 +208,19 @@ portal_docker_build:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_TOKEN $CI_REGISTRY
   script:
     - echo '构建 portal docker 镜像'
-    - pushd portal
+    - cd portal
     - pwd
     - ls dist
     - docker build -t portal:v1-dev .
     - docker tag portal:v1-dev harbor.sumblog.cn/pub/portal:v1-dev
     - docker push harbor.sumblog.cn/pub/portal:v1-dev
-    - popd
-    - pushd navigation
+    - cd ..
+    - cd navigation
     - echo '构建 navigation docker 镜像'
     - docker build -t navigation:v1-dev . 
     - docker tag navigation:v1-dev harbor.sumblog.cn/pub/navigation:v1-dev
     - docker push harbor.sumblog.cn/pub/navigation:v1-dev
+    - cd ..
   tags:
     - docker
 
