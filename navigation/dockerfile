@@ -1,0 +1,4 @@
+FROM nginx:1.17.10-alpine
+RUN mkdir /portal
+COPY dist /portal
+RUN ls -al /portal
