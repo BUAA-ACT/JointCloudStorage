@@ -19,8 +19,8 @@ var Config = Configuration{
 	DebugLevel: "Trace",
 	Database: DBConfiguration{
 		Driver:       MongoDB,
-		Host:         "192.168.105.8",
-		Port:         "20100",
+		Host:         "192.168.105.13",
+		Port:         "27017",
 		DatabaseName: "dev",
 	},
 	UploadFileTempPath:   "./tmp/upload/",
