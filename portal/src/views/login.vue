@@ -70,16 +70,15 @@
         </el-col>
       </el-row>
     </div>
-    <Footer type="mini" />
+<!--    <Footer type="mini" />-->
   </div>
 </template>
 
 <script>
-import Footer from "@/components/footer.vue";
 
 export default {
   name: "Login",
-  components: { Footer },
+  components: {  },
   data() {
     return {
       loginForm: {

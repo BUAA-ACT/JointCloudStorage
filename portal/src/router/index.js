@@ -339,6 +339,26 @@ const router = [
       {
         path: "dataMigration",
         component: () => import("../components/userCenter/dataMigration")
+      },
+      {
+        path: "admin",
+        component: () => import("../components/adminCenter/adminFrame"),
+        children: [
+          {
+            path: "addNewCloud",
+            component: () => import("../components/adminCenter/addNewCloud.vue")
+          },
+          {
+            path: "addNewCloud/:formData",
+            name: "addNewCloud",
+            component: () => import("../components/adminCenter/addNewCloud.vue")
+          },
+          {
+            path: "addNewCloud/confirm/:formData",
+            name: "addNewCloudConfirm",
+            component: () => import("../components/adminCenter/addNewCloudConfirm.vue")
+          }
+        ]
       }
     ]
   },

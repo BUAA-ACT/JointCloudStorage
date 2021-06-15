@@ -2,18 +2,17 @@
   <div class="dashboard-container">
     <HeadNav :mini="true" />
     <UserCenter />
-    <Footer />
+<!--    <Footer />-->
   </div>
 </template>
 
 <script>
 import HeadNav from "../components/headNav.vue";
 import UserCenter from "../components/userCenter.vue";
-import Footer from "../components/footer.vue";
 
 export default {
   name: "Index",
-  components: { HeadNav, UserCenter, Footer },
+  components: { HeadNav, UserCenter },
   data() {
     return {};
   },

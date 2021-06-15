@@ -14,6 +14,13 @@
         <el-menu-item index="2-1"><i class="el-icon-folder-opened"></i>文件管理</el-menu-item>
         <el-menu-item index="3-1"><i class="el-icon-map-location"></i>数据分布</el-menu-item>
         <el-menu-item index="4-1"><i class="el-icon-guide"></i>存储迁移</el-menu-item>
+        <el-submenu index="0">
+          <template slot="title">
+            <i class="el-icon-user"></i>
+            <span>管理中心</span>
+          </template>
+          <el-menu-item index="0-1">增加新云</el-menu-item>
+        </el-submenu>
       </el-menu>
     </el-aside>
     <el-main><router-view></router-view></el-main>
@@ -35,7 +42,8 @@ export default {
         "1-7": "userInfo",
         "2-1": "fileManagement",
         "3-1": "dataDistribution",
-        "4-1": "dataMigration"
+        "4-1": "dataMigration",
+        "0-1": "admin/addNewCloud"
       }
     };
   },
