@@ -164,7 +164,7 @@ func UserChooseStoragePlan(con *gin.Context) {
 		return
 	}
 	// post to notice scheduler this plan
-	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(userId, storagePlan)
+	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(user, storagePlan)
 	if !postPlanSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
@@ -242,7 +242,7 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	}
 	nowAdvice := (*newAdvices)[0]
 	// post to notice scheduler this plan
-	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(userId, &nowAdvice.StoragePlanNew)
+	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(user, &nowAdvice.StoragePlanNew)
 	// save new plan
 	if !postPlanSuccess {
 		con.JSON(http.StatusOK, gin.H{

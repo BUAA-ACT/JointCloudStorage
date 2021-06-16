@@ -63,6 +63,7 @@ type GetStatusData struct {
 type PostStoragePlanParam struct {
 	CloudID     string
 	UserID      string
+	Password    string
 	StoragePlan dao.StoragePlan
 }
 
@@ -304,7 +305,11 @@ func PostStoragePlan(c *gin.Context) {
 		}
 
 		// 新建用户
-		passwd := genPassword()
+		passwd := param.Password
+		// 密码为空时生成随机密码
+		if passwd == "" {
+			passwd = genPassword()
+		}
 		user := dao.User{
 			UserId:       param.UserID,
 			Email:        param.UserID,
