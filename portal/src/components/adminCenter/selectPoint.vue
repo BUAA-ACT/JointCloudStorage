@@ -34,11 +34,13 @@
 <script>
 import BaiduMap from "vue-baidu-map/components/map/Map.vue";
 import BmLocalSearch from "vue-baidu-map/components/search/LocalSearch.vue";
+import BmMarker from "vue-baidu-map/components/overlays/Marker.vue";
 
 export default {
   components: {
     BaiduMap,
-    BmLocalSearch
+    BmLocalSearch,
+    BmMarker,
   },
   data() {
     return {

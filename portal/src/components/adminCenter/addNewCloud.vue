@@ -17,7 +17,7 @@
               <el-input v-model="form.cloudName" class="input"></el-input>
             </el-form-item>
             <el-form-item label="云际 id">
-              <el-input v-model="form.resource" class="input"></el-input>
+              <el-input v-model="form.cloudId" class="input"></el-input>
             </el-form-item>
             <el-divider></el-divider>
             <el-form-item label="存储价格">
@@ -78,17 +78,18 @@ export default {
   data() {
     return {
       form: {
-        storagePrice: "",
+        storagePrice: "0.01",
         cloudName: "",
+        cloudId: "",
         location: "",
-        resource: "",
-        trafficPrice: "",
-        availability: "",
+        resource: "阿里",
+        trafficPrice: "0.01",
+        availability: "0.9995",
         endPoint: "",
         accessKey: "",
         secretKey: "",
         bucket: "",
-        address: "",
+        address: "116.475478,39.847138",
       },
       cpuList: [],
       storageList: [],
@@ -121,13 +122,14 @@ export default {
       this.$router.push({ name: "addNewCloudConfirm", params: { formData: this.form } });
     },
     getPoint(point) {
-      this.location = `${point.lng},${point.lat}`;
-      console.log(this.location)
+      this.form.location = `${point.lng},${point.lat}`;
+      console.log(this.form.location)
     }
   },
-  created() {
+  mounted() {
     if (this.$route.params.formData) {
-      this.formData = this.$route.params.formData;
+      console.log("ok")
+      this.form = this.$route.params.formData;
     }
   },
 };
