@@ -26,6 +26,8 @@ func (d *Dao) GetUserInfo(userId string) (*User, bool) {
 	}
 	if user.DataStats.DownloadTraffic == nil {
 		user.DataStats.DownloadTraffic = make(map[string]uint64)
+	}
+	if user.DataStats.UploadTraffic == nil {
 		user.DataStats.UploadTraffic = make(map[string]uint64)
 	}
 	if user.Preference.Latency == nil {

@@ -90,13 +90,16 @@ module.exports = {
   devServer: {
     proxy: {
       "/file": {
-        target: `http://192.168.105.13:8081`
+        target: `http://127.0.0.1:8081`
       },
       "/plan": {
-        target: `http://192.168.105.13:8081`
+        target: `http://127.0.0.1:8081`
       },
       "/user": {
-        target: `http://192.168.105.13:8081`
+        target: `http://127.0.0.1:8081`
+      },
+      "/upload": {
+        target: `http://192.168.105.13:8083`
       }
     }
   }

@@ -77,7 +77,7 @@ export default {
       const self = this;
       cloudStorage.getUploadAddress(item.file.name).then(response => {
         const token = response.Token;
-        const addr = `${window.location.protocol}//${window.location.hostname}/upload`;
+        const addr = `${window.location.protocol}//${window.location.hostname}:${window.location.port}/upload`;
         cloudStorage.upload(item, token, addr).then(() => {
           self.fetchData();
         });
