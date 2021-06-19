@@ -294,7 +294,7 @@ transporter_deploy_test_job:
     - go mod vendor
     - cd controller
     - echo '开始测试 transporter'
-    - go test -v -args -env cloud -host $DEV_SERVER:8083
+    - go test -v -args -env cloud -host $DEV_SERVER:8383
     - echo 'transporter 测试完成'
   tags:
     - docker
