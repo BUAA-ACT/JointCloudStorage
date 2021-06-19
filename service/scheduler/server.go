@@ -554,3 +554,68 @@ func heartbeat(interval time.Duration) {
 		logInfo("Heartbeat finished", requestID, len(clouds), success)
 	}
 }
+
+func GetAllCloudsStatus(c *gin.Context) {
+	requestID := uuid.New().String()
+
+	//查询所有的clouds
+	clouds, err := db.GetAllClouds()
+	if err != nil {
+		//查询出错，报告错误
+		logError(err, requestID, "query for all clouds status failed")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"RequestID": requestID,
+			"Code":      codeInternalError,
+			"Msg":       errorMsg[codeInternalError],
+		})
+		return
+	} else {
+		//查询成功，返回数据
+		//隐藏accesskey和secretkey
+		for index, _ := range clouds {
+			clouds[index].AccessKey = ""
+			clouds[index].SecretKey = ""
+		}
+		c.JSON(http.StatusOK, clouds)
+		return
+	}
+}
+
+func PostUpdateClouds(c *gin.Context) {
+	requestID := uuid.New().String()
+	//get the clouds
+	var clouds []dao.Cloud
+	if err := c.ShouldBindJSON(&clouds); err != nil {
+		//can't get the clouds
+		//return the error
+		logError(err, requestID, "can't get the clouds from paramators")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"RequestID": requestID,
+			"Code":      codeBadRequest,
+			"Msg":       errorMsg[codeBadRequest],
+		})
+		return
+	}
+
+	//update the clouds
+	for _, cloud := range clouds {
+		if err := db.UpdateCloud(cloud); err != nil {
+			//log the error
+			logError(err, requestID, "can't update the cloud")
+			c.JSON(http.StatusBadRequest, gin.H{
+				"RequestID": requestID,
+				"Code":      codeInternalError,
+				"Msg":       errorMsg[codeInternalError],
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"RequestID": requestID,
+		"Code":      codeOK,
+		"Msg":       errorMsg[codeOK],
+	})
+	logInfo("update the clouds succeeded!", requestID, len(clouds))
+	return
+}

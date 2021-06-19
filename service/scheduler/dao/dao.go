@@ -302,6 +302,30 @@ func bool2pointer(b bool) *bool {
 	return &b
 }
 
+func (d *Dao) InsertCloud(cloud Cloud) error {
+	col := d.client.Database(d.database).Collection(d.cloudCollection)
+	_, err := col.InsertOne(
+		context.TODO(),
+		cloud,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *Dao) InsertTempCloud(cloud interface{}) error {
+	col := d.client.Database(d.database).Collection(d.cloudCollection)
+	_, err := col.InsertOne(
+		context.TODO(),
+		cloud,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (d *Dao) InsertUser(user User) error {
 	col := d.client.Database(d.database).Collection(d.userCollection)
 	_, err := col.UpdateOne(

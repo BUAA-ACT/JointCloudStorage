@@ -70,9 +70,11 @@ func main() {
 	r.GET("/storage_plan", GetStoragePlan)
 	r.GET("/download_plan", GetDownloadPlan)
 	r.GET("/status", GetStatus)
+	r.GET("/all_clouds_status", GetAllCloudsStatus)
 
 	r.POST("/storage_plan", PostStoragePlan)
 	r.POST("/metadata", PostMetadata)
+	r.POST("/update_clouds", PostUpdateClouds)
 
 	go reSchedule(*flagRescheduleInterval)
 	go heartbeat(*flagHeartbeatInterval)
