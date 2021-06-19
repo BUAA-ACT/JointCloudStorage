@@ -125,17 +125,16 @@
         </div>
       </el-form>
     </div>
-    <Footer type="mini" />
+<!--    <Footer type="mini" />-->
   </div>
 </template>
 
 <script>
-import Footer from "@/components/footer.vue";
 import Common from "@/api/common";
 
 export default {
   name: "Register",
-  components: { Footer },
+  components: {  },
   data() {
     return {
       regForm: {
