@@ -31,8 +31,14 @@ var (
 	addrMap = make(map[string]string)
 )
 
-func init() {
+func flagPrase(env string) {
+	if env == "debug" {
+		flagMongo=flag.String("mongo", "mongodb://192.168.105.8:20100", "mongodb address")
+	}
 	flag.Parse()
+}
+
+func Init() {
 
 	// Set logging format
 	log.SetFormatter(&log.TextFormatter{
@@ -62,11 +68,7 @@ func init() {
 	// }
 }
 
-func main() {
-	log.Infoln("Starting scheduler", Version)
-
-	r := gin.Default()
-
+func NewRouter(r *gin.Engine) {
 	r.GET("/storage_plan", GetStoragePlan)
 	r.GET("/download_plan", GetDownloadPlan)
 	r.GET("/status", GetStatus)
@@ -75,6 +77,15 @@ func main() {
 	r.POST("/storage_plan", PostStoragePlan)
 	r.POST("/metadata", PostMetadata)
 	r.POST("/update_clouds", PostUpdateClouds)
+}
+
+func main() {
+	flagPrase("")
+	Init()
+	log.Infoln("Starting scheduler", Version)
+
+	r := gin.Default()
+	NewRouter(r)
 
 	go reSchedule(*flagRescheduleInterval)
 	go heartbeat(*flagHeartbeatInterval)

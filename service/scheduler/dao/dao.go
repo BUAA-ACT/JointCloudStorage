@@ -170,6 +170,7 @@ func (d *Dao) UpdateCloud(cloud Cloud) error {
 				"traffic_price": cloud.TrafficPrice,
 				"availability":  cloud.Availability,
 				"status":        cloud.Status,
+				"location":		 cloud.Location,
 			},
 		},
 	)
