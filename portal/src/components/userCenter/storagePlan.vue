@@ -26,12 +26,13 @@
         </div>
       </el-card>
     </div>
-    <location-viewer v-if="plansLoaded" :clouds="candidates[storagePlanIndex].Clouds" class="location-viewer" />
+    <location-viewer v-if="plansLoaded" :clouds="candidates[storagePlanIndex].Clouds" :inactive-clouds="inactiveClouds" class="location-viewer" />
   </div>
 </template>
 
 <script>
 import Plan from "@/api/plan";
+import Clouds from "@/api/clouds";
 import locationViewer from "@/components/viewer/locationViewer.vue";
 
 export default {
@@ -66,6 +67,7 @@ export default {
         }
       },
       // { name: "China", value: [104.195397, 35.86166, 550] }
+      inactiveClouds: {},
       formattedClouds: [],
       plansLoaded: false,
       submitLoading: false
@@ -92,6 +94,14 @@ export default {
       this.candidates = this.candidates || [];
       this.formatClouds();
       this.plansLoaded = true;
+      this.getAllCloud();
+    },
+    /**
+     * 获取所有云
+     *
+     */ async getAllCloud() {
+      this.inactiveClouds = Clouds.getAllCloud().clouds;
+      console.log(this.inactiveClouds)
     },
     /**
      * @method formatClouds

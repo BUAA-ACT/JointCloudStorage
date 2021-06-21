@@ -8,7 +8,14 @@
 /**
  * 云存储可视化工具
  * 格式：clouds 中存放云的位置
- * clouds[0]: [Longitude, Latitude, Caption]
+ * {
+          CloudID: val.CloudID, // 必须的
+          Location: val.Location, // required
+          UploadTraffic: dataStats.UploadTraffic[val.CloudID] || 0, //optional
+          DownloadTraffic: dataStats.DownloadTraffic[val.CloudID] || 0  //optional
+          TrafficPrice //optional
+          StoragePrice // optional
+   };
  * 经度， 纬度， 注解
  */
 import echarts from "echarts";
@@ -26,17 +33,51 @@ export default {
       type: Array
       // [Longitude, Latitude, Caption]
     },
+    inactiveClouds: {
+      type: Array,
+      default: () => []
+      // [Longitude, Latitude, Caption]
+    },
     formatFunction: {
+      // 把云的信息，转化为 位置信息和注释
       type: Function,
       default: Clouds => {
         return Clouds.map(value => {
           return {
             name: value.CloudID,
-            value: value.Location.split(",").concat([
-              `存储价格：${value.StoragePrice}元/GB/月<br/>
+            value: value.Location.split(",") // longitude ,latitude
+              .concat([
+                //
+                `存储价格：${value.StoragePrice}元/GB/月<br/>
           流量价格：${value.TrafficPrice}元/GB<br/>
           可用性：${value.Availability}<br />`
-            ])
+              ])
+          };
+        });
+      }
+    },
+    formatInActiveCloudFunction: {
+      // 把云的信息，转化为 位置信息和注释
+      type: Function,
+      default: Clouds => {
+        return Clouds.filter(item => {
+          console.log(this.clouds);
+          for (const cloud of this.clouds) {
+            if (cloud.CloudID === item.cloud_id) {
+              return false;
+            }
+          }
+          return true;
+        }).map(value => {
+          return {
+            name: value.cloud_id,
+            value: value.location
+              .split(",") // longitude ,latitude
+              .concat([
+                `存储价格：${value.storage_price}元/GB/月<br/>
+          流量价格：${value.traffic_price}元/GB<br/>
+          可用性：${value.availability}<br />`
+              ])
           };
         });
       }
@@ -49,7 +90,6 @@ export default {
   methods: {
     initCharts() {
       const chart = echarts.init(this.$refs.previewMap);
-
       // 把配置和数据放这里
       chart.setOption({
         backgroundColor: "#ffffff",
@@ -89,8 +129,39 @@ export default {
         },
         series: [
           {
+            name: "未激活服务器",
+            type: "effectScatter", // https://echarts.apache.org/zh/option.html#series-effectScatter
+            coordinateSystem: "geo",
+            data: [...this.formattedInactiveClouds],
+            symbolSize: 20,
+            encode: {
+              value: 2
+            },
+            showEffectOn: "render",
+            rippleEffect: {
+              brushType: "stroke"
+            },
+            hoverAnimation: true,
+            label: {
+              formatter: "{b}",
+              position: "right",
+              show: true
+            },
+            itemStyle: {
+              color: "#888888",
+              shadowBlur: 10,
+              shadowColor: "#fff"
+            },
+            zlevel: 20,
+            tooltip: {
+              formatter(params) {
+                return params.data.value[2];
+              }
+            }
+          },
+          {
             name: "当前服务器",
-            type: "effectScatter",
+            type: "effectScatter", // https://echarts.apache.org/zh/option.html#series-effectScatter
             coordinateSystem: "geo",
             data: [...this.formattedClouds],
             symbolSize: 30,
@@ -119,6 +190,7 @@ export default {
               }
             }
           },
+
           ...this.cloudMigration
         ]
       });
@@ -126,6 +198,26 @@ export default {
         console.log("resize");
         chart.resize();
       };
+    },
+    formatInActiveCloud(Clouds) {
+      return Clouds.filter(item => {
+        console.log(this.clouds);
+        // eslint-disable-next-line no-restricted-syntax
+        return !this.clouds.some(value => {
+          return value.CloudID === item.cloud_id;
+        });
+      }).map(value => {
+        return {
+          name: value.cloud_id,
+          value: value.location
+            .split(",") // longitude ,latitude
+            .concat([
+              `存储价格：${value.storage_price}元/GB/月<br/>
+          流量价格：${value.traffic_price}元/GB<br/>
+          可用性：${value.availability}<br />`
+            ])
+        };
+      });
     }
   },
   mounted() {
@@ -211,6 +303,9 @@ export default {
     },
     formattedClouds() {
       return this.formatFunction(this.clouds);
+    },
+    formattedInactiveClouds() {
+      return this.formatInActiveCloud(this.inactiveClouds); // todo
     },
     formattedNewClouds() {
       return this.formatFunction(this.newClouds);
