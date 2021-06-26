@@ -55,11 +55,10 @@
               <el-input v-model="form.address" class="input"></el-input>
             </el-form-item>
             <el-form-item label="地理位置">
-              <select-point  @getPoint="getPoint"></select-point>
+              <select-point @getPoint="getPoint"></select-point>
             </el-form-item>
 
             <el-divider></el-divider>
-
           </el-form>
           <el-button type="primary" class="submitBtn" @click="onSubmit">确认提交</el-button>
         </el-card>
@@ -89,7 +88,7 @@ export default {
         accessKey: "",
         secretKey: "",
         bucket: "",
-        address: "116.475478,39.847138",
+        address: ""
       },
       cpuList: [],
       storageList: [],
@@ -123,15 +122,15 @@ export default {
     },
     getPoint(point) {
       this.form.location = `${point.lng},${point.lat}`;
-      console.log(this.form.location)
+      this.$log(this.form.location);
     }
   },
   mounted() {
     if (this.$route.params.formData) {
-      console.log("ok")
+      this.$log("ok");
       this.form = this.$route.params.formData;
     }
-  },
+  }
 };
 </script>
 
