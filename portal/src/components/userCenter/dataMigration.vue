@@ -1,6 +1,6 @@
 <template>
   <div>
-    <plan-advice v-if="migrating" />
+    <plan-advice v-if="!migrating" />
     <div class="no-new-plan" v-else>
       <i class="el-icon-info tip-icon"></i><br />
       数据迁移中……
