@@ -54,16 +54,14 @@
               https://
               <el-input v-model="form.address" class="input"></el-input>
             </el-form-item>
-            <el-form-item label="地理位置">
-            </el-form-item>
+            <el-form-item label="地理位置"> </el-form-item>
             <el-button type="primary">点击提交</el-button>
             <el-button type="info" plain v-on:click="goBack"> 返回修改 </el-button>
           </el-form>
         </el-card>
       </el-col>
     </el-row>
-    <el-row>
-    </el-row>
+    <el-row> </el-row>
   </div>
 </template>
 
@@ -86,6 +84,34 @@ export default {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.kuberx {
+  text-align: left;
+  padding-top: 20px;
 
+  .el-icon-question {
+    color: #dddddd;
+    margin: 0 5px;
+  }
+
+  table {
+    border-spacing: 0;
+
+    td {
+      white-space: nowrap;
+    }
+  }
+}
+
+.input {
+  width: 200px;
+}
+
+.el-input__inner {
+  width: 50px;
+}
+
+.formTable {
+  white-space: nowrap;
+}
 </style>

@@ -217,7 +217,6 @@ export default {
       this.capsTooltip = key && key.length === 1 && key >= "A" && key <= "Z";
     },
     async handleRegister() {
-      console.log("NMSL");
       this.loading = true;
       if (!this.agreeCheck) {
         this.loading = false;
@@ -238,8 +237,8 @@ export default {
                 this.$router.push({ path: this.redirect || "/" });
               }
             })
-            .catch(e => {
-              console.log(e);
+            .catch(() => {
+              // console.log(e);
             });
           this.loading = false;
         })
