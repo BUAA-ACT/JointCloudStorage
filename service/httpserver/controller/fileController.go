@@ -26,7 +26,7 @@ func UserGetFiles(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	//check token
-	userId, valid := UserCheckAccessToken(con, accessToken)
+	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
@@ -102,11 +102,11 @@ func UserGetFiles(con *gin.Context) {
 }
 
 func UserChangeFilePath(con *gin.Context) {
-
+	//TODO
 }
 
 func UserChangeFileName(con *gin.Context) {
-
+	//TODO
 }
 
 func UserPreUploadFile(con *gin.Context) {
@@ -121,7 +121,7 @@ func UserPreUploadFile(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	//check access token
-	userId, valid := UserCheckAccessToken(con, accessToken)
+	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
@@ -197,7 +197,7 @@ func UserDownloadFile(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	filePath := (*valueMap)[args.FieldWordFilePath].(string)
-	userId, valid := UserCheckAccessToken(con, accessToken)
+	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
@@ -315,7 +315,7 @@ func UserDeleteFile(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	// check token
-	userId, valid := UserCheckAccessToken(con, accessToken)
+	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}

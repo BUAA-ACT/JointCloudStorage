@@ -2,27 +2,27 @@ package dao
 
 import (
 	"cloud-storage-httpserver/args"
-	. "cloud-storage-httpserver/model"
+	"cloud-storage-httpserver/model"
 	"cloud-storage-httpserver/service/code"
 	"cloud-storage-httpserver/service/tools"
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (d *Dao) CreateNewUser(user User) {
+func (d *Dao) CreateNewUser(user model.User) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	_, _ = col.InsertOne(context.TODO(), user)
 }
 
-func (d *Dao) GetUserInfo(userId string) (*User, bool) {
+func (d *Dao) GetUserInfo(userId string) (*model.User, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
-	var user User
+	var user model.User
 	filter := bson.M{
 		"user_id": userId,
 	}
 	err := col.FindOne(context.TODO(), filter).Decode(&user)
 	if user.AccessCredentials == nil {
-		user.AccessCredentials = make([]AccessCredential, 0)
+		user.AccessCredentials = make([]model.AccessCredential, 0)
 	}
 	if user.DataStats.DownloadTraffic == nil {
 		user.DataStats.DownloadTraffic = make(map[string]uint64)
@@ -32,7 +32,7 @@ func (d *Dao) GetUserInfo(userId string) (*User, bool) {
 		user.Preference.Latency = make(map[string]uint64)
 	}
 	if user.StoragePlan.Clouds == nil {
-		user.StoragePlan.Clouds = make([]Cloud, 0)
+		user.StoragePlan.Clouds = make([]model.Cloud, 0)
 	}
 	if tools.PrintError(err) {
 		return nil, false
@@ -75,13 +75,13 @@ func (d *Dao) SetUserStatusWithId(userId string, status string) {
 	_, _ = col.UpdateMany(context.TODO(), filter, update)
 }
 
-func (d *Dao) LoginWithEmail(email string, password string) (*User, bool) {
+func (d *Dao) LoginWithEmail(email string, password string) (*model.User, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"email":    email,
 		"password": code.AesEncrypt(password, *args.EncryptKey),
 	}
-	var user User
+	var user model.User
 	err := col.FindOne(context.TODO(), filter).Decode(&user)
 	return &user, err == nil
 }
@@ -92,7 +92,7 @@ func (d *Dao) LoginWithId(userId string, password string) bool {
 		"user_id":  userId,
 		"password": code.AesEncrypt(password, *args.EncryptKey),
 	}
-	var user User
+	var user model.User
 	err := col.FindOne(context.TODO(), filter).Decode(&user)
 	return err == nil
 }
@@ -136,7 +136,7 @@ func (d *Dao) SetUserNickname(userId string, newNickname string) {
 	_, _ = col.UpdateMany(context.TODO(), filter, update)
 }
 
-func (d *Dao) SetUserPreference(userId string, preference *Preference) {
+func (d *Dao) SetUserPreference(userId string, preference *model.Preference) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userId,
@@ -149,7 +149,7 @@ func (d *Dao) SetUserPreference(userId string, preference *Preference) {
 	_, _ = col.UpdateMany(context.TODO(), filter, update)
 }
 
-func (d *Dao) SetUserStoragePlan(userId string, plan *StoragePlan) {
+func (d *Dao) SetUserStoragePlan(userId string, plan *model.StoragePlan) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userId,
@@ -162,7 +162,7 @@ func (d *Dao) SetUserStoragePlan(userId string, plan *StoragePlan) {
 	_, _ = col.UpdateMany(context.TODO(), filter, update)
 }
 
-func (d *Dao) SetUserAccessCredential(userId string, credentials *[]AccessCredential) {
+func (d *Dao) SetUserAccessCredential(userId string, credentials *[]model.AccessCredential) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userId,

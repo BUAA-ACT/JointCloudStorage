@@ -1,7 +1,7 @@
 package dao
 
 import (
-	. "cloud-storage-httpserver/model"
+	"cloud-storage-httpserver/model"
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
@@ -43,7 +43,7 @@ func (d *Dao) VerifyEmail(email string, verifyCode string) bool {
 func (d *Dao) InsertAccessToken(token string, userId string) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	timeNow := time.Now()
-	accessToken := &AccessTokenCode{
+	accessToken := &model.AccessTokenCode{
 		AccessToken:           token,
 		UserId:                userId,
 		AccessTokenCreateTime: timeNow,
@@ -63,7 +63,7 @@ func (d *Dao) CheckValid(token string) (string, bool) {
 			{"access_token_modify_time", timeNow},
 		},
 	}}
-	var originToken AccessTokenCode
+	var originToken model.AccessTokenCode
 	err := col.FindOneAndUpdate(context.TODO(), filter, update).Decode(&originToken)
 	if err != nil {
 		fmt.Print(err)

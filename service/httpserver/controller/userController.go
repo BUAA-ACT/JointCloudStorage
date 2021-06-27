@@ -158,7 +158,7 @@ func UserLogout(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token is valid
-	_, valid := UserCheckAccessToken(con, accessToken)
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -181,7 +181,7 @@ func UserCheckValidity(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	//check token
-	_, valid := UserCheckAccessToken(con, accessToken)
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -209,7 +209,7 @@ func UserChangePassword(con *gin.Context) {
 	originPassword := (*valueMap)[args.FieldWordOriginPassword].(string)
 	newPassword := (*valueMap)[args.FieldWordNewPassword].(string)
 	// check token
-	userId, valid := UserCheckAccessToken(con, accessToken)
+	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -223,6 +223,7 @@ func UserChangePassword(con *gin.Context) {
 		})
 		return
 	}
+	// it can be modify into UserRoles ↓
 	if user.Role == args.UserGuestRole {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodePasswordNotRight,
@@ -244,6 +245,9 @@ func UserChangePassword(con *gin.Context) {
 	}
 	// dao change password
 	dao.UserDao.SetUserPassword(userId, newPassword)
+	// let scheduler change and sync password
+	// TODO
+
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
 		"msg":  "修改密码成功",
@@ -252,6 +256,7 @@ func UserChangePassword(con *gin.Context) {
 }
 
 func UserChangeEmail(con *gin.Context) {
+	// we can't change email now
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 		args.FieldWordNewEmail:    true,
@@ -263,7 +268,7 @@ func UserChangeEmail(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	newEmail := (*valueMap)[args.FieldWordNewEmail].(string)
 	// check token
-	userId, valid := UserCheckAccessToken(con, accessToken)
+	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -277,6 +282,7 @@ func UserChangeEmail(con *gin.Context) {
 		})
 		return
 	}
+	// it can be modify into roles
 	if user.Role == args.UserHostRole || user.Role == args.UserGuestRole {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodePasswordNotRight,
@@ -320,7 +326,7 @@ func UserChangeNickname(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	newNickname := (*valueMap)[args.FieldWordNickname].(string)
 	// check token
-	userId, valid := UserCheckAccessToken(con, accessToken)
+	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -342,7 +348,7 @@ func UserGetInfo(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	userId, valid := UserCheckAccessToken(con, accessToken)
+	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -389,7 +395,7 @@ func UserSetPreference(con *gin.Context) {
 		latency = &map[string]uint64{}
 	}
 	//check token
-	userId, valid := UserCheckAccessToken(con, accessToken)
+	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
@@ -407,6 +413,26 @@ func UserSetPreference(con *gin.Context) {
 		"msg":  "设置个人偏好成功",
 		"data": gin.H{},
 	})
+}
+
+func UserAddKey(con *gin.Context) {
+
+}
+
+func UserGetKeys(con *gin.Context) {
+
+}
+
+func UserDeleteKey(con *gin.Context) {
+
+}
+
+func UserChangeKeyStatus(con *gin.Context) {
+
+}
+
+func UserRemakeKey(con *gin.Context) {
+
 }
 
 //func UserUploadAvatar(c *gin.Context) {

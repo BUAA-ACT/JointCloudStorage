@@ -33,6 +33,11 @@ func setupRouter(r *gin.Engine) {
 	r.POST("/user/changeNickname", controller.UserChangeNickname)
 	r.POST("/user/getUserInfo", controller.UserGetInfo)
 	r.POST("/user/changeUserPreference", controller.UserSetPreference)
+	r.POST("/user/newKey", controller.UserAddKey)
+	r.POST("/user/getUserKeys", controller.UserGetKeys)
+	r.POST("/user/deleteKey", controller.UserDeleteKey)
+	r.POST("/user/changeKeyStatus", controller.UserChangeKeyStatus)
+	r.POST("/user/remakeKey", controller.UserRemakeKey)
 	//r.POST("/user/uploadAvatar",controller.UserUploadAvatar)
 
 	/* plan function */
@@ -53,6 +58,12 @@ func setupRouter(r *gin.Engine) {
 
 	/* task function */
 	r.POST("/task/getTask", controller.UserGetTask)
+
+	/* admin & cloud function */
+	r.POST("/cloud/getAllClouds", controller.AdminGetAllClouds)
+	r.POST("/cloud/newCloud", controller.AdminAddCloud)
+	r.POST("/cloud/changeCloudInfo", controller.AdminChangeCloudInfo)
+	r.POST("/cloud/vote", controller.AdminVoteForCloud)
 }
 
 func Cors() gin.HandlerFunc {

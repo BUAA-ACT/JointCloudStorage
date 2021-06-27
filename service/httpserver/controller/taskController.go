@@ -20,7 +20,7 @@ func UserGetTask(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	taskId := (*valueMap)[args.FieldWordTaskID].(string)
 	taskIdExist := (*existMap)[args.FieldWordTaskID]
-	userId, valid := UserCheckAccessToken(con, accessToken)
+	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}

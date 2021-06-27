@@ -18,14 +18,14 @@ const (
 	// BadRequest
 	CodeUploadError            = 1400
 	CodeVerifyFail             = 1401
-	CodeInvalidToken           = 1402
+	CodeInvalidRole            = 1402
 	CodeFileNotExists          = 1403
 	CodeEmailNotExist          = 1404
 	CodeSameEmail              = 1405
 	CodeFieldNotExist          = 1406
 	CodeRegexWrong             = 1407
 	CodePasswordNotRight       = 1408
-	CodeTokenNotValid          = 1409
+	CodeInvalidAccessToken     = 1409
 	CodePreferenceNotExist     = 1410
 	CodeStoragePlanNotExist    = 1411
 	CodeJsonError              = 1412
@@ -81,16 +81,18 @@ const (
 	FieldWordNewFileName    = "NewFileName"
 	FieldWordStoragePlan    = "StoragePlan"
 	FieldWordTaskID         = "TaskID"
+	FiledWordAccessKey      = "AccessKey"
 )
 
 /* user const */
 const (
 	/* user role */
-	UserAdminRole    = "Admin"
-	UserSuperRole    = "Super"
-	UserOrdinaryRole = "Ordinary"
+	UserAdminRole    = "ADMIN"
+	UserSuperRole    = "SUPER"
+	UserOrdinaryRole = "ORDINARY"
 	UserHostRole     = "HOST"
 	UserGuestRole    = "GUEST"
+	UserAllRole      = "ALL"
 
 	/* user status */
 	UserVerifyStatus       = "VERIFYING"
@@ -148,6 +150,8 @@ var (
 	TaskCollection            = flag.String("TaskCollection", "", "task collection name")
 	VerifyCodeCollection      = flag.String("VerifyCodeCollection", "", "verify code collection name")
 	MigrationAdviceCollection = flag.String("MigrationAdviceCollection", "", "migration advice collection name")
+	CloudCollection           = flag.String("CloudCollection", "", "cloud collection name")
+	AccessKeyCollection       = flag.String("AccessKeyCollection", "", "access key collection name")
 	EncryptKey                = flag.String("EncryptKey", "", "password encrypt key for AES")
 	CloudID                   = flag.String("CloudID", "", "server's cloud id")
 )
@@ -216,6 +220,8 @@ func LoadProperties() {
 	*VerifyCodeCollection = properties["VerifyCodeCollection"]
 	*TaskCollection = properties["TaskCollection"]
 	*MigrationAdviceCollection = properties["MigrationAdviceCollection"]
+	*CloudCollection = properties["CloudCollection"]
+	*AccessKeyCollection = properties["AccessKeyCollection"]
 	*EncryptKey = properties["EncryptKey"]
 	*CloudID = properties["CloudID"]
 }
