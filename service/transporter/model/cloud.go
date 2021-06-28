@@ -26,6 +26,8 @@ type Cloud struct {
 	Status       string  `bson:"status"`
 	Location     string  `bson:"location"`
 	Address      string  `bson:"address"`
+	CloudName    string  `bson:"cloud_name"`
+	ProviderName string  `bson:"provider_name"`
 }
 
 // S3 客户端结构

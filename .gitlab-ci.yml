@@ -21,7 +21,7 @@ scheduler_build:
   only:
     - master
     - dev-scheduler
-    - dev-scheduler-2
+    - dev
   script:
     - echo '下载依赖'
     - cd service/scheduler
@@ -48,6 +48,7 @@ httpserver_build:
   stage: build
   only:
     - master
+    - dev
   script:
     - echo '下载依赖'
     - cd service/httpserver
@@ -75,6 +76,7 @@ transporter_build:
   only:
     - master
     - dev-transporter
+    - dev
   script:
     - echo '下载依赖'
     - pwd
@@ -104,6 +106,7 @@ portal_build:
   stage: build
   only:
     - master
+    - dev
   script:
     - echo '下载依赖'
     - pwd
@@ -149,7 +152,7 @@ scheduler_docker_build:
   only:
     - master
     - dev-scheduler
-    - dev-scheduler-2
+    - dev
   before_script:
     - docker info
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_TOKEN $CI_REGISTRY
@@ -177,6 +180,7 @@ transporter_docker_build:
   only:
     - master
     - dev-transporter
+    - dev
   before_script:
     - docker info
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_TOKEN $CI_REGISTRY
@@ -203,6 +207,7 @@ portal_docker_build:
     - portal_build
   only:
     - master
+    - dev
   before_script:
     - docker info
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_TOKEN $CI_REGISTRY
@@ -236,6 +241,7 @@ httpserver_docker_build:
   needs: ["httpserver_build"]
   only:
     - master
+    - dev
   before_script:
     - docker info
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_TOKEN $CI_REGISTRY
@@ -257,6 +263,7 @@ transporter_deploy_job:
   only:
     - master
     - dev-transporter
+    - dev
   before_script:
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
@@ -288,6 +295,7 @@ transporter_deploy_test_job:
   only:
     - master
     - dev-transporter
+    - dev
   script:
     - cd service/transporter/
     - go mod tidy

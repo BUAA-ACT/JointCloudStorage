@@ -24,6 +24,7 @@ type TaskProcessor struct {
 	Scheduler     Scheduler
 	Monitor       *TrafficMonitor
 	UserDatabase  model.UserDatabase
+	Dao           *model.Dao
 }
 
 func (processor *TaskProcessor) SetTaskStorage(storage model.TaskStorage) {
