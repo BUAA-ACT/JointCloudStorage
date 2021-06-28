@@ -71,5 +71,16 @@ export default {
         [`New${Field}`]: newVal
       }
     });
+  },
+  changePassword(OriginPassword, NewPassword, AccessToken) {
+    return request({
+      url: `/user/changePassword`,
+      method: "post",
+      data: {
+        AccessToken,
+        OriginPassword,
+        NewPassword
+      }
+    });
   }
 };
