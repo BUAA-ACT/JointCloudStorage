@@ -31,14 +31,8 @@ func UserGetFiles(con *gin.Context) {
 		return
 	}
 	// check it is file or dir and get files out
-	files, success := dao.FileDao.ListFiles(userId, filePath, tools.IsDir(filePath))
-	if !success {
-		// database err
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeDatabaseError,
-			"msg":  "数据库错误",
-			"data": gin.H{},
-		})
+	files, listFilesSuccess := dao.FileDao.ListFiles(userId, filePath, tools.IsDir(filePath))
+	if !checkDaoSuccess(con, listFilesSuccess) {
 		return
 	}
 	//if len(*files) == 0 {
@@ -125,14 +119,9 @@ func UserPreUploadFile(con *gin.Context) {
 	if !valid {
 		return
 	}
-	user, success := dao.UserDao.GetUserInfo(userId)
+	user, infoSuccess := dao.UserDao.GetUserInfo(userId)
 	// database error
-	if !success {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeDatabaseError,
-			"msg":  "数据库错误",
-			"data": gin.H{},
-		})
+	if !checkDaoSuccess(con, infoSuccess) {
 		return
 	}
 	// check have storage plan?
@@ -155,8 +144,8 @@ func UserPreUploadFile(con *gin.Context) {
 	}
 
 	// preUpload and get a token
-	response, success := transporter.PreUploadFile(filePath, user)
-	if !success {
+	preUploadToTransporterResponse, preUploadToTransporterSuccess := transporter.PreUploadFile(filePath, user)
+	if !preUploadToTransporterSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
 			"msg":  "解析transporter-json信息有误",
@@ -165,13 +154,13 @@ func UserPreUploadFile(con *gin.Context) {
 		return
 	}
 	// error in transporter
-	if response.Code != args.CodeOK {
+	if preUploadToTransporterResponse.Code != args.CodeOK {
 		fmt.Println("transporter fault:")
-		fmt.Println("Code: ", response.Code)
-		fmt.Println("Msg: ", response.Msg)
+		fmt.Println("Code: ", preUploadToTransporterResponse.Code)
+		fmt.Println("Msg: ", preUploadToTransporterResponse.Msg)
 		con.JSON(http.StatusOK, gin.H{
-			"code": response.Code,
-			"msg":  response.Msg,
+			"code": preUploadToTransporterResponse.Code,
+			"msg":  preUploadToTransporterResponse.Msg,
 			"data": gin.H{},
 		})
 		return
@@ -181,7 +170,7 @@ func UserPreUploadFile(con *gin.Context) {
 		"code": args.CodeOK,
 		"msg":  "上传请求已记录",
 		"data": gin.H{
-			"Token": response.Data.Result,
+			"Token": preUploadToTransporterResponse.Data.Result,
 		},
 	})
 }
@@ -211,13 +200,8 @@ func UserDownloadFile(con *gin.Context) {
 	//	})
 	//}
 	// check user
-	user, success := dao.UserDao.GetUserInfo(userId)
-	if !success {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeDatabaseError,
-			"msg":  "数据库错误",
-			"data": gin.H{},
-		})
+	user, infoSuccess := dao.UserDao.GetUserInfo(userId)
+	if !checkDaoSuccess(con, infoSuccess) {
 		return
 	}
 	if !user.UserHaveStoragePlan() {
@@ -236,17 +220,12 @@ func UserDownloadFile(con *gin.Context) {
 		return
 	}
 	// check file status if done -> return url
-	files, success := dao.FileDao.CheckFileStatus(userId, filePath)
-	if !success {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeDatabaseError,
-			"msg":  "数据库错误",
-			"data": gin.H{},
-		})
+	files, checkFileSuccess := dao.FileDao.CheckFileStatus(userId, filePath)
+	if !checkDaoSuccess(con, checkFileSuccess) {
 		return
 	}
 	var doneURL string
-	var doneFlag bool = false
+	var doneFlag = false
 	for _, file := range *files {
 		if file.ReconstructStatus == args.FileReconstructStatusDone {
 			doneFlag = true
@@ -256,7 +235,7 @@ func UserDownloadFile(con *gin.Context) {
 	if doneFlag {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeOK,
-			"msg":  "解析scheduler-json信息有误",
+			"msg":  "重建已完成",
 			"data": gin.H{
 				"Type":   "url",
 				"Result": doneURL,
@@ -265,8 +244,8 @@ func UserDownloadFile(con *gin.Context) {
 		return
 	}
 	// else -> use scheduler's download plan to download file with transporter
-	getDownloadPlanResponse, success := scheduler.GetDownloadPlanFromScheduler(userId, filePath)
-	if !success {
+	getDownloadPlanResponse, getDownloadPlanSuccess := scheduler.GetDownloadPlanFromScheduler(userId, filePath)
+	if !getDownloadPlanSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
 			"msg":  "解析scheduler-json信息有误",
@@ -274,8 +253,8 @@ func UserDownloadFile(con *gin.Context) {
 		})
 	}
 
-	downloadResponse, success := transporter.DownLoadFile(filePath, userId, getDownloadPlanResponse.Data)
-	if !success {
+	downloadResponse, downloadSuccess := transporter.DownLoadFile(filePath, userId, getDownloadPlanResponse.Data)
+	if !downloadSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
 			"msg":  "解析scheduler-json信息有误",
@@ -319,14 +298,9 @@ func UserDeleteFile(con *gin.Context) {
 	if !valid {
 		return
 	}
-	user, success := dao.UserDao.GetUserInfo(userId)
+	user, infoSuccess := dao.UserDao.GetUserInfo(userId)
 	// database error
-	if !success {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeDatabaseError,
-			"msg":  "数据库错误",
-			"data": gin.H{},
-		})
+	if !checkDaoSuccess(con, infoSuccess) {
 		return
 	}
 	// check have storage plan?
@@ -348,8 +322,8 @@ func UserDeleteFile(con *gin.Context) {
 	}
 
 	// delete file with transporter
-	success = transporter.DeleteFile(filePath, user)
-	if !success {
+	deleteFileFromTransporterSuccess := transporter.DeleteFile(filePath, user)
+	if !deleteFileFromTransporterSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
 			"msg":  "解析transporter-json信息有误",

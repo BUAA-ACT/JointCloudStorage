@@ -25,14 +25,8 @@ func UserGetTask(con *gin.Context) {
 		return
 	}
 
-	tasks, success := dao.TaskDao.GetTask(taskId, userId, taskIdExist)
-	if !success {
-		// error with find
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeDatabaseError,
-			"msg":  "数据库错误",
-			"data": gin.H{},
-		})
+	tasks, getTaskSuccess := dao.TaskDao.GetTask(taskId, userId, taskIdExist)
+	if checkDaoSuccess(con, getTaskSuccess) {
 		return
 	}
 	// check if it is correct user

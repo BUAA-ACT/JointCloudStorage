@@ -24,5 +24,4 @@ func (d *Dao) GetAllClouds(userId string) (*[]model.Cloud, bool) {
 		clouds = append(clouds, cloud)
 	}
 	return &clouds, true
-
 }

@@ -135,14 +135,14 @@ func UserCheckStatus(con *gin.Context, user *model.User, statusMap *map[string]b
 	return true
 }
 
-func checkDaoError(con *gin.Context, err error) bool {
-	if err == nil {
-		return false
+func checkDaoSuccess(con *gin.Context, success bool) bool {
+	if success {
+		return true
 	}
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeDatabaseError,
 		"msg":  "数据库错误",
 		"data": gin.H{},
 	})
-	return true
+	return false
 }

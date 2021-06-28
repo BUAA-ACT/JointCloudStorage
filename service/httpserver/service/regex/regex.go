@@ -89,6 +89,15 @@ func storagePlanRegex(plan interface{}) (*model.StoragePlan, bool) {
 	return &storagePlan, err == nil
 }
 
+func statusRegex(status interface{}) (bool, bool) {
+	if reflect.TypeOf(status).Kind() != reflect.String {
+		return false, false
+	}
+	var realStatus bool
+	realStatus, err := strconv.ParseBool(status.(string))
+	return realStatus, !tools.PrintError(err)
+}
+
 func CheckRegex(value interface{}, field string) (interface{}, bool) {
 	var formatValue interface{}
 	if reflect.TypeOf(value).Kind() != reflect.Map {
@@ -115,6 +124,8 @@ func CheckRegex(value interface{}, field string) (interface{}, bool) {
 		return storagePlanRegex(formatValue)
 	case args.FieldWordLatency:
 		return latencyRegex(formatValue)
+	case args.FieldWordStatus:
+		return statusRegex(formatValue)
 	default:
 		return formatValue, true
 	}

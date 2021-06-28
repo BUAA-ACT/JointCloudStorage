@@ -9,9 +9,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (d *Dao) CreateNewUser(user model.User) {
+func (d *Dao) CreateNewUser(user model.User) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
-	_, _ = col.InsertOne(context.TODO(), user)
+	_, err := col.InsertOne(context.TODO(), user)
+	return !tools.PrintError(err)
 }
 
 func (d *Dao) GetUserInfo(userId string) (*model.User, bool) {
@@ -49,7 +50,7 @@ func (d *Dao) CheckSameEmail(email string) bool {
 	return !tools.PrintError(result.Err())
 }
 
-func (d *Dao) SetUserStatusWithEmail(email string, status string) {
+func (d *Dao) SetUserStatusWithEmail(email string, status string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"email": email,
@@ -59,10 +60,11 @@ func (d *Dao) SetUserStatusWithEmail(email string, status string) {
 			{"user_status", status},
 		},
 	}}
-	_, _ = col.UpdateMany(context.TODO(), filter, update)
+	_, err := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(err)
 }
 
-func (d *Dao) SetUserStatusWithId(userId string, status string) {
+func (d *Dao) SetUserStatusWithId(userId string, status string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userId,
@@ -72,7 +74,8 @@ func (d *Dao) SetUserStatusWithId(userId string, status string) {
 			{"user_status", status},
 		},
 	}}
-	_, _ = col.UpdateMany(context.TODO(), filter, update)
+	_, err := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(err)
 }
 
 func (d *Dao) LoginWithEmail(email string, password string) (*model.User, bool) {
@@ -97,7 +100,7 @@ func (d *Dao) LoginWithId(userId string, password string) bool {
 	return err == nil
 }
 
-func (d *Dao) SetUserPassword(userId string, password string) {
+func (d *Dao) SetUserPassword(userId string, password string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userId,
@@ -107,10 +110,11 @@ func (d *Dao) SetUserPassword(userId string, password string) {
 			{"password", code.AesEncrypt(password, *args.EncryptKey)},
 		},
 	}}
-	_, _ = col.UpdateMany(context.TODO(), filter, update)
+	_, err := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(err)
 }
 
-func (d *Dao) SetUserEmail(userId string, newEmail string) {
+func (d *Dao) SetUserEmail(userId string, newEmail string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userId,
@@ -120,10 +124,11 @@ func (d *Dao) SetUserEmail(userId string, newEmail string) {
 			{"email", newEmail},
 		},
 	}}
-	_, _ = col.UpdateMany(context.TODO(), filter, update)
+	_, err := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(err)
 }
 
-func (d *Dao) SetUserNickname(userId string, newNickname string) {
+func (d *Dao) SetUserNickname(userId string, newNickname string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userId,
@@ -133,10 +138,11 @@ func (d *Dao) SetUserNickname(userId string, newNickname string) {
 			{"nickname", newNickname},
 		},
 	}}
-	_, _ = col.UpdateMany(context.TODO(), filter, update)
+	_, err := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(err)
 }
 
-func (d *Dao) SetUserPreference(userId string, preference *model.Preference) {
+func (d *Dao) SetUserPreference(userId string, preference *model.Preference) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userId,
@@ -146,10 +152,11 @@ func (d *Dao) SetUserPreference(userId string, preference *model.Preference) {
 			{"preference", *preference},
 		},
 	}}
-	_, _ = col.UpdateMany(context.TODO(), filter, update)
+	_, err := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(err)
 }
 
-func (d *Dao) SetUserStoragePlan(userId string, plan *model.StoragePlan) {
+func (d *Dao) SetUserStoragePlan(userId string, plan *model.StoragePlan) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userId,
@@ -159,10 +166,11 @@ func (d *Dao) SetUserStoragePlan(userId string, plan *model.StoragePlan) {
 			{"storage_plan", *plan},
 		},
 	}}
-	_, _ = col.UpdateMany(context.TODO(), filter, update)
+	_, err := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(err)
 }
 
-func (d *Dao) SetUserAccessCredential(userId string, credentials *[]model.AccessCredential) {
+func (d *Dao) SetUserAccessCredential(userId string, credentials *[]model.AccessCredential) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userId,
@@ -172,5 +180,6 @@ func (d *Dao) SetUserAccessCredential(userId string, credentials *[]model.Access
 			{"access_credentials", *credentials},
 		},
 	}}
-	_, _ = col.UpdateMany(context.TODO(), filter, update)
+	_, err := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(err)
 }

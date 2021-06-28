@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
 
@@ -26,7 +27,6 @@ func (d *Dao) GetAllKeys(userId string) (*[]model.AccessKey, bool) {
 		keys = append(keys, key)
 	}
 	return &keys, true
-
 }
 
 func (d *Dao) InsertKey(userId string, accessKey string, secretKey string) bool {
@@ -44,14 +44,42 @@ func (d *Dao) InsertKey(userId string, accessKey string, secretKey string) bool 
 	return !tools.PrintError(err)
 }
 
-func (d *Dao) DeleteKey(userId string, accessKey string) {
-
+func (d *Dao) DeleteKey(userId string, accessKey string) (*mongo.DeleteResult, bool) {
+	col := d.client.Database(d.database).Collection(d.collection)
+	filter := bson.M{
+		"user_id":    userId,
+		"access_key": accessKey,
+	}
+	result, err := col.DeleteMany(context.TODO(), filter)
+	return result, !tools.PrintError(err)
 }
 
-func (d *Dao) ChangeKeyStatus(userId string, accessKey string) {
-
+func (d *Dao) ChangeKeyStatus(userId string, accessKey string, status bool) (*mongo.UpdateResult, bool) {
+	col := d.client.Database(d.database).Collection(d.collection)
+	filter := bson.M{
+		"user_id":    userId,
+		"access_key": accessKey,
+	}
+	update := bson.D{{"$set",
+		bson.D{
+			{"available", status},
+		},
+	}}
+	result, err := col.UpdateMany(context.TODO(), filter, update)
+	return result, !tools.PrintError(err)
 }
 
-func (d *Dao) RemakeKey(userId string, accessKey string) {
-
+func (d *Dao) RemakeKey(userId string, accessKey string, secretKey string) (*mongo.UpdateResult, bool) {
+	col := d.client.Database(d.database).Collection(d.collection)
+	filter := bson.M{
+		"user_id":    userId,
+		"access_key": accessKey,
+	}
+	update := bson.D{{"$set",
+		bson.D{
+			{"secret_key", secretKey},
+		},
+	}}
+	result, err := col.UpdateMany(context.TODO(), filter, update)
+	return result, !tools.PrintError(err)
 }

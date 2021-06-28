@@ -5,6 +5,7 @@ import (
 	"cloud-storage-httpserver/service/tools"
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func (d *Dao) GetNewAdvice(userId string) (*[]model.MigrationAdvice, bool) {
@@ -34,10 +35,11 @@ func (d *Dao) GetNewAdvice(userId string) (*[]model.MigrationAdvice, bool) {
 	return &advices, true
 }
 
-func (d *Dao) DeleteAdvice(userId string) {
+func (d *Dao) DeleteAdvice(userId string) (*mongo.DeleteResult, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userId,
 	}
-	_, _ = col.DeleteMany(context.TODO(), filter)
+	result, err := col.DeleteMany(context.TODO(), filter)
+	return result, !tools.PrintError(err)
 }

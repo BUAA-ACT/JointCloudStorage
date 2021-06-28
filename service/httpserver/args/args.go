@@ -33,6 +33,7 @@ const (
 	CodeFileNotExist           = 1414
 	CodeAlreadyHaveStoragePlan = 1415
 	CodeForbiddenTransport     = 1416
+	CodeDeleteNothing          = 1417
 
 	// user status code
 	CodeStatusNormal       = 1501
@@ -60,6 +61,7 @@ const (
 /* http body field const */
 const (
 	FieldWordAccessToken    = "AccessToken"
+	FieldWordAccessKey      = "AccessKey"
 	FieldWordEmail          = "Email"
 	FieldWordPassword       = "Password"
 	FieldWordNickname       = "Nickname"
@@ -81,7 +83,7 @@ const (
 	FieldWordNewFileName    = "NewFileName"
 	FieldWordStoragePlan    = "StoragePlan"
 	FieldWordTaskID         = "TaskID"
-	FiledWordAccessKey      = "AccessKey"
+	FieldWordStatus         = "Status"
 )
 
 /* user const */
