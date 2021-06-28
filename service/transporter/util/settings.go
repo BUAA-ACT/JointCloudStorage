@@ -29,7 +29,8 @@ var Config = Configuration{
 	Port:                 8083,
 	Host:                 "0.0.0.0",
 	ZookeeperHost:        "192.168.105.13",
-	LocalCloudID:         "aliyun-beijing",
+	SchedulerHost:        "http://192.168.105.13:8082",
+	LocalCloudID:         "aliyun-hohhot",
 	EnableHttps:          true,
 }
 

@@ -102,12 +102,19 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	processor.Lock = lock
 	processor.Lock.UnLockAll("/tester")
 	// 初始化 Scheduler
+	// 初始化 scheduler
 	scheduler := JcsPanScheduler{
-		LocalCloudID:     "aliyun-hangzhou",
-		SchedulerHostUrl: "http://192.168.105.13:8082",
+		LocalCloudID:     util.Config.LocalCloudID,
+		SchedulerHostUrl: util.Config.SchedulerHost,
 		ReloadCloudInfo:  true,
 		CloudDatabase:    clientDatabase,
 	}
+	//scheduler := JcsPanScheduler{
+	//	LocalCloudID:     "aliyun-hohhot",
+	//	SchedulerHostUrl: "http://192.168.105.13:8082",
+	//	ReloadCloudInfo:  true,
+	//	CloudDatabase:    clientDatabase,
+	//}
 	processor.Scheduler = &scheduler
 	// 初始化 Monitor
 	userDB, err := model.NewMongoUserDatabase()
