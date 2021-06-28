@@ -1,30 +1,34 @@
 <template>
   <div style="text-align: left">
-    <el-button @click="getStoragePlans">获取存储方案</el-button>
-    <el-button type="primary" @click="submit" :loading="submitLoading" :disabled="!plansLoaded">提交</el-button><br />
+    <div class="storage-plan-header">
+      <el-button @click="getStoragePlans">{{ `${havePlan ? "刷新" : "获取"}存储方案` }}</el-button>
+      <el-button type="primary" @click="submit" :loading="submitLoading" :disabled="!plansLoaded" v-if="!havePlan">提交</el-button><br />
+    </div>
     <div v-if="plansLoaded" class="plans-viewer-container">
-      <el-card class="box-card">
-        <div slot="header" class="clearfix">
-          <el-radio v-model="storagePlanIndex" :label="0">存储价格优先</el-radio>
-        </div>
-        <div class="text item">
-          存储模式： {{ modifyStorageMode(storagePlans.StoragePriceFirst) }}<br />
-          存储价格： {{ storagePlans.StoragePriceFirst.StoragePrice }}<br />
-          流量价格： {{ storagePlans.StoragePriceFirst.TrafficPrice }}<br />
-          可用性：{{ storagePlans.StoragePriceFirst.Availability }}
-        </div>
-      </el-card>
-      <el-card class="box-card">
-        <div slot="header" class="clearfix">
-          <el-radio v-model="storagePlanIndex" :label="1">流量价格优先</el-radio>
-        </div>
-        <div class="text item">
-          存储模式： {{ modifyStorageMode(storagePlans.TrafficPriceFirst) }}<br />
-          存储价格： {{ storagePlans.TrafficPriceFirst.StoragePrice }}<br />
-          流量价格： {{ storagePlans.TrafficPriceFirst.TrafficPrice }}<br />
-          可用性：{{ storagePlans.TrafficPriceFirst.Availability }}
-        </div>
-      </el-card>
+      <div v-if="!havePlan" class="plans-selector">
+        <el-card class="box-card">
+          <div slot="header" class="clearfix">
+            <el-radio v-model="storagePlanIndex" :label="0">存储价格优先</el-radio>
+          </div>
+          <div class="text item">
+            存储模式： {{ modifyStorageMode(storagePlans.StoragePriceFirst) }}<br />
+            存储价格： {{ storagePlans.StoragePriceFirst.StoragePrice }}<br />
+            流量价格： {{ storagePlans.StoragePriceFirst.TrafficPrice }}<br />
+            可用性：{{ storagePlans.StoragePriceFirst.Availability }}
+          </div>
+        </el-card>
+        <el-card class="box-card">
+          <div slot="header" class="clearfix">
+            <el-radio v-model="storagePlanIndex" :label="1">流量价格优先</el-radio>
+          </div>
+          <div class="text item">
+            存储模式： {{ modifyStorageMode(storagePlans.TrafficPriceFirst) }}<br />
+            存储价格： {{ storagePlans.TrafficPriceFirst.StoragePrice }}<br />
+            流量价格： {{ storagePlans.TrafficPriceFirst.TrafficPrice }}<br />
+            可用性：{{ storagePlans.TrafficPriceFirst.Availability }}
+          </div>
+        </el-card>
+      </div>
     </div>
     <location-viewer v-if="plansLoaded" :clouds="candidates[storagePlanIndex].Clouds" :inactive-clouds="inactiveClouds" class="location-viewer" />
   </div>
@@ -79,22 +83,28 @@ export default {
     },
     async getStoragePlans() {
       this.plansLoaded = false;
-      await Plan.getStoragePlans().then(resp => {
-        this.storagePlans = resp;
-        // Object.keys(this.storagePlans).forEach(index => {
-        //   console.log(index);
-        //   if (index === "StoragePriceFirst" || index === "TrafficPriceFirst") {
-        //     this.storagePlans[index].StorageMode += `(N:${this.storagePlans[index].N}, K:${this.storagePlans[index].K})`;
-        //   }
-        // });
-        const { StoragePriceFirst, TrafficPriceFirst } = resp;
-        this.candidates = [StoragePriceFirst, TrafficPriceFirst];
-        // { name: "China", value: [104.195397, 35.86166, Caption] }
-      });
+      if (this.havePlan) {
+        await this.$store.dispatch("getInfo");
+        this.candidates = [this.$store.getters.storagePlan];
+      } else {
+        await Plan.getStoragePlans().then(resp => {
+          this.storagePlans = resp;
+          // Object.keys(this.storagePlans).forEach(index => {
+          //   console.log(index);
+          //   if (index === "StoragePriceFirst" || index === "TrafficPriceFirst") {
+          //     this.storagePlans[index].StorageMode += `(N:${this.storagePlans[index].N}, K:${this.storagePlans[index].K})`;
+          //   }
+          // });
+          this.$log(resp);
+          const { StoragePriceFirst, TrafficPriceFirst } = resp;
+          this.candidates = [StoragePriceFirst, TrafficPriceFirst];
+          // { name: "China", value: [104.195397, 35.86166, Caption] }
+        });
+      }
       this.candidates = this.candidates || [];
       this.formatClouds();
+      await this.getAllCloud();
       this.plansLoaded = true;
-      this.getAllCloud();
     },
     /**
      * 获取所有云
@@ -145,6 +155,11 @@ export default {
   watch: {
     storagePlanIndex() {
       // this.formatClouds();
+    }
+  },
+  computed: {
+    havePlan() {
+      return this.$store.getters.haveStoragePlan;
     }
   }
 };

@@ -18,7 +18,8 @@ export default new Vuex.Store({
     dataStats: {
       Volume: 0
     },
-    roles: []
+    roles: [],
+    ready: false
   },
   getters: {
     token: state => {
@@ -50,7 +51,11 @@ export default new Vuex.Store({
         };
       });
       return { Volume, cloudsDetails };
-    }
+    },
+    haveStoragePlan: state => state.storagePlan.N > 0,
+    preference: state => state.preference,
+    storagePlan: state => state.storagePlan,
+    ready: state => state.ready
   },
   mutations: {
     SET_TOKEN: (state, token) => {
@@ -76,6 +81,7 @@ export default new Vuex.Store({
       state.status = status;
     },
     RESET_ALL: state => {
+      state.ready = false;
       state.token = null;
       removeToken();
       state.name = null;
@@ -84,6 +90,9 @@ export default new Vuex.Store({
       state.storagePlan = {};
       state.dataStats = {};
       state.status = null;
+    },
+    SET_READY: (state, ready) => {
+      state.ready = ready;
     }
   },
   actions: {
@@ -117,6 +126,7 @@ export default new Vuex.Store({
           commit("SET_STORAGE_PLAN", StoragePlan);
           commit("SET_DATA_STATS", DataStats);
           commit("SET_STATUS", Status);
+          commit("SET_READY", true);
         });
       });
     },
