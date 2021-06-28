@@ -101,7 +101,7 @@ export default {
      *
      */ async getAllCloud() {
       this.inactiveClouds = Clouds.getAllCloud().clouds;
-      console.log(this.inactiveClouds)
+      this.$log(this.inactiveClouds);
     },
     /**
      * @method formatClouds

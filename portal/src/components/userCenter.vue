@@ -49,8 +49,8 @@ export default {
   },
   methods: {
     handleSelect(key) {
-      console.log(key);
-      console.log(this.$route.path);
+      this.$log(key);
+      this.$log(this.$route.path);
       if (this.$route.path !== this.navList[key]) {
         this.$router.push({ path: `/cloudStorage/${this.navList[key]}` });
       }
