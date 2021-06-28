@@ -76,7 +76,7 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 	var storage model.TaskStorage
 	var clientDatabase model.CloudDatabase
 	var fileDatabase model.FileDatabase
-	//util.ReadConfigFromFile("../transporter_config.json")
+	//util.ReadConfigFromFile("../transporter_config.json.sample")
 	err := util.CheckConfig()
 	if err != nil {
 		return nil, nil
