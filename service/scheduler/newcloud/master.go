@@ -201,7 +201,12 @@ func GetVoteRequest(c * gin.Context){
 	}
 
 	//2.返回所有clouds
-	c.JSON(http.StatusOK,clouds)
+	c.JSON(http.StatusOK,gin.H{
+		"RequestID": requestID,
+		"Code":      codeOK,
+		"Msg":       errorMsg[codeOK],
+		"Data": clouds,
+	})
 	log.Info("package:NewCloud, func:GetVoteRequest, message:successed!")
 }
 
