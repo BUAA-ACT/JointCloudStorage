@@ -53,7 +53,21 @@ export default {
         .catch(() => {
           this.loading = false;
         });
+      this.$store.dispatch("getInfo").then(() => {
+        this.getUserPreference();
+      });
+    },
+    async getUserPreference() {
+      if (!this.$store.getters.ready) {
+        setTimeout(() => this.getUserPreference(), 50);
+        return;
+      }
+      this.form = { ...this.$store.getters.preference, AllowDelay: this.form.AllowDelay };
+      this.$log(this.form);
     }
+  },
+  beforeMount() {
+    this.getUserPreference();
   }
 };
 </script>

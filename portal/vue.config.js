@@ -64,7 +64,7 @@ module.exports = {
               // warnings: false,
               drop_console: true,
               drop_debugger: false,
-              pure_funcs: ["console.log"] // 移除console
+              pure_funcs: ["console.log", "this.$log"] // 移除console
             }
           }
         })

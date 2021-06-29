@@ -19,6 +19,9 @@ Vue.config.productionTip = false;
 
 Vue.prototype.$Api = appApi;
 
+// Add Debug output
+Vue.prototype.$log = console.log;
+
 const i18n = new VueI18n({
   locale: "zh-CN", // 语言标识
   // this.$i18n.locale // 通过切换locale的值来实现语言切换

@@ -70,15 +70,14 @@
         </el-col>
       </el-row>
     </div>
-<!--    <Footer type="mini" />-->
+    <!--    <Footer type="mini" />-->
   </div>
 </template>
 
 <script>
-
 export default {
   name: "Login",
-  components: {  },
+  components: {},
   data() {
     return {
       loginForm: {

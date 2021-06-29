@@ -40,7 +40,7 @@ export default {
   components: {
     BaiduMap,
     BmLocalSearch,
-    BmMarker,
+    BmMarker
   },
   data() {
     return {
@@ -59,7 +59,7 @@ export default {
       this.center.lng = 116.413387;
       this.center.lat = 39.926861;
       const viewthis = this;
-      map.addEventListener("click", function(e) {
+      map.addEventListener("click", e => {
         viewthis.model.lng = e.point.lng;
         viewthis.model.lat = e.point.lat;
         viewthis.$emit("getPoint", { lng: e.point.lng, lat: e.point.lat });
@@ -69,11 +69,11 @@ export default {
       function getBoundary(data, bdary) {
         // eslint-disable-next-line no-param-reassign
         data = data.split("-");
-        bdary.get(data[0], function(rs) {
+        bdary.get(data[0], rs => {
           // 获取行政区域
           const count = rs.boundaries.length; // 行政区域的点有多少个
           // var pointArray = []
-          for (let i = 0; i < count; i+=1) {
+          for (let i = 0; i < count; i += 1) {
             const ply = new BMap.Polygon(rs.boundaries[i], {
               strokeWeight: 2,
               strokeColor: "#ff0000",
@@ -87,11 +87,9 @@ export default {
       // 区域图
       const datas = new Array("徐州市-#665599");
       const bdary = new BMap.Boundary();
-      for (let i = 0; i < datas.length; i+=1) {
+      for (let i = 0; i < datas.length; i += 1) {
         getBoundary(datas[i], bdary);
       }
-
-
     }
   }
 };
