@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"cloud-storage-httpserver/args"
 	"cloud-storage-httpserver/model"
+	"cloud-storage-httpserver/service/code"
 	"cloud-storage-httpserver/service/tools"
 	"encoding/json"
 
@@ -68,11 +69,12 @@ func GetDownloadPlanFromScheduler(userId string, fileId string) (*model.GetDownl
 	return &response, true
 }
 
-func SetStoragePlanToScheduler(userId string, storagePlan *model.StoragePlan) (*model.PostStoragePlanResponse, bool) {
+func SetStoragePlanToScheduler(user *model.User, storagePlan *model.StoragePlan) (*model.PostStoragePlanResponse, bool) {
 	client := http.Client{}
 	postStoragePlan := model.PostStoragePlan{
 		CloudID:     *args.CloudID,
-		UserID:      userId,
+		UserID:      user.UserId,
+		Password:    code.AesDecrypt(user.Password, *args.EncryptKey),
 		StoragePlan: *storagePlan,
 	}
 	preferenceJSON, errMarshal := json.Marshal(postStoragePlan)

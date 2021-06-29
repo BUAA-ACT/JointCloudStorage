@@ -63,6 +63,7 @@ type GetStatusData struct {
 type PostStoragePlanParam struct {
 	CloudID     string
 	UserID      string
+	Password    string
 	StoragePlan dao.StoragePlan
 }
 
@@ -304,7 +305,11 @@ func PostStoragePlan(c *gin.Context) {
 		}
 
 		// 新建用户
-		passwd := genPassword()
+		passwd := param.Password
+		// 密码为空时生成随机密码
+		if passwd == "" {
+			passwd = genPassword()
+		}
 		user := dao.User{
 			UserId:       param.UserID,
 			Email:        param.UserID,
@@ -548,4 +553,68 @@ func heartbeat(interval time.Duration) {
 
 		logInfo("Heartbeat finished", requestID, len(clouds), success)
 	}
+}
+
+func GetAllCloudsStatus(c *gin.Context) {
+	requestID := uuid.New().String()
+
+	//查询所有的clouds
+	clouds, err := db.GetAllClouds()
+	logInfo("clouds:",requestID,clouds)
+	if err != nil {
+		//查询出错，报告错误
+		logError(err, requestID, "query for all clouds status failed")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"RequestID": requestID,
+			"Code":      codeInternalError,
+			"Msg":       errorMsg[codeInternalError],
+		})
+		return
+	}
+	//查询成功，返回数据
+	//隐藏accesskey和secretkey
+	for index, _ := range clouds {
+		clouds[index].AccessKey = ""
+		clouds[index].SecretKey = ""
+	}
+	c.JSON(http.StatusOK, clouds)
+	return
+
+}
+
+func PostUpdateClouds(c *gin.Context) {
+	requestID := uuid.New().String()
+	//get the clouds
+	logInfo("UpdateClouds:",requestID,c)
+	var cloud dao.Cloud
+	if err := c.ShouldBindJSON(&cloud); err != nil {
+		//can't get the clouds
+		//return the error
+		logError(err, requestID, "can't get the clouds from paramators")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"RequestID": requestID,
+			"Code":      codeBadRequest,
+			"Msg":       errorMsg[codeBadRequest],
+		})
+		return
+	}
+
+	//update the clouds
+	if err := db.UpdateCloud(cloud); err != nil {
+		//log the error
+		logError(err, requestID, "can't update the cloud")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"RequestID": requestID,
+			"Code":      codeInternalError,
+			"Msg":       errorMsg[codeInternalError],
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"RequestID": requestID,
+		"Code":      codeOK,
+		"Msg":       errorMsg[codeOK],
+	})
+	logInfo("update the clouds succeeded!", requestID,cloud)
 }

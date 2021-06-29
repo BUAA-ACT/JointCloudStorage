@@ -34,6 +34,7 @@ type GetDownloadPlanResponse struct {
 type PostStoragePlan struct {
 	CloudID     string      `json:"CloudID" bson:"cloud_id"`
 	UserID      string      `json:"UserID" bson:"user_id"`
+	Password    string      `json:"Password" bson:"password"`
 	StoragePlan StoragePlan `json:"StoragePlan" bson:"storage_plan"`
 }
 
