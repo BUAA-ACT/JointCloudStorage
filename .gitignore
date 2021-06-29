@@ -6,3 +6,4 @@ bin/
 **/.DS_Store
 configs/private/
 build/
+**/go.sum
