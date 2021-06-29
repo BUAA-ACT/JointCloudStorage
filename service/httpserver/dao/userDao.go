@@ -15,11 +15,11 @@ func (d *Dao) CreateNewUser(user model.User) bool {
 	return !tools.PrintError(err)
 }
 
-func (d *Dao) GetUserInfo(userId string) (*model.User, bool) {
+func (d *Dao) GetUserInfo(userID string) (*model.User, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	var user model.User
 	filter := bson.M{
-		"user_id": userId,
+		"user_id": userID,
 	}
 	err := col.FindOne(context.TODO(), filter).Decode(&user)
 	if user.AccessCredentials == nil {
@@ -47,7 +47,7 @@ func (d *Dao) CheckSameEmail(email string) bool {
 	}
 	col := d.client.Database(d.database).Collection(d.collection)
 	result := col.FindOne(context.TODO(), filter)
-	return !tools.PrintError(result.Err())
+	return result.Err() == nil
 }
 
 func (d *Dao) SetUserStatusWithEmail(email string, status string) bool {
@@ -64,10 +64,10 @@ func (d *Dao) SetUserStatusWithEmail(email string, status string) bool {
 	return !tools.PrintError(err)
 }
 
-func (d *Dao) SetUserStatusWithId(userId string, status string) bool {
+func (d *Dao) SetUserStatusWithId(userID string, status string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
-		"user_id": userId,
+		"user_id": userID,
 	}
 	update := bson.D{{"$set",
 		bson.D{
@@ -89,10 +89,10 @@ func (d *Dao) LoginWithEmail(email string, password string) (*model.User, bool) 
 	return &user, err == nil
 }
 
-func (d *Dao) LoginWithId(userId string, password string) bool {
+func (d *Dao) LoginWithId(userID string, password string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
-		"user_id":  userId,
+		"user_id":  userID,
 		"password": code.AesEncrypt(password, *args.EncryptKey),
 	}
 	var user model.User
@@ -100,10 +100,10 @@ func (d *Dao) LoginWithId(userId string, password string) bool {
 	return err == nil
 }
 
-func (d *Dao) SetUserPassword(userId string, password string) bool {
+func (d *Dao) SetUserPassword(userID string, password string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
-		"user_id": userId,
+		"user_id": userID,
 	}
 	update := bson.D{{"$set",
 		bson.D{
@@ -114,10 +114,10 @@ func (d *Dao) SetUserPassword(userId string, password string) bool {
 	return !tools.PrintError(err)
 }
 
-func (d *Dao) SetUserEmail(userId string, newEmail string) bool {
+func (d *Dao) SetUserEmail(userID string, newEmail string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
-		"user_id": userId,
+		"user_id": userID,
 	}
 	update := bson.D{{"$set",
 		bson.D{
@@ -128,10 +128,10 @@ func (d *Dao) SetUserEmail(userId string, newEmail string) bool {
 	return !tools.PrintError(err)
 }
 
-func (d *Dao) SetUserNickname(userId string, newNickname string) bool {
+func (d *Dao) SetUserNickname(userID string, newNickname string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
-		"user_id": userId,
+		"user_id": userID,
 	}
 	update := bson.D{{"$set",
 		bson.D{
@@ -142,10 +142,10 @@ func (d *Dao) SetUserNickname(userId string, newNickname string) bool {
 	return !tools.PrintError(err)
 }
 
-func (d *Dao) SetUserPreference(userId string, preference *model.Preference) bool {
+func (d *Dao) SetUserPreference(userID string, preference *model.Preference) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
-		"user_id": userId,
+		"user_id": userID,
 	}
 	update := bson.D{{"$set",
 		bson.D{
@@ -156,10 +156,10 @@ func (d *Dao) SetUserPreference(userId string, preference *model.Preference) boo
 	return !tools.PrintError(err)
 }
 
-func (d *Dao) SetUserStoragePlan(userId string, plan *model.StoragePlan) bool {
+func (d *Dao) SetUserStoragePlan(userID string, plan *model.StoragePlan) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
-		"user_id": userId,
+		"user_id": userID,
 	}
 	update := bson.D{{"$set",
 		bson.D{
@@ -170,10 +170,10 @@ func (d *Dao) SetUserStoragePlan(userId string, plan *model.StoragePlan) bool {
 	return !tools.PrintError(err)
 }
 
-func (d *Dao) SetUserAccessCredential(userId string, credentials *[]model.AccessCredential) bool {
+func (d *Dao) SetUserAccessCredential(userID string, credentials *[]model.AccessCredential) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
-		"user_id": userId,
+		"user_id": userID,
 	}
 	update := bson.D{{"$set",
 		bson.D{

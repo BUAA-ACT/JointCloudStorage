@@ -3,9 +3,10 @@ package model
 import "time"
 
 type AccessKey struct {
-	UserId     string    `bson:"user_id"`
-	AccessKey  string    `bson:"access_key"`
-	SecretKey  string    `bson:"secret_key"`
-	CreateTime time.Time `bson:"create_time"`
-	Available  bool      `bson:"available"`
+	UserID     string    `json:"UserID" bson:"user_id"`
+	AccessKey  string    `json:"AccessKey" bson:"access_key"`
+	SecretKey  string    `json:"SecretKey" bson:"secret_key"`
+	Comment    string    `json:"Comment" bson:"comment"`
+	CreateTime time.Time `json:"CreateTime" bson:"create_time"`
+	Available  bool      `json:"Available" bson:"available"`
 }

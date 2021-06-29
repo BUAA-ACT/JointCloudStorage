@@ -3,6 +3,8 @@ package controller
 import (
 	"cloud-storage-httpserver/args"
 	"cloud-storage-httpserver/dao"
+	"cloud-storage-httpserver/model"
+	"cloud-storage-httpserver/service/scheduler"
 	"cloud-storage-httpserver/service/tools"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -19,13 +21,30 @@ func AdminGetAllClouds(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
 	if !valid {
 		return
 	}
-	// get clouds with dao
-	clouds, getCloudsSuccess := dao.CloudDao.GetAllClouds(userId)
-	if !checkDaoSuccess(con, getCloudsSuccess) {
+	// get clouds from scheduler
+	getCloudsResponse, getCloudsSuccess := scheduler.GetAllCloudsFromScheduler()
+	if !getCloudsSuccess {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeJsonError,
+			"msg":  "解析scheduler-json信息有误",
+			"data": gin.H{},
+		})
+		return
+	}
+	// wrong in scheduler
+	if getCloudsResponse.Code != args.CodeOK {
+		fmt.Println("scheduler fault:")
+		fmt.Println("Code: ", getCloudsResponse.Code)
+		fmt.Println("Msg: ", getCloudsResponse.Msg)
+		con.JSON(http.StatusOK, gin.H{
+			"code": getCloudsResponse.Code,
+			"msg":  getCloudsResponse.Msg,
+			"data": gin.H{},
+		})
 		return
 	}
 	// success
@@ -33,7 +52,7 @@ func AdminGetAllClouds(con *gin.Context) {
 		"code": args.CodeOK,
 		"msg":  "管理员获取所有云节点成功",
 		"data": gin.H{
-			"Clouds": *clouds,
+			"Clouds": getCloudsResponse.Data,
 		},
 	})
 }
@@ -41,20 +60,50 @@ func AdminGetAllClouds(con *gin.Context) {
 func AdminAddCloud(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
+		args.FieldWordCloud:       true,
 	}
 	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	cloud := (*valueMap)[args.FieldWordCloud].(*model.Cloud)
 	// check token
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
 	if !valid {
 		return
 	}
-
-	fmt.Println(userId)
-
+	// check cloud id exist?
+	if dao.CloudDao.CheckSameCloudID(cloud.CloudID) {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeSameCloudID,
+			"msg":  "CloudID已存在,不可重复添加",
+			"data": gin.H{},
+		})
+		return
+	}
+	// post new cloud to scheduler
+	postNewCloudResponse, postNewCloudSuccess := scheduler.PostNewCloudToScheduler(cloud)
+	if !postNewCloudSuccess {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeJsonError,
+			"msg":  "解析scheduler-json信息有误",
+			"data": gin.H{},
+		})
+		return
+	}
+	// wrong in scheduler
+	if postNewCloudResponse.Code != args.CodeOK {
+		fmt.Println("scheduler fault:")
+		fmt.Println("Code: ", postNewCloudResponse.Code)
+		fmt.Println("Msg: ", postNewCloudResponse.Msg)
+		con.JSON(http.StatusOK, gin.H{
+			"code": postNewCloudResponse.Code,
+			"msg":  postNewCloudResponse.Msg,
+			"data": gin.H{},
+		})
+		return
+	}
 	// success
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
@@ -66,20 +115,50 @@ func AdminAddCloud(con *gin.Context) {
 func AdminChangeCloudInfo(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
+		args.FieldWordCloud:       true,
 	}
 	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	cloud := (*valueMap)[args.FieldWordCloud].(*model.Cloud)
 	// check token
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
 	if !valid {
 		return
 	}
-
-	fmt.Println(userId)
-
+	// check cloud id exist?
+	if !dao.CloudDao.CheckSameCloudID(cloud.CloudID) {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeCloudIDNotExist,
+			"msg":  "CloudID不存在",
+			"data": gin.H{},
+		})
+		return
+	}
+	// post cloud info to scheduler to change and sync it
+	postUpdateCloudResponse, postUpdateCloudSuccess := scheduler.PostUpdateCloudToScheduler(cloud)
+	if !postUpdateCloudSuccess {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeJsonError,
+			"msg":  "解析scheduler-json信息有误",
+			"data": gin.H{},
+		})
+		return
+	}
+	// wrong in scheduler
+	if postUpdateCloudResponse.Code != args.CodeOK {
+		fmt.Println("scheduler fault:")
+		fmt.Println("Code: ", postUpdateCloudResponse.Code)
+		fmt.Println("Msg: ", postUpdateCloudResponse.Msg)
+		con.JSON(http.StatusOK, gin.H{
+			"code": postUpdateCloudResponse.Code,
+			"msg":  postUpdateCloudResponse.Msg,
+			"data": gin.H{},
+		})
+		return
+	}
 	// success
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
@@ -91,6 +170,55 @@ func AdminChangeCloudInfo(con *gin.Context) {
 func AdminVoteForCloud(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
+		args.FieldWordCloudID:     true,
+		args.FieldWordVoteResult:  true,
+	}
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
+		return
+	}
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	cloudID := (*valueMap)[args.FieldWordCloudID].(string)
+	voteResult := (*valueMap)[args.FieldWordVoteResult].(bool)
+	// check token
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
+	if !valid {
+		return
+	}
+	// post cloud vote result to scheduler
+	postCloudVoteResponse, postCloudVoteSuccess := scheduler.PostCloudVoteToScheduler(cloudID, voteResult)
+	if !postCloudVoteSuccess {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeJsonError,
+			"msg":  "解析scheduler-json信息有误",
+			"data": gin.H{},
+		})
+		return
+	}
+	// wrong in scheduler
+	if postCloudVoteResponse.Code != args.CodeOK {
+		fmt.Println("scheduler fault:")
+		fmt.Println("Code: ", postCloudVoteResponse.Code)
+		fmt.Println("Msg: ", postCloudVoteResponse.Msg)
+		con.JSON(http.StatusOK, gin.H{
+			"code": postCloudVoteResponse.Code,
+			"msg":  postCloudVoteResponse.Msg,
+			"data": gin.H{},
+		})
+		return
+	}
+
+	// success
+	con.JSON(http.StatusOK, gin.H{
+		"code": args.CodeOK,
+		"msg":  "管理员投票成功",
+		"data": gin.H{},
+	})
+}
+
+func AdminGetVoteRequests(con *gin.Context) {
+	fieldRequired := map[string]bool{
+		args.FieldWordAccessToken: true,
 	}
 	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
@@ -98,17 +226,39 @@ func AdminVoteForCloud(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
 	if !valid {
 		return
 	}
-
-	fmt.Println(userId)
+	// get the voting clouds from scheduler
+	getVoteRequestsResponse, getVoteRequestsSuccess := scheduler.GetVoteRequestsFromScheduler()
+	if !getVoteRequestsSuccess {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeJsonError,
+			"msg":  "解析scheduler-json信息有误",
+			"data": gin.H{},
+		})
+		return
+	}
+	// wrong in scheduler
+	if getVoteRequestsResponse.Code != args.CodeOK {
+		fmt.Println("scheduler fault:")
+		fmt.Println("Code: ", getVoteRequestsResponse.Code)
+		fmt.Println("Msg: ", getVoteRequestsResponse.Msg)
+		con.JSON(http.StatusOK, gin.H{
+			"code": getVoteRequestsResponse.Code,
+			"msg":  getVoteRequestsResponse.Msg,
+			"data": gin.H{},
+		})
+		return
+	}
 
 	// success
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
-		"msg":  "管理员投票成功",
-		"data": gin.H{},
+		"msg":  "管理员获取正在投票的云列表成功",
+		"data": gin.H{
+			"Clouds": getVoteRequestsResponse.Data,
+		},
 	})
 }

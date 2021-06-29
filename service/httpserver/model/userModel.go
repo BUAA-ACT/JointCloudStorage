@@ -51,7 +51,7 @@ type AccessCredential struct {
 }
 
 type User struct {
-	UserId            string             `json:"UserId" bson:"user_id"`
+	UserID            string             `json:"UserID" bson:"user_id"`
 	Email             string             `json:"Email" bson:"email"`
 	Password          string             `json:"-" bson:"password"`
 	Nickname          string             `json:"Nickname" bson:"nickname"`

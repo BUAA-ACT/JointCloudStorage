@@ -23,11 +23,11 @@ func UserGetAllStoragePlan(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check access token
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
-	thisUser, infoSuccess := dao.UserDao.GetUserInfo(userId)
+	thisUser, infoSuccess := dao.UserDao.GetUserInfo(userID)
 	if !checkDaoSuccess(con, infoSuccess) {
 		return
 	}
@@ -41,7 +41,7 @@ func UserGetAllStoragePlan(con *gin.Context) {
 		return
 	}
 	// get storage plan from scheduler
-	response, storagePlanFromSchedulerSuccess := scheduler.GetAllStoragePlanFromScheduler(thisUser.Preference)
+	response, storagePlanFromSchedulerSuccess := scheduler.GetAllStoragePlanFromScheduler(&thisUser.Preference)
 	if !storagePlanFromSchedulerSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
@@ -83,11 +83,11 @@ func UserGetAdvice(con *gin.Context) {
 		return
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
-	advices, adviceSuccess := dao.MigrationAdviceDao.GetNewAdvice(userId)
+	advices, adviceSuccess := dao.MigrationAdviceDao.GetNewAdvice(userID)
 	if !checkDaoSuccess(con, adviceSuccess) {
 		return
 	}
@@ -113,11 +113,11 @@ func UserAbandonAdvice(con *gin.Context) {
 		return
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
-	deleteAdviceResult, deleteAdviceSuccess := dao.MigrationAdviceDao.DeleteAdvice(userId)
+	deleteAdviceResult, deleteAdviceSuccess := dao.MigrationAdviceDao.DeleteAdvice(userID)
 	if !checkDaoSuccess(con, deleteAdviceSuccess) {
 		return
 	}
@@ -150,11 +150,11 @@ func UserChooseStoragePlan(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	storagePlan := (*valueMap)[args.FieldWordStoragePlan].(*model.StoragePlan)
 	// check token
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
-	user, infoSuccess := dao.UserDao.GetUserInfo(userId)
+	user, infoSuccess := dao.UserDao.GetUserInfo(userID)
 	if !checkDaoSuccess(con, infoSuccess) {
 		return
 	}
@@ -169,7 +169,7 @@ func UserChooseStoragePlan(con *gin.Context) {
 		return
 	}
 	// post to notice scheduler this plan
-	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(userId, storagePlan)
+	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(userID, storagePlan)
 	if !postPlanSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
@@ -191,12 +191,12 @@ func UserChooseStoragePlan(con *gin.Context) {
 		return
 	}
 	// save access credential respond from scheduler
-	credentialSuccess := dao.UserDao.SetUserAccessCredential(userId, &postPlanResponse.Data)
+	credentialSuccess := dao.UserDao.SetUserAccessCredential(userID, &postPlanResponse.Data)
 	if !checkDaoSuccess(con, credentialSuccess) {
 		return
 	}
 	// save new plan
-	storagePlanSuccess := dao.UserDao.SetUserStoragePlan(userId, storagePlan)
+	storagePlanSuccess := dao.UserDao.SetUserStoragePlan(userID, storagePlan)
 	if !checkDaoSuccess(con, storagePlanSuccess) {
 		return
 	}
@@ -217,12 +217,12 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
 	// check user status
-	user, infoSuccess := dao.UserDao.GetUserInfo(userId)
+	user, infoSuccess := dao.UserDao.GetUserInfo(userID)
 	if !checkDaoSuccess(con, infoSuccess) {
 		return
 	}
@@ -234,18 +234,18 @@ func UserAcceptStoragePlan(con *gin.Context) {
 		return
 	}
 	// forbid user other transportation
-	statusSuccess := dao.UserDao.SetUserStatusWithId(userId, args.UserForbiddenStatus)
+	statusSuccess := dao.UserDao.SetUserStatusWithId(userID, args.UserForbiddenStatus)
 	if !checkDaoSuccess(con, statusSuccess) {
 		return
 	}
 	// take advice out
-	newAdvices, adviceSuccess := dao.MigrationAdviceDao.GetNewAdvice(userId)
+	newAdvices, adviceSuccess := dao.MigrationAdviceDao.GetNewAdvice(userID)
 	if !checkDaoSuccess(con, adviceSuccess) {
 		return
 	}
 	nowAdvice := (*newAdvices)[0]
 	// post to notice scheduler this plan
-	postPlanToSchedulerResponse, postPlanToSchedulerSuccess := scheduler.SetStoragePlanToScheduler(userId, &nowAdvice.StoragePlanNew)
+	postPlanToSchedulerResponse, postPlanToSchedulerSuccess := scheduler.SetStoragePlanToScheduler(userID, &nowAdvice.StoragePlanNew)
 	// save new plan
 	if !postPlanToSchedulerSuccess {
 		con.JSON(http.StatusOK, gin.H{
@@ -268,12 +268,12 @@ func UserAcceptStoragePlan(con *gin.Context) {
 		return
 	}
 	// save access credential respond from scheduler
-	credentialSuccess := dao.UserDao.SetUserAccessCredential(userId, &postPlanToSchedulerResponse.Data)
+	credentialSuccess := dao.UserDao.SetUserAccessCredential(userID, &postPlanToSchedulerResponse.Data)
 	if !checkDaoSuccess(con, credentialSuccess) {
 		return
 	}
 	// save new plan
-	storagePlanSuccess := dao.UserDao.SetUserStoragePlan(userId, &nowAdvice.StoragePlanNew)
+	storagePlanSuccess := dao.UserDao.SetUserStoragePlan(userID, &nowAdvice.StoragePlanNew)
 	if !checkDaoSuccess(con, storagePlanSuccess) {
 		return
 	}
@@ -288,7 +288,7 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	}
 
 	// use "" to tell transporter migrate all files
-	syncFromTransporterResponse, syncFromTransporterSuccess := transporter.SyncFile("", userId, sourcePlan, destinationPlan)
+	syncFromTransporterResponse, syncFromTransporterSuccess := transporter.SyncFile("", userID, sourcePlan, destinationPlan)
 	if !syncFromTransporterSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
@@ -307,7 +307,7 @@ func UserAcceptStoragePlan(con *gin.Context) {
 		return
 	}
 	// delete advice
-	deleteAdviceResult, deleteAdviceSuccess := dao.MigrationAdviceDao.DeleteAdvice(userId)
+	deleteAdviceResult, deleteAdviceSuccess := dao.MigrationAdviceDao.DeleteAdvice(userID)
 	if !checkDaoSuccess(con, deleteAdviceSuccess) {
 		return
 	}
@@ -347,11 +347,11 @@ func UserSetStoragePlan(con *gin.Context) {
 	accessToken := valueMap[args.FieldWordAccessToken].(string)
 	storagePlan := valueMap[args.FieldWordStoragePlan].(*model.StoragePlan)
 	// check token
-	userId, valid := UserCheckAccessToken(con, accessToken)
+	userID, valid := UserCheckAccessToken(con, accessToken)
 	if !valid {
 		return
 	}
-	user, success := dao.UserDao.GetUserInfo(userId)
+	user, success := dao.UserDao.GetUserInfo(userID)
 	if !success {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeDatabaseError,
@@ -364,7 +364,7 @@ func UserSetStoragePlan(con *gin.Context) {
 	oldPlan := &user.StoragePlan
 	havePlan := oldPlan.N > 0
 	// post to notice scheduler this plan
-	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(userId, storagePlan)
+	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(userID, storagePlan)
 	// save new plan
 	if !postPlanSuccess {
 		con.JSON(http.StatusOK, gin.H{
@@ -384,14 +384,14 @@ func UserSetStoragePlan(con *gin.Context) {
 		return
 	}
 	// save access credential respond from scheduler
-	dao.UserDao.SetUserAccessCredential(userId, &postPlanResponse.Data)
+	dao.UserDao.SetUserAccessCredential(userID, &postPlanResponse.Data)
 	// save new plan
-	dao.UserDao.SetUserStoragePlan(userId, storagePlan)
+	dao.UserDao.SetUserStoragePlan(userID, storagePlan)
 
 	// if origin plan exist -> sync it
 	if havePlan {
 		// use "" to tell transporter migrate all files
-		syncResponse, syncSuccess := transporter.SyncFile("", userId, oldPlan, storagePlan)
+		syncResponse, syncSuccess := transporter.SyncFile("", userID, oldPlan, storagePlan)
 		if !syncSuccess {
 			con.JSON(http.StatusOK, gin.H{
 				"code": args.CodeJsonError,
@@ -410,7 +410,7 @@ func UserSetStoragePlan(con *gin.Context) {
 			return
 		}
 		//delete advice
-		dao.MigrationAdviceDao.DeleteAdvice(userId)
+		dao.MigrationAdviceDao.DeleteAdvice(userID)
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeOK,
 			"msg":  "设置存储方案成功",

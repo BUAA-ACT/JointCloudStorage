@@ -86,7 +86,16 @@ func storagePlanRegex(plan interface{}) (*model.StoragePlan, bool) {
 	}
 	var storagePlan model.StoragePlan
 	err := mapstructure.Decode(plan, &storagePlan)
-	return &storagePlan, err == nil
+	return &storagePlan, !tools.PrintError(err)
+}
+
+func cloudRegex(cloud interface{}) (*model.Cloud, bool) {
+	if reflect.TypeOf(cloud).Kind() != reflect.Map {
+		return nil, false
+	}
+	var realCloud model.Cloud
+	err := mapstructure.Decode(cloud, &realCloud)
+	return &realCloud, !tools.PrintError(err)
 }
 
 func statusRegex(status interface{}) (bool, bool) {
@@ -96,6 +105,15 @@ func statusRegex(status interface{}) (bool, bool) {
 	var realStatus bool
 	realStatus, err := strconv.ParseBool(status.(string))
 	return realStatus, !tools.PrintError(err)
+}
+
+func voteResultRegex(voteResult interface{}) (bool, bool) {
+	if reflect.TypeOf(voteResult).Kind() != reflect.String {
+		return false, false
+	}
+	var realVoteResult bool
+	realVoteResult, err := strconv.ParseBool(voteResult.(string))
+	return realVoteResult, !tools.PrintError(err)
 }
 
 func CheckRegex(value interface{}, field string) (interface{}, bool) {
@@ -126,6 +144,10 @@ func CheckRegex(value interface{}, field string) (interface{}, bool) {
 		return latencyRegex(formatValue)
 	case args.FieldWordStatus:
 		return statusRegex(formatValue)
+	case args.FieldWordVoteResult:
+		return voteResultRegex(formatValue)
+	case args.FieldWordCloud:
+		return cloudRegex(formatValue)
 	default:
 		return formatValue, true
 	}

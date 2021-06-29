@@ -20,12 +20,12 @@ func UserGetTask(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	taskId := (*valueMap)[args.FieldWordTaskID].(string)
 	taskIdExist := (*existMap)[args.FieldWordTaskID]
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
 
-	tasks, getTaskSuccess := dao.TaskDao.GetTask(taskId, userId, taskIdExist)
+	tasks, getTaskSuccess := dao.TaskDao.GetTask(taskId, userID, taskIdExist)
 	if checkDaoSuccess(con, getTaskSuccess) {
 		return
 	}

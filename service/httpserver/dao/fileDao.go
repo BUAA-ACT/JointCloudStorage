@@ -8,16 +8,16 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (d *Dao) ListFiles(userId string, path string, isDir bool) (*[]model.File, bool) {
+func (d *Dao) ListFiles(userID string, path string, isDir bool) (*[]model.File, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	var files []model.File = make([]model.File, 0)
 	var filter interface{}
 	// TODO time complex high !!!
 	filterDir := bson.M{
-		"owner": userId,
+		"owner": userID,
 	}
 	filterFile := bson.M{
-		"owner":     userId,
+		"owner":     userID,
 		"file_name": path,
 	}
 	if isDir {
@@ -40,10 +40,10 @@ func (d *Dao) ListFiles(userId string, path string, isDir bool) (*[]model.File, 
 	return &files, true
 }
 
-func (d *Dao) CheckFileStatus(userId string, path string) (*[]model.File, bool) {
+func (d *Dao) CheckFileStatus(userID string, path string) (*[]model.File, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
-		"file_id": userId + path,
+		"file_id": userID + path,
 	}
 	files := make([]model.File, 0)
 	result, err := col.Find(context.TODO(), filter)

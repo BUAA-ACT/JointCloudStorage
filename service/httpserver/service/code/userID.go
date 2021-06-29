@@ -2,6 +2,6 @@ package code
 
 import uuid "github.com/satori/go.uuid"
 
-func GenUserId() uuid.UUID {
+func GenUserID() uuid.UUID {
 	return genUUIDv4()
 }

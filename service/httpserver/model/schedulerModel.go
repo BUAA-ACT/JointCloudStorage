@@ -1,6 +1,6 @@
 package model
 
-/* get storage plan*/
+// GetStoragePlan data struct
 type GetStoragePlan = Preference
 
 type GetStoragePlanResponseData struct {
@@ -15,7 +15,7 @@ type GetStoragePlanResponse struct {
 	Msg       string                     `json:"Msg" bson:"msg"`
 }
 
-/* get download plan*/
+// GetDownloadPlan data struct
 type GetDownloadPlan struct {
 	UserID string `json:"UserID" bson:"user_id"`
 	FileID string `json:"FileID" json:"file_id"`
@@ -30,7 +30,7 @@ type GetDownloadPlanResponse struct {
 	Msg       string                      `json:"Msg" bson:"msg"`
 }
 
-/* post storage plan*/
+// PostStoragePlan data struct
 type PostStoragePlan struct {
 	CloudID     string      `json:"CloudID" bson:"cloud_id"`
 	UserID      string      `json:"UserID" bson:"user_id"`
@@ -42,6 +42,58 @@ type PostStoragePlanResponse struct {
 	RequestID string             `json:"RequestID" bson:"request_id"`
 	Data      []AccessCredential `json:"Data" bson:"data"`
 	Msg       string             `json:"Msg" bson:"msg"`
+}
+
+// GetAllClouds data struct
+type GetAllClouds struct {
+}
+
+type GetAllCloudsResponse struct {
+	Code      uint64  `json:"Code" json:"code"`
+	RequestID string  `json:"RequestID" bson:"request_id"`
+	Data      []Cloud `json:"Data" bson:"data"`
+	Msg       string  `json:"Msg" bson:"msg"`
+}
+
+// PostNewCloud data struct
+type PostNewCloud = Cloud
+
+type PostNewCloudResponse struct {
+	Code      uint64 `json:"Code" json:"code"`
+	RequestID string `json:"RequestID" bson:"request_id"`
+	Msg       string `json:"Msg" bson:"msg"`
+}
+
+// PostUpdateCloud data struct
+type PostUpdateCloud = Cloud
+
+type PostUpdateCloudResponse struct {
+	Code      uint64 `json:"Code" json:"code"`
+	RequestID string `json:"RequestID" bson:"request_id"`
+	Msg       string `json:"Msg" bson:"msg"`
+}
+
+// GetVoteRequests data struct
+type GetVoteRequests struct {
+}
+
+type GetVoteRequestsResponse struct {
+	Code      uint64  `json:"Code" json:"code"`
+	RequestID string  `json:"RequestID" bson:"request_id"`
+	Msg       string  `json:"Msg" bson:"msg"`
+	Data      []Cloud `json:"Data" bson:"data"`
+}
+
+// PostCloudVote data struct
+type PostCloudVote struct {
+	CloudID    string `json:"CloudID" bson:"cloud_id"`
+	VoteResult bool   `json:"VoteResult" bson:"vote_result"`
+}
+
+type PostCloudVoteResponse struct {
+	Code      uint64 `json:"Code" json:"code"`
+	RequestID string `json:"RequestID" bson:"request_id"`
+	Msg       string `json:"Msg" bson:"msg"`
 }
 
 func (thisPlan *StoragePlan) isEqual(otherPlan *StoragePlan) bool {

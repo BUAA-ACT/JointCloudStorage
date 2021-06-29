@@ -34,6 +34,8 @@ const (
 	CodeAlreadyHaveStoragePlan = 1415
 	CodeForbiddenTransport     = 1416
 	CodeDeleteNothing          = 1417
+	CodeCloudIDNotExist        = 1418
+	CodeSameCloudID            = 1419
 
 	// user status code
 	CodeStatusNormal       = 1501
@@ -84,6 +86,10 @@ const (
 	FieldWordStoragePlan    = "StoragePlan"
 	FieldWordTaskID         = "TaskID"
 	FieldWordStatus         = "Status"
+	FieldWordCloud          = "Cloud"
+	FieldWordCloudID        = "CloudID"
+	FieldWordVoteResult     = "VoteResult"
+	FieldWordComment        = "Comment"
 )
 
 /* user const */

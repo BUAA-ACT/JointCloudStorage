@@ -43,12 +43,12 @@ func (d *Dao) VerifyEmail(email string, verifyCode string) bool {
 	return true
 }
 
-func (d *Dao) InsertAccessToken(token string, userId string) bool {
+func (d *Dao) InsertAccessToken(token string, userID string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	timeNow := time.Now()
 	accessToken := &model.AccessTokenCode{
 		AccessToken:           token,
-		UserId:                userId,
+		UserID:                userID,
 		AccessTokenCreateTime: timeNow,
 		AccessTokenModifyTime: timeNow,
 	}
@@ -73,7 +73,7 @@ func (d *Dao) CheckValid(token string) (string, bool) {
 		fmt.Println("无效token")
 		return "", false
 	}
-	return originToken.UserId, true
+	return originToken.UserID, true
 }
 
 func (d *Dao) DeleteAccessToken(accessToken string) (*mongo.DeleteResult, bool) {

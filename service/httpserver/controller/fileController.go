@@ -26,12 +26,12 @@ func UserGetFiles(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	//check token
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
 	// check it is file or dir and get files out
-	files, listFilesSuccess := dao.FileDao.ListFiles(userId, filePath, tools.IsDir(filePath))
+	files, listFilesSuccess := dao.FileDao.ListFiles(userID, filePath, tools.IsDir(filePath))
 	if !checkDaoSuccess(con, listFilesSuccess) {
 		return
 	}
@@ -115,11 +115,11 @@ func UserPreUploadFile(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	//check access token
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
-	user, infoSuccess := dao.UserDao.GetUserInfo(userId)
+	user, infoSuccess := dao.UserDao.GetUserInfo(userID)
 	// database error
 	if !checkDaoSuccess(con, infoSuccess) {
 		return
@@ -186,13 +186,13 @@ func UserDownloadFile(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	filePath := (*valueMap)[args.FieldWordFilePath].(string)
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
 	//reqId, fileName := regex.FileIdToUserAndFileName(filePath)
 	//check file and user
-	//if userId != reqId {
+	//if userID != reqId {
 	//	con.JSON(http.StatusOK, gin.H{
 	//		"code": args.CodeDifferentUser,
 	//		"msg":  "文件Owner与请求UserId不符合",
@@ -200,7 +200,7 @@ func UserDownloadFile(con *gin.Context) {
 	//	})
 	//}
 	// check user
-	user, infoSuccess := dao.UserDao.GetUserInfo(userId)
+	user, infoSuccess := dao.UserDao.GetUserInfo(userID)
 	if !checkDaoSuccess(con, infoSuccess) {
 		return
 	}
@@ -220,7 +220,7 @@ func UserDownloadFile(con *gin.Context) {
 		return
 	}
 	// check file status if done -> return url
-	files, checkFileSuccess := dao.FileDao.CheckFileStatus(userId, filePath)
+	files, checkFileSuccess := dao.FileDao.CheckFileStatus(userID, filePath)
 	if !checkDaoSuccess(con, checkFileSuccess) {
 		return
 	}
@@ -244,7 +244,7 @@ func UserDownloadFile(con *gin.Context) {
 		return
 	}
 	// else -> use scheduler's download plan to download file with transporter
-	getDownloadPlanResponse, getDownloadPlanSuccess := scheduler.GetDownloadPlanFromScheduler(userId, filePath)
+	getDownloadPlanResponse, getDownloadPlanSuccess := scheduler.GetDownloadPlanFromScheduler(userID, filePath)
 	if !getDownloadPlanSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
@@ -253,7 +253,7 @@ func UserDownloadFile(con *gin.Context) {
 		})
 	}
 
-	downloadResponse, downloadSuccess := transporter.DownLoadFile(filePath, userId, getDownloadPlanResponse.Data)
+	downloadResponse, downloadSuccess := transporter.DownLoadFile(filePath, userID, getDownloadPlanResponse.Data)
 	if !downloadSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
@@ -294,11 +294,11 @@ func UserDeleteFile(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	// check token
-	userId, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
-	user, infoSuccess := dao.UserDao.GetUserInfo(userId)
+	user, infoSuccess := dao.UserDao.GetUserInfo(userID)
 	// database error
 	if !checkDaoSuccess(con, infoSuccess) {
 		return

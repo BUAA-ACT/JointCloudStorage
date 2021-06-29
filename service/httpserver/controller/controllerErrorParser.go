@@ -94,7 +94,7 @@ func getQueryAndReturn(con *gin.Context, fields *map[string]bool) (*map[string]i
 }
 
 func UserCheckAccessToken(con *gin.Context, accessToken string, permitRoles *[]string) (string, bool) {
-	userId, valid := dao.AccessTokenDao.CheckValid(accessToken)
+	userID, valid := dao.AccessTokenDao.CheckValid(accessToken)
 	if !valid {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeInvalidAccessToken,
@@ -103,11 +103,11 @@ func UserCheckAccessToken(con *gin.Context, accessToken string, permitRoles *[]s
 		})
 		return "", false
 	}
-	user, valid := dao.UserDao.GetUserInfo(userId)
+	user, valid := dao.UserDao.GetUserInfo(userID)
 	for _, role := range *permitRoles {
 		// role == UserAllRole can be all permit
 		if user.Role == role || role == args.UserAllRole {
-			return userId, true
+			return userID, true
 		}
 	}
 	con.JSON(http.StatusOK, gin.H{
