@@ -2,7 +2,6 @@
   <div style="text-align: left">
     <el-button @click="getUserInfo" type="primary">获取用户信息</el-button><br />
     <!--    <JsonViewer :value="UserInfo"></JsonViewer>-->
-
     <el-card class="box-card user-info-container">
       <div slot="header" class="clearfix">
         <span>用户信息</span>
@@ -12,20 +11,7 @@
         <el-form-item label="密码"><el-button @click="passDiagVis = true">修改密码</el-button></el-form-item>
       </el-form>
     </el-card>
-    <el-card class="box-card">
-      <div slot="header" class="clearfix">
-        <span>访问凭证</span>
-      </div>
-      <el-card class="inner-box-card" v-for="AccessCredential in UserInfo.AccessCredentials" :key="AccessCredential.CloudID" shadow="hover">
-        <div slot="header" class="clearfix">
-          <span>{{ AccessCredential.CloudID }}</span>
-        </div>
-        <div class="text item">
-          访问用户：{{ AccessCredential.UserID }}<br />
-          访问密码：{{ AccessCredential.Password }}<br />
-        </div>
-      </el-card>
-    </el-card>
+    <key-management />
     <el-card class="box-card">
       <div slot="header" class="clearfix">
         <span>访问凭证-NEW</span>
@@ -75,9 +61,13 @@
 
 <script>
 import common from "@/api/common";
+import KeyManagement from "./userInfo/keyManagement.vue";
 
 export default {
   name: "userInfo",
+  components: {
+    KeyManagement
+  },
   data() {
     return {
       UserInfo: {
@@ -151,7 +141,7 @@ export default {
       return this.UserInfo.AccessCredentials;
     }
   },
-  created() {
+  beforeMount() {
     this.getUserInfo();
   }
 };
@@ -176,9 +166,6 @@ export default {
   margin: 10px 0;
   .inner-box-card {
     width: 30%;
-    .no-border /deep/ .el-input__inner {
-      border: 0;
-    }
   }
 }
 </style>
