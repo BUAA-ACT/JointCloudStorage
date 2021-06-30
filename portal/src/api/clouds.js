@@ -154,6 +154,11 @@ export default {
       }
     });
   },
+  /**
+   * @param {String} CloudID
+   * @param {Boolean} VoteResult
+   * @returns {Promise}
+   */
   voteForCloud(CloudID, VoteResult) {
     return request({
       url: `/cloud/vote`,
