@@ -20,6 +20,7 @@
             <span>管理中心</span>
           </template>
           <el-menu-item index="0-1">增加新云</el-menu-item>
+          <el-menu-item index="0-2">新云投票</el-menu-item>
         </el-submenu>
       </el-menu>
     </el-aside>
