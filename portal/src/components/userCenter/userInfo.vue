@@ -12,31 +12,6 @@
       </el-form>
     </el-card>
     <key-management />
-    <el-card class="box-card">
-      <div slot="header" class="clearfix">
-        <span>访问凭证-NEW</span>
-      </div>
-      <el-card class="inner-box-card" shadow="hover">
-        <div slot="header" class="clearfix">
-          <span></span>
-        </div>
-        <div class="text item">
-          <el-form label-position="right">
-            <el-form-item label="Access Key"> <el-input :value="ak" class="no-border" size="large" /> </el-form-item>
-            <el-form-item label="Secret Key"> <el-input :value="sk" show-password class="no-border" size="large"/></el-form-item>
-          </el-form>
-        </div>
-      </el-card>
-      <el-card class="inner-box-card" v-for="AccessCredential in UserInfo.AccessCredentials" :key="AccessCredential.CloudID" shadow="hover">
-        <div slot="header" class="clearfix">
-          <span>{{ AccessCredential.CloudID }}</span>
-        </div>
-        <div class="text item">
-          访问用户：{{ AccessCredential.UserID }}<br />
-          访问密码：{{ AccessCredential.Password }}<br />
-        </div>
-      </el-card>
-    </el-card>
     <el-dialog title="修改密码" :visible.sync="passDiagVis" width="25%" :before-close="resetForm" class="pass-form-container">
       <el-form label-position="right" ref="passForm" :model="passChangeForm" :rules="rules" class="pass-form">
         <el-form-item label="原密码" prop="oldPass"> <el-input v-model="passChangeForm.oldPass" show-password /> </el-form-item>
@@ -70,9 +45,7 @@ export default {
   },
   data() {
     return {
-      UserInfo: {
-        AccessCredentials: []
-      },
+      UserInfo: {},
       rules: {
         conPass: [
           {
@@ -93,8 +66,6 @@ export default {
         newPass: "",
         conPass: ""
       },
-      ak: "application_key",
-      sk: "SeCreTKey",
       type: "text",
       passDiagVis: false
     };
