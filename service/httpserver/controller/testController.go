@@ -1,13 +1,9 @@
 package controller
 
 import (
-	"cloud-storage-httpserver/args"
-	"cloud-storage-httpserver/model"
+	"cloud-storage-httpserver/service/tools"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/mitchellh/mapstructure"
-	"go.mongodb.org/mongo-driver/x/mongo/driver/uuid"
-	"net/http"
 )
 
 type HHH struct {
@@ -17,52 +13,74 @@ type HHH struct {
 }
 
 func UserTestPost(con *gin.Context) {
-	var a []model.File
-	file := model.File{}
-	a = append(a, file)
-	a = append(a, file)
-	a = append(a, file)
+	fieldRequired := map[string]bool{
+		"header": true,
+	}
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
+		return
+	}
+	accessToken := (*valueMap)["header"].(string)
+	fmt.Println(accessToken)
+	return
 	//getQueryAndReturn(con,"EEE")
-	requestID, _ := uuid.New()
-	var param map[string]interface{}
-	con.BindJSON(&param)
-	mapHHH := param["HHH"]
-	h := HHH{}
-	err1 := mapstructure.Decode(mapHHH, &h)
-	fmt.Println("exter err1")
-	fmt.Println(err1)
-	fmt.Println("exter h:")
-	fmt.Println(h)
-	con.JSON(http.StatusOK, gin.H{
-		"RequestID": requestID,
-		"Code":      args.CodeOK,
-	})
+	//requestID, _ := uuid.New()
+	//var param map[string]interface{}
+	//con.BindJSON(&param)
+	//mapHHH := param["HHH"]
+	//h := HHH{}
+	//err1 := mapstructure.Decode(mapHHH, &h)
+	//fmt.Println("exter err1")
+	//fmt.Println(err1)
+	//fmt.Println("exter h:")
+	//fmt.Println(h)
+	//con.JSON(http.StatusOK, gin.H{
+	//	"RequestID": requestID,
+	//	"Code":      args.CodeOK,
+	//})
 }
 
 func UserTestGet(con *gin.Context) {
-	requestID, _ := uuid.New()
-	var param model.Preference
-	err := con.BindJSON(&param)
-	fmt.Println("-----")
-	fmt.Println(err)
-	fmt.Println("-----")
+	fieldRequired := map[string]bool{
+		"header": true,
+	}
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
+		return
+	}
+	accessToken := (*valueMap)["header"].(string)
+	fmt.Println(accessToken)
+}
 
-	fmt.Println(param)
-	con.JSON(http.StatusOK, gin.H{
-		"RequestID": requestID,
-		"Code":      args.CodeOK,
-		"Data":      gin.H{},
-	})
+func HeaderTestPost(con *gin.Context) {
+	fieldRequired := map[string]bool{
+		"header": true,
+	}
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
+		return
+	}
+	accessToken := (*valueMap)["header"].(string)
+	fmt.Println(accessToken)
 }
 
 func CookieTestGet(con *gin.Context) {
-
-	cookie, err := con.Cookie("gin_cookie1")
-	fmt.Println("cookie:" + cookie)
-	if err != nil {
-		cookie = "NotSet"
-		con.SetCookie("gin_cookie2", "test", 3600, "/", "localhost", false, true)
+	fieldRequired := map[string]bool{
+		"gin_cookie1": true,
 	}
-	fmt.Printf("Cookie value: %s \n", cookie)
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
+		return
+	}
+	accessToken := (*valueMap)["gin_cookie1"].(string)
+	fmt.Println(accessToken)
+
+	//cookie, err := con.Cookie("gin_cookie1")
+	//fmt.Println("cookie:" + cookie)
+	//if err != nil {
+	//	cookie = "NotSet"
+	//	con.SetCookie("gin_cookie2", "test", 3600, "/", "localhost", false, true)
+	//}
+	//fmt.Printf("Cookie value: %s \n", cookie)
 
 }

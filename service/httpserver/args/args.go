@@ -2,6 +2,7 @@ package args
 
 import (
 	"bufio"
+	"cloud-storage-httpserver/service/tools"
 	"flag"
 	"fmt"
 	"io"
@@ -55,9 +56,13 @@ const (
 	HttpMethodGet             = "GET"
 	HttpMethodPost            = "POST"
 	HttpContentTypeUrlEncoded = "application/x-www-form-urlencoded"
-	HttpContentTypeJson       = "application/json"
+	HttpContentTypeFormData   = "multipart/form-data"
 	HttpContentTypeRaw        = "text/plain"
-	HttpContentTypeDataForm   = "multipart/form-data"
+	HttpContentTypeHTML       = "text/html"
+	HttpContentTypeJavascript = "application/javascript"
+	HttpContentTypeJson       = "application/json"
+	HttpContentTypeXML        = "application/xml"
+	HttpContentTypeMS         = "application/x-msdownload"
 )
 
 /* http body field const */
@@ -166,7 +171,10 @@ var (
 
 func LoadProperties() {
 	srcFile, err := os.OpenFile("./httpserver.properties", os.O_RDONLY, 0666)
-	defer srcFile.Close()
+	defer func(srcFile *os.File) {
+		err := srcFile.Close()
+		tools.PrintError(err)
+	}(srcFile)
 	if err != nil {
 		fmt.Println("The file not exits.")
 	} else {

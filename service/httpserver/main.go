@@ -21,6 +21,7 @@ func setupRouter(r *gin.Engine) {
 	r.POST("/testPost", controller.UserTestPost)
 	r.GET("/testGet", controller.UserTestGet)
 	r.GET("/cookie", controller.CookieTestGet)
+	r.POST("/header", controller.HeaderTestPost)
 
 	/* user function */
 	r.POST("/user/register", controller.UserRegister)
