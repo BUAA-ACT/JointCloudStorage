@@ -14,7 +14,7 @@
         <el-menu-item index="2-1"><i class="el-icon-folder-opened"></i>文件管理</el-menu-item>
         <el-menu-item index="3-1"><i class="el-icon-map-location"></i>数据分布</el-menu-item>
         <el-menu-item index="4-1"><i class="el-icon-guide"></i>存储迁移</el-menu-item>
-        <el-submenu index="0" v-if="userName === 'admin'">
+        <el-submenu index="0" v-if="isAdmin">
           <template slot="title">
             <i class="el-icon-user"></i>
             <span>管理中心</span>
@@ -43,7 +43,8 @@ export default {
         "2-1": "fileManagement",
         "3-1": "dataDistribution",
         "4-1": "dataMigration",
-        "0-1": "admin/addNewCloud"
+        "0-1": "admin/addNewCloud",
+        "0-2": "admin/voteForClouds"
       }
     };
   },
@@ -57,9 +58,6 @@ export default {
     }
   },
   computed: {
-    userName() {
-      return this.$store.state.name;
-    },
     activeEntry() {
       let currentRoute;
       Object.keys(this.navList).forEach(navListKey => {
@@ -68,6 +66,9 @@ export default {
         }
       });
       return currentRoute;
+    },
+    isAdmin() {
+      return true || this.$store.getters.isAdmin;
     }
   }
 };
