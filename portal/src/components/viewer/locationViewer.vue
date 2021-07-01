@@ -60,15 +60,7 @@ export default {
       // 把云的信息，转化为 位置信息和注释
       type: Function,
       default: Clouds => {
-        return Clouds.filter(item => {
-          console.log(this.clouds);
-          for (const cloud of this.clouds) {
-            if (cloud.CloudID === item.cloud_id) {
-              return false;
-            }
-          }
-          return true;
-        }).map(value => {
+        return Clouds.filter(item => !this.clouds.some(val => val.CloudID === item.cloud_id)).map(value => {
           return {
             name: value.cloud_id,
             value: value.location
@@ -195,13 +187,12 @@ export default {
         ]
       });
       window.onresize = () => {
-        console.log("resize");
         chart.resize();
       };
     },
     formatInActiveCloud(Clouds) {
       return Clouds.filter(item => {
-        console.log(this.clouds);
+        this.$log(this.clouds);
         // eslint-disable-next-line no-restricted-syntax
         return !this.clouds.some(value => {
           return value.CloudID === item.cloud_id;

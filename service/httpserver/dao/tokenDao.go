@@ -1,15 +1,17 @@
 package dao
 
 import (
-	. "cloud-storage-httpserver/model"
+	"cloud-storage-httpserver/model"
+	"cloud-storage-httpserver/service/tools"
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
-func (d *Dao) InsertVerifyCode(email string, code string) {
+func (d *Dao) InsertVerifyCode(email string, code string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	timeNow := time.Now()
 	upsert := true
@@ -23,7 +25,8 @@ func (d *Dao) InsertVerifyCode(email string, code string) {
 			{"verify_code_create_time", timeNow},
 		},
 	}}
-	_, _ = col.UpdateOne(context.TODO(), filter, update, opts)
+	_, err := col.UpdateOne(context.TODO(), filter, update, opts)
+	return !tools.PrintError(err)
 }
 
 func (d *Dao) VerifyEmail(email string, verifyCode string) bool {
@@ -40,16 +43,17 @@ func (d *Dao) VerifyEmail(email string, verifyCode string) bool {
 	return true
 }
 
-func (d *Dao) InsertAccessToken(token string, userId string) {
+func (d *Dao) InsertAccessToken(token string, userID string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	timeNow := time.Now()
-	accessToken := &AccessTokenCode{
+	accessToken := &model.AccessTokenCode{
 		AccessToken:           token,
-		UserId:                userId,
+		UserID:                userID,
 		AccessTokenCreateTime: timeNow,
 		AccessTokenModifyTime: timeNow,
 	}
-	_, _ = col.InsertOne(context.TODO(), accessToken)
+	_, err := col.InsertOne(context.TODO(), accessToken)
+	return !tools.PrintError(err)
 }
 
 func (d *Dao) CheckValid(token string) (string, bool) {
@@ -63,19 +67,20 @@ func (d *Dao) CheckValid(token string) (string, bool) {
 			{"access_token_modify_time", timeNow},
 		},
 	}}
-	var originToken AccessTokenCode
+	var originToken model.AccessTokenCode
 	err := col.FindOneAndUpdate(context.TODO(), filter, update).Decode(&originToken)
 	if err != nil {
-		fmt.Print(err)
+		fmt.Println("无效token")
 		return "", false
 	}
-	return originToken.UserId, true
+	return originToken.UserID, true
 }
 
-func (d *Dao) DeleteAccessToken(accessToken string) {
+func (d *Dao) DeleteAccessToken(accessToken string) (*mongo.DeleteResult, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"access_token": accessToken,
 	}
-	_, _ = col.DeleteMany(context.TODO(), filter)
+	result, err := col.DeleteMany(context.TODO(), filter)
+	return result, !tools.PrintError(err)
 }

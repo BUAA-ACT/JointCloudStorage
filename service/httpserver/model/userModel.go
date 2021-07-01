@@ -16,6 +16,8 @@ type Cloud struct {
 	Status       string  `json:"Status" bson:"status"`     // "UP" | "DOWN"
 	Location     string  `json:"Location" bson:"location"` // "116.381252,39.906569"
 	Address      string  `json:"Address" bson:"address"`
+	CloudName    string  `json:"CloudName" bson:"cloud_name"`
+	ProviderName string  `json:"ProviderName" bson:"provider_name"`
 }
 
 type Preference struct {
@@ -49,7 +51,7 @@ type AccessCredential struct {
 }
 
 type User struct {
-	UserId            string             `json:"UserId" bson:"user_id"`
+	UserID            string             `json:"UserID" bson:"user_id"`
 	Email             string             `json:"Email" bson:"email"`
 	Password          string             `json:"-" bson:"password"`
 	Nickname          string             `json:"Nickname" bson:"nickname"`
@@ -62,6 +64,7 @@ type User struct {
 	DataStats         DataStats          `json:"DataStats" bson:"data_stats"`
 	AccessCredentials []AccessCredential `json:"AccessCredentials" bson:"access_credentials"`
 	Status            string             `json:"Status" bson:"status"`
+	//TODO
 }
 
 func (user *User) UserHaveStoragePlan() bool {

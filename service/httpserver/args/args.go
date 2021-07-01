@@ -18,14 +18,14 @@ const (
 	// BadRequest
 	CodeUploadError            = 1400
 	CodeVerifyFail             = 1401
-	CodeInvalidToken           = 1402
+	CodeInvalidRole            = 1402
 	CodeFileNotExists          = 1403
 	CodeEmailNotExist          = 1404
 	CodeSameEmail              = 1405
 	CodeFieldNotExist          = 1406
 	CodeRegexWrong             = 1407
 	CodePasswordNotRight       = 1408
-	CodeTokenNotValid          = 1409
+	CodeInvalidAccessToken     = 1409
 	CodePreferenceNotExist     = 1410
 	CodeStoragePlanNotExist    = 1411
 	CodeJsonError              = 1412
@@ -33,6 +33,9 @@ const (
 	CodeFileNotExist           = 1414
 	CodeAlreadyHaveStoragePlan = 1415
 	CodeForbiddenTransport     = 1416
+	CodeDeleteNothing          = 1417
+	CodeCloudIDNotExist        = 1418
+	CodeSameCloudID            = 1419
 
 	// user status code
 	CodeStatusNormal       = 1501
@@ -52,14 +55,19 @@ const (
 	HttpMethodGet             = "GET"
 	HttpMethodPost            = "POST"
 	HttpContentTypeUrlEncoded = "application/x-www-form-urlencoded"
-	HttpContentTypeJson       = "application/json"
+	HttpContentTypeFormData   = "multipart/form-data"
 	HttpContentTypeRaw        = "text/plain"
-	HttpContentTypeDataForm   = "multipart/form-data"
+	HttpContentTypeHTML       = "text/html"
+	HttpContentTypeJavascript = "application/javascript"
+	HttpContentTypeJson       = "application/json"
+	HttpContentTypeXML        = "application/xml"
+	HttpContentTypeMS         = "application/x-msdownload"
 )
 
 /* http body field const */
 const (
 	FieldWordAccessToken    = "AccessToken"
+	FieldWordAccessKey      = "AccessKey"
 	FieldWordEmail          = "Email"
 	FieldWordPassword       = "Password"
 	FieldWordNickname       = "Nickname"
@@ -81,16 +89,22 @@ const (
 	FieldWordNewFileName    = "NewFileName"
 	FieldWordStoragePlan    = "StoragePlan"
 	FieldWordTaskID         = "TaskID"
+	FieldWordStatus         = "Status"
+	FieldWordCloud          = "Cloud"
+	FieldWordCloudID        = "CloudID"
+	FieldWordVoteResult     = "VoteResult"
+	FieldWordComment        = "Comment"
 )
 
 /* user const */
 const (
 	/* user role */
-	UserAdminRole    = "Admin"
-	UserSuperRole    = "Super"
-	UserOrdinaryRole = "Ordinary"
+	UserAdminRole    = "ADMIN"
+	UserSuperRole    = "SUPER"
+	UserOrdinaryRole = "ORDINARY"
 	UserHostRole     = "HOST"
 	UserGuestRole    = "GUEST"
+	UserAllRole      = "ALL"
 
 	/* user status */
 	UserVerifyStatus       = "VERIFYING"
@@ -148,16 +162,21 @@ var (
 	TaskCollection            = flag.String("TaskCollection", "", "task collection name")
 	VerifyCodeCollection      = flag.String("VerifyCodeCollection", "", "verify code collection name")
 	MigrationAdviceCollection = flag.String("MigrationAdviceCollection", "", "migration advice collection name")
+	CloudCollection           = flag.String("CloudCollection", "", "cloud collection name")
+	AccessKeyCollection       = flag.String("AccessKeyCollection", "", "access key collection name")
 	EncryptKey                = flag.String("EncryptKey", "", "password encrypt key for AES")
 	CloudID                   = flag.String("CloudID", "", "server's cloud id")
 )
 
-func LoadProperties(propertiesFilePath string) {
-	if propertiesFilePath == "" {
-		propertiesFilePath = "./httpserver.properties"
-	}
-	srcFile, err := os.OpenFile(propertiesFilePath, os.O_RDONLY, 0666)
-	defer srcFile.Close()
+func LoadProperties(configFilePath string) {
+	srcFile, err := os.OpenFile(configFilePath, os.O_RDONLY, 0666)
+	defer func(srcFile *os.File) {
+		err := srcFile.Close()
+		if err != nil {
+			fmt.Println("出错啦！错误信息为：")
+			fmt.Println(err)
+		}
+	}(srcFile)
 	if err != nil {
 		fmt.Println("The file not exits.")
 	} else {
@@ -219,6 +238,8 @@ func LoadProperties(propertiesFilePath string) {
 	*VerifyCodeCollection = properties["VerifyCodeCollection"]
 	*TaskCollection = properties["TaskCollection"]
 	*MigrationAdviceCollection = properties["MigrationAdviceCollection"]
+	*CloudCollection = properties["CloudCollection"]
+	*AccessKeyCollection = properties["AccessKeyCollection"]
 	*EncryptKey = properties["EncryptKey"]
 	*CloudID = properties["CloudID"]
 }

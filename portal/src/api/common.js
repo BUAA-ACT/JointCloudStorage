@@ -1,4 +1,5 @@
 import request from "@/utils/request";
+import { Message } from "element-ui";
 
 // const BACKEND_URL = "http://localhost:8081";
 export default {
@@ -42,6 +43,44 @@ export default {
       url: `/user/logout`,
       method: "post",
       data: { AccessToken }
+    });
+  },
+  changeUserInfo(field, newVal, AccessToken) {
+    let err = "";
+    if (AccessToken === undefined) {
+      err = "获取AccessToken失败！";
+      Message.error(err);
+      return Promise.reject(err);
+    }
+    let Field = "";
+    switch (field) {
+      case "username":
+      case "password":
+        Field = field.charAt(0).toUpperCase() + field.slice(1);
+        break;
+      default:
+        err = `未知字段：${field}`;
+        Message.error(err);
+        return Promise.reject(err);
+    }
+    return request({
+      url: `/user/changeUser${Field}`,
+      method: "post",
+      data: {
+        AccessToken,
+        [`New${Field}`]: newVal
+      }
+    });
+  },
+  changePassword(OriginPassword, NewPassword, AccessToken) {
+    return request({
+      url: `/user/changePassword`,
+      method: "post",
+      data: {
+        AccessToken,
+        OriginPassword,
+        NewPassword
+      }
     });
   }
 };

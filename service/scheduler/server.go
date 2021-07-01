@@ -560,7 +560,7 @@ func GetAllCloudsStatus(c *gin.Context) {
 
 	//查询所有的clouds
 	clouds, err := db.GetAllClouds()
-	logInfo("clouds:",requestID,clouds)
+	logInfo("clouds:", requestID, clouds)
 	if err != nil {
 		//查询出错，报告错误
 		logError(err, requestID, "query for all clouds status failed")
@@ -577,7 +577,12 @@ func GetAllCloudsStatus(c *gin.Context) {
 		clouds[index].AccessKey = ""
 		clouds[index].SecretKey = ""
 	}
-	c.JSON(http.StatusOK, clouds)
+	c.JSON(http.StatusOK, gin.H{
+		"RequestID": requestID,
+		"Code":      codeOK,
+		"Msg":       errorMsg[codeOK],
+		"Data":      clouds,
+	})
 	return
 
 }
@@ -585,7 +590,7 @@ func GetAllCloudsStatus(c *gin.Context) {
 func PostUpdateClouds(c *gin.Context) {
 	requestID := uuid.New().String()
 	//get the clouds
-	logInfo("UpdateClouds:",requestID,c)
+	logInfo("UpdateClouds:", requestID, c)
 	var cloud dao.Cloud
 	if err := c.ShouldBindJSON(&cloud); err != nil {
 		//can't get the clouds
@@ -616,5 +621,5 @@ func PostUpdateClouds(c *gin.Context) {
 		"Code":      codeOK,
 		"Msg":       errorMsg[codeOK],
 	})
-	logInfo("update the clouds succeeded!", requestID,cloud)
+	logInfo("update the clouds succeeded!", requestID, cloud)
 }

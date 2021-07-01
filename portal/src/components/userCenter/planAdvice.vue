@@ -61,7 +61,7 @@ export default {
       this.newPlanAvailable = false;
       Plan.getNewAdvice().then(resp => {
         if (resp) {
-          if (resp.Advices.length > 0) {
+          if (resp.Advices && resp.Advices.length > 0) {
             [this.Advices] = resp.Advices;
             this.newPlanAvailable = true;
           } else {

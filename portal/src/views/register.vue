@@ -109,12 +109,7 @@
           </el-checkbox>
         </el-tooltip>
 
-        <el-button
-          :loading="loading"
-          :disabled="!agreeCheck"
-          type="primary"
-          style="width:100%;margin-bottom:30px;"
-          @click.native.prevent="handleRegister"
+        <el-button :loading="loading" :disabled="!agreeCheck" type="primary" style="width:100%;margin-bottom:30px;" @click="handleRegister"
           >注册</el-button
         >
 
@@ -125,7 +120,7 @@
         </div>
       </el-form>
     </div>
-<!--    <Footer type="mini" />-->
+    <!--    <Footer type="mini" />-->
   </div>
 </template>
 
@@ -134,7 +129,7 @@ import Common from "@/api/common";
 
 export default {
   name: "Register",
-  components: {  },
+  components: {},
   data() {
     return {
       regForm: {
@@ -227,22 +222,29 @@ export default {
         this.loading = false;
         return;
       }
-      Common.register(this.regForm)
-        .then(resp => {
-          if (resp) {
-            console.log(resp);
-            this.$store.dispatch("login", {
-              username: this.regForm.Email,
-              password: this.regForm.Password
+      this.$refs.registerForm
+        .validate()
+        .then(() => {
+          Common.register(this.regForm)
+            .then(resp => {
+              if (resp) {
+                // console.log(resp);
+                this.$store.dispatch("login", {
+                  username: this.regForm.Email,
+                  password: this.regForm.Password
+                });
+                this.$message.success("注册成功");
+                this.$router.push({ path: this.redirect || "/" });
+              }
+            })
+            .catch(() => {
+              // console.log(e);
             });
-            this.$message.success("注册成功");
-            this.$router.push({ path: this.redirect || "/" });
-          }
+          this.loading = false;
         })
-        .catch(e => {
-          console.log(e);
+        .catch(() => {
+          this.loading = false;
         });
-      this.loading = false;
     }
   }
 };

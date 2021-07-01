@@ -23,6 +23,7 @@ func setupRouter(r *gin.Engine) {
 	r.POST("/testPost", controller.UserTestPost)
 	r.GET("/testGet", controller.UserTestGet)
 	r.GET("/cookie", controller.CookieTestGet)
+	r.POST("/header", controller.HeaderTestPost)
 
 	/* user function */
 	r.POST("/user/register", controller.UserRegister)
@@ -35,6 +36,12 @@ func setupRouter(r *gin.Engine) {
 	r.POST("/user/changeNickname", controller.UserChangeNickname)
 	r.POST("/user/getUserInfo", controller.UserGetInfo)
 	r.POST("/user/changeUserPreference", controller.UserSetPreference)
+	r.POST("/user/newKey", controller.UserAddKey)
+	r.POST("/user/getUserKeys", controller.UserGetKeys)
+	r.POST("/user/deleteKey", controller.UserDeleteKey)
+	r.POST("/user/changeKeyStatus", controller.UserChangeKeyStatus)
+	r.POST("/user/changeKeyComment", controller.UserChangeKeyComment)
+	r.POST("/user/remakeKey", controller.UserRemakeKey)
 	//r.POST("/user/uploadAvatar",controller.UserUploadAvatar)
 
 	/* plan function */
@@ -55,6 +62,13 @@ func setupRouter(r *gin.Engine) {
 
 	/* task function */
 	r.POST("/task/getTask", controller.UserGetTask)
+
+	/* admin & cloud function */
+	r.POST("/cloud/getAllClouds", controller.AdminGetAllClouds)
+	r.POST("/cloud/newCloud", controller.AdminAddCloud)
+	r.POST("/cloud/changeCloudInfo", controller.AdminChangeCloudInfo)
+	r.POST("/cloud/vote", controller.AdminVoteForCloud)
+	r.POST("/cloud/getVoteRequests", controller.AdminGetVoteRequests)
 }
 
 func Cors() gin.HandlerFunc {
@@ -95,8 +109,8 @@ func main() {
 		},
 	}
 	app := cli.App{
-		Name:    "Jcs-Httpserver",
-		Usage:   "Httpserver backend for JcsPan",
+		Name:  "Jcs-Httpserver",
+		Usage: "Httpserver backend for JcsPan",
 		Authors: []*cli.Author{&cli.Author{
 			Name:  "Zhang Junhua",
 			Email: "zhangjh@mail.act.buaa.edu.cn",

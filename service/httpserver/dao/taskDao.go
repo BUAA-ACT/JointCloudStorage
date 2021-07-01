@@ -7,14 +7,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (d *Dao) GetTask(taskId string, userId string, isSingle bool) (*[]model.Task, bool) {
+func (d *Dao) GetTask(taskId string, userID string, isSingle bool) (*[]model.Task, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	var filter interface{}
 	filterSingle := bson.M{
 		"task_id": taskId,
 	}
 	filterAll := bson.M{
-		"user_id": userId,
+		"user_id": userID,
 	}
 	if isSingle {
 		filter = filterSingle

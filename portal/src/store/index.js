@@ -6,6 +6,8 @@ import user from "@/utils/user";
 
 Vue.use(Vuex);
 
+const ROLE_ADMIN = "ADMIN";
+
 // const store = new Vuex.Store({
 export default new Vuex.Store({
   state: {
@@ -18,7 +20,8 @@ export default new Vuex.Store({
     dataStats: {
       Volume: 0
     },
-    roles: []
+    role: [],
+    ready: false
   },
   getters: {
     token: state => {
@@ -50,7 +53,13 @@ export default new Vuex.Store({
         };
       });
       return { Volume, cloudsDetails };
-    }
+    },
+    haveStoragePlan: state => state.storagePlan.N > 0,
+    preference: state => state.preference,
+    storagePlan: state => state.storagePlan,
+    ready: state => state.ready,
+    role: state => state.role,
+    isAdmin: state => state.role === ROLE_ADMIN
   },
   mutations: {
     SET_TOKEN: (state, token) => {
@@ -76,6 +85,7 @@ export default new Vuex.Store({
       state.status = status;
     },
     RESET_ALL: state => {
+      state.ready = false;
       state.token = null;
       removeToken();
       state.name = null;
@@ -84,6 +94,12 @@ export default new Vuex.Store({
       state.storagePlan = {};
       state.dataStats = {};
       state.status = null;
+    },
+    SET_READY: (state, ready) => {
+      state.ready = ready;
+    },
+    SET_ROLE: (state, role) => {
+      state.role = role;
     }
   },
   actions: {
@@ -110,13 +126,15 @@ export default new Vuex.Store({
         }
         commit("SET_TOKEN", token);
         await Common.getUserInfo(token).then(data => {
-          const { Email, Nickname, Preference, StoragePlan, DataStats, Status } = data.UserInfo;
+          const { Email, Nickname, Preference, StoragePlan, DataStats, Status, Role } = data.UserInfo;
           commit("SET_NAME", Email);
           commit("SET_NICKNAME", Nickname);
           commit("SET_PREFERENCE", Preference);
           commit("SET_STORAGE_PLAN", StoragePlan);
           commit("SET_DATA_STATS", DataStats);
           commit("SET_STATUS", Status);
+          commit("SET_READY", true);
+          commit("SET_ROLE", Role);
         });
       });
     },

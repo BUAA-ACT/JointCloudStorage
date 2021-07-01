@@ -82,6 +82,13 @@ func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
 		fileDatabase = model.NewInMemoryFileDatabase()
 	}
 	processor := controller.TaskProcessor{}
+	// 初始化 Dao
+	var err error
+	processor.Dao, err = model.InitDao()
+	if err != nil {
+		util.Log(logrus.FatalLevel, "init Processor", "error init mongodb connection", "Dao", "err", err.Error())
+	}
+
 	processor.SetTaskStorage(storage)
 	// 初始化存储数据库
 	processor.SetStorageDatabase(clientDatabase)

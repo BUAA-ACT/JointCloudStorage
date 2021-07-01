@@ -2,7 +2,7 @@
   <div class="dashboard-container">
     <HeadNav :mini="true" />
     <UserCenter />
-<!--    <Footer />-->
+    <!--    <Footer />-->
   </div>
 </template>
 
