@@ -513,6 +513,27 @@ func (d *Dao)GetVoteCloud(id string) (VoteCloud,error){
 	}
 }
 
+//Get all voteCloud in collection voteCloud
+func (d *Dao)GetAllVoteCloud()([]VoteCloud,error){
+	col:=d.client.Database(d.database).Collection(d.cloudCollection)
+
+	var result []VoteCloud
+	cur,err:=col.Find(context.TODO(),bson.M{})
+	defer cur.Close(context.TODO())
+	if err!=nil{
+		return result,err
+	}
+
+	for cur.Next(context.TODO()){
+		var cloud VoteCloud
+		if err=cur.Decode(&cloud);err!=nil {
+			return result, err
+		}
+		result= append(result, cloud)
+	}
+	return result,nil
+}
+
 //Get the vote number of the cloud with id
 func (d *Dao)GetVoteNumber(id string)(int, error){
 	col:=d.client.Database(d.database).Collection(d.cloudCollection)

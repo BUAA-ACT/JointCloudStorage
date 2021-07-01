@@ -2,11 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"shaoliyin.me/jcspan/dao"
+	"shaoliyin.me/jcspan/newcloud"
 )
 
 const (
@@ -31,9 +33,10 @@ var (
 	addrMap = make(map[string]string)
 )
 
-func flagPrase(env string) {
+func FlagPrase(env string) {
 	if env == "debug" {
 		flagMongo=flag.String("mongo", "mongodb://192.168.105.8:20100", "mongodb address")
+		flagEnv=flag.String("env","dev","Database name used for Clouds storage.")
 	}
 	flag.Parse()
 }
@@ -80,13 +83,14 @@ func NewRouter(r *gin.Engine) {
 }
 
 func main() {
-	flagPrase("")
+	fmt.Println("this is main func")
+	FlagPrase("")
 	Init()
 	log.Infoln("Starting scheduler", Version)
 
 	r := gin.Default()
 	NewRouter(r)
-
+	newcloud.Router(r,*flagMongo,*flagEnv,*flagCloudID)
 	go reSchedule(*flagRescheduleInterval)
 	go heartbeat(*flagHeartbeatInterval)
 

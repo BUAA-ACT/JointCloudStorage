@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Router(r *gin.Engine, mongo, databasename, cid string)error{
-	if err:=NewCloudInit(mongo,databasename,cid);err!=nil{
+func Router(r *gin.Engine, mongo, databasename, cid,envMod string)error{
+	if err:=NewCloudInit(mongo,databasename,cid,envMod);err!=nil{
 		return err
 	}
 
