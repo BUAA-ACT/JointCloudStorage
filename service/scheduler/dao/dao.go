@@ -37,6 +37,8 @@ type Cloud struct {
 	Status       string  `bson:"status"`
 	Location     string  `bson:"location"`
 	Address      string  `bson:"address"`
+	CloudName    string  `bson:"cloud_name"`
+	ProviderName string  `bson:"provider_name"`
 }
 
 type User struct {
@@ -170,7 +172,7 @@ func (d *Dao) UpdateCloud(cloud Cloud) error {
 				"traffic_price": cloud.TrafficPrice,
 				"availability":  cloud.Availability,
 				"status":        cloud.Status,
-				"location":		 cloud.Location,
+				"location":      cloud.Location,
 			},
 		},
 	)
@@ -244,13 +246,13 @@ func (d *Dao) GetCloud(cid string) (Cloud, error) {
 	return cloud, err
 }
 
-func (d * Dao)GetCloudNum()(int,error){
-	col:=d.client.Database(d.database).Collection(d.cloudCollection)
-	num,err:=col.CountDocuments(context.TODO(),bson.D{})
-	if err!=nil{
-		return 0,err
-	}else{
-		return int(num),nil
+func (d *Dao) GetCloudNum() (int, error) {
+	col := d.client.Database(d.database).Collection(d.cloudCollection)
+	num, err := col.CountDocuments(context.TODO(), bson.D{})
+	if err != nil {
+		return 0, err
+	} else {
+		return int(num), nil
 	}
 }
 func (d *Dao) GetFile(fid string) (File, error) {
@@ -323,7 +325,6 @@ func (d *Dao) InsertCloud(cloud Cloud) error {
 	}
 	return nil
 }
-
 
 func (d *Dao) InsertUser(user User) error {
 	col := d.client.Database(d.database).Collection(d.userCollection)
@@ -442,10 +443,10 @@ func (d *Dao) DeleteUser(uid string) error {
  * 下面函数用于操作投票类型voteCloud
  */
 type VoteCloud struct {
-	Id      string		`bson:"id" json:"id"`
-	Cloud   Cloud	`bson:"cloud" json:"cloud"`
-	VoteNum int		`bson:"vote_num" json:"vote_num"`
-	Address string	`bson:"address" json:"address"`
+	Id      string `bson:"id" json:"id"`
+	Cloud   Cloud  `bson:"cloud" json:"cloud"`
+	VoteNum int    `bson:"vote_num" json:"vote_num"`
+	Address string `bson:"address" json:"address"`
 }
 
 func (d *Dao) InsertVoteCloud(cloud VoteCloud) error {
@@ -461,68 +462,66 @@ func (d *Dao) InsertVoteCloud(cloud VoteCloud) error {
 }
 
 //get the number of clouds whose id is cid
-func (d *Dao)CloudsCount(cid string)(int64,error){
-	col:=d.client.Database(d.database).Collection(d.cloudCollection)
-	count,err:=col.CountDocuments(context.TODO(),bson.M{"id": cid})
-	if err!=nil{
-		return count,err
-	}else{
-		return count,nil
+func (d *Dao) CloudsCount(cid string) (int64, error) {
+	col := d.client.Database(d.database).Collection(d.cloudCollection)
+	count, err := col.CountDocuments(context.TODO(), bson.M{"id": cid})
+	if err != nil {
+		return count, err
+	} else {
+		return count, nil
 	}
 }
 
 //delete the cloud
-func (d *Dao)DeleteVoteCloud(id string)error{
-	col:=d.client.Database(d.database).Collection(d.cloudCollection)
+func (d *Dao) DeleteVoteCloud(id string) error {
+	col := d.client.Database(d.database).Collection(d.cloudCollection)
 
-	_,err:=col.DeleteOne(context.TODO(),bson.M{"id":id})
-	if err!=nil{
+	_, err := col.DeleteOne(context.TODO(), bson.M{"id": id})
+	if err != nil {
 		return err
-	}else{
+	} else {
 		return nil
 	}
 }
 
 //add vote number
-func (d *Dao)AddVoteNum(vote int,id string)(int,error){
-	col:=d.client.Database(d.database).Collection(d.cloudCollection)
+func (d *Dao) AddVoteNum(vote int, id string) (int, error) {
+	col := d.client.Database(d.database).Collection(d.cloudCollection)
 
-	res,err:=col.UpdateOne(
+	res, err := col.UpdateOne(
 		context.TODO(),
-		bson.M{"id":id},
+		bson.M{"id": id},
 		bson.M{
-			"$inc":bson.M{"vote_num":vote},
+			"$inc": bson.M{"vote_num": vote},
 		})
-	if err!=nil{
-		return int(res.ModifiedCount),err
-	}else{
-		return int(res.ModifiedCount),nil
+	if err != nil {
+		return int(res.ModifiedCount), err
+	} else {
+		return int(res.ModifiedCount), nil
 	}
 }
 
 //Get struct voteCloud by id
-func (d *Dao)GetVoteCloud(id string) (VoteCloud,error){
-	col:=d.client.Database(d.database).Collection(d.cloudCollection)
+func (d *Dao) GetVoteCloud(id string) (VoteCloud, error) {
+	col := d.client.Database(d.database).Collection(d.cloudCollection)
 
 	var result VoteCloud
-	err:= col.FindOne(context.TODO(), bson.M{"id": id}).Decode(&result)
-	if err!=nil{
-		return result,err
-	}else{
-		return result,nil
+	err := col.FindOne(context.TODO(), bson.M{"id": id}).Decode(&result)
+	if err != nil {
+		return result, err
+	} else {
+		return result, nil
 	}
 }
 
 //Get the vote number of the cloud with id
-func (d *Dao)GetVoteNumber(id string)(int, error){
-	col:=d.client.Database(d.database).Collection(d.cloudCollection)
+func (d *Dao) GetVoteNumber(id string) (int, error) {
+	col := d.client.Database(d.database).Collection(d.cloudCollection)
 	var result VoteCloud
-	err:= col.FindOne(context.TODO(), bson.M{"id": id}).Decode(&result)
-	if err!=nil{
-		return -1,err
-	}else{
-		return result.VoteNum,nil
+	err := col.FindOne(context.TODO(), bson.M{"id": id}).Decode(&result)
+	if err != nil {
+		return -1, err
+	} else {
+		return result.VoteNum, nil
 	}
 }
-
-
