@@ -90,7 +90,7 @@ func main() {
 
 	r := gin.Default()
 	NewRouter(r)
-	newcloud.Router(r,*flagMongo,*flagEnv,*flagCloudID)
+	newcloud.Router(r,*flagMongo,*flagEnv,*flagCloudID,"production")
 	go reSchedule(*flagRescheduleInterval)
 	go heartbeat(*flagHeartbeatInterval)
 
