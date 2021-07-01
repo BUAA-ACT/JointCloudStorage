@@ -9,7 +9,6 @@ require (
 	github.com/go-zookeeper/zk v1.0.2
 	github.com/golang/protobuf v1.3.5 // indirect
 	github.com/google/uuid v1.2.0
-	github.com/magefile/mage v1.10.0 // indirect
 	github.com/sethvargo/go-password v0.2.0
 	github.com/sirupsen/logrus v1.8.1
 	go.mongodb.org/mongo-driver v1.4.6
