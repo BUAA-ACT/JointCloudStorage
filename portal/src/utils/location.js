@@ -25,14 +25,14 @@ export default {
    * @param {string} location `${longitude},${latitude}`
    * @returns {string}
    */
-  convertToCityName(location) {
+  async convertToCityName(location) {
     const coordinate = location.split(",");
     const [lng, lat] = coordinate;
     const map = new BMap.Map("allmap");
     const point = new BMap.Point(lng, lat);
     const gc = new BMap.Geocoder();
     let ret = "";
-    gc.getLocation(point, rs => {
+    await gc.getLocation(point, rs => {
       const addComp = rs.addressComponents;
       ret = `${addComp.province}, ${addComp.city}`;
     });
