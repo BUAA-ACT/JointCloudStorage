@@ -18,6 +18,8 @@ var (
 	TaskDao            *Dao
 	VerifyCodeDao      *Dao
 	MigrationAdviceDao *Dao
+	CloudDao           *Dao
+	AccessKeyDao       *Dao
 )
 
 type Dao struct {
@@ -77,6 +79,14 @@ func ConnectInitDao() {
 		log.Fatal(err)
 	}
 	MigrationAdviceDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.MigrationAdviceCollection)
+	if err != nil {
+		log.Fatal(err)
+	}
+	CloudDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.CloudCollection)
+	if err != nil {
+		log.Fatal(err)
+	}
+	AccessKeyDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.AccessKeyCollection)
 	if err != nil {
 		log.Fatal(err)
 	}

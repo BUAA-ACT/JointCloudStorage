@@ -10,7 +10,7 @@ type VerifyCode struct {
 
 type AccessTokenCode struct {
 	AccessToken           string    `json:"AccessToken" bson:"access_token"`
-	UserId                string    `json:"UserId" bson:"user_id"`
-	AccessTokenCreateTime time.Time `json:"AccessTokenCreateTime" bson:"access_token_create_date"`
+	UserID                string    `json:"UserID" bson:"user_id"`
+	AccessTokenCreateTime time.Time `json:"AccessTokenCreateTime" bson:"access_token_create_time"`
 	AccessTokenModifyTime time.Time `json:"AccessTokenModifyTime" bson:"access_token_modify_time"`
 }

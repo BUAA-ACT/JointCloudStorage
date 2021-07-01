@@ -20,19 +20,13 @@ func UserGetTask(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	taskId := (*valueMap)[args.FieldWordTaskID].(string)
 	taskIdExist := (*existMap)[args.FieldWordTaskID]
-	userId, valid := UserCheckAccessToken(con, accessToken)
+	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
 
-	tasks, success := dao.TaskDao.GetTask(taskId, userId, taskIdExist)
-	if !success {
-		// error with find
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeDatabaseError,
-			"msg":  "数据库错误",
-			"data": gin.H{},
-		})
+	tasks, getTaskSuccess := dao.TaskDao.GetTask(taskId, userID, taskIdExist)
+	if checkDaoSuccess(con, getTaskSuccess) {
 		return
 	}
 	// check if it is correct user
