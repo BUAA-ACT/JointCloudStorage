@@ -85,7 +85,7 @@ export default {
         SecretKey: "",
         StoragePrice: 0.01,
         TrafficPrice: 0.01,
-        Availability: 0.995,
+        Availability: 0.99995,
         Status: "DOWN",
         Location: "",
         Address: "",
@@ -94,7 +94,7 @@ export default {
         Bucket: ""
       },
       confirmVisible: false,
-      precision: 0.01,
+      precision: 2,
       availability: [0.99995, 0.9995, 0.995, 0.99, 0.95]
     };
   },
