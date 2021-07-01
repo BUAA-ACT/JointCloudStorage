@@ -1,64 +1,54 @@
 <template>
-  <div>
+  <div class="confirm-container">
     <el-row>
       <el-col>
-        <el-card shadow="always" class="requirementForm kuberx">
-          <el-form ref="form" :model="form" label-width="100px" label-position="left">
-            <el-form-item label="存储服务商">
-              <el-radio-group v-model="form.resource">
-                <el-radio-button label="阿里"></el-radio-button>
-                <el-radio-button label="华为"></el-radio-button>
-                <el-radio-button label="腾讯"></el-radio-button>
-                <el-radio-button label="百度"></el-radio-button>
-                <el-radio-button label="金山"></el-radio-button>
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item label="云存储名称">
-              <el-input v-model="form.cloudName" class="input"></el-input>
-            </el-form-item>
-            <el-form-item label="云际 id">
-              <el-input v-model="form.cloudId" class="input"></el-input>
-            </el-form-item>
-            <el-divider></el-divider>
-            <el-form-item label="存储价格">
-              <el-input v-model="form.storagePrice" class="input"></el-input>
-              元/GB
-            </el-form-item>
-            <el-form-item label="流量价格">
-              <el-input v-model="form.trafficPrice" class="input"></el-input>
-              元/GB
-            </el-form-item>
-            <el-form-item label="可用性">
-              <el-radio-group v-model="form.availability">
-                <el-radio-button label="0.99995"></el-radio-button>
-                <el-radio-button label="0.9995"></el-radio-button>
-                <el-radio-button label="0.995"></el-radio-button>
-              </el-radio-group>
-            </el-form-item>
-            <el-divider></el-divider>
-            <el-form-item label="存储接入点">
-              https://
-              <el-input v-model="form.endpoint" class="input"></el-input>
-            </el-form-item>
-            <el-form-item label="accessKey">
-              <el-input v-model="form.accessKey" class="input"></el-input>
-            </el-form-item>
-            <el-form-item label="secretKey">
-              <el-input v-model="form.secretKey" class="input"></el-input>
-            </el-form-item>
-            <el-form-item label="bucket 名称">
-              <el-input v-model="form.bucket" class="input"></el-input>
-            </el-form-item>
-            <el-divider></el-divider>
-            <el-form-item label="云际地址">
-              https://
-              <el-input v-model="form.address" class="input"></el-input>
-            </el-form-item>
-            <el-form-item label="地理位置"> </el-form-item>
-            <el-button type="primary">点击提交</el-button>
-            <el-button type="info" plain v-on:click="goBack"> 返回修改 </el-button>
-          </el-form>
-        </el-card>
+        <el-form ref="form" :model="cloud" label-width="100px" label-position="left">
+          <el-form-item label="存储服务商">
+            <el-input :value="cloud.resource" class="read-only"> </el-input>
+          </el-form-item>
+          <el-form-item label="云存储名称">
+            <el-input :value="cloud.cloudName" class="read-only"></el-input>
+          </el-form-item>
+          <el-form-item label="云际 id">
+            <el-input :value="cloud.cloudId" class="read-only"></el-input>
+          </el-form-item>
+          <el-divider></el-divider>
+          <el-form-item label="存储价格">
+            <el-input :value="cloud.storagePrice" class="read-only"></el-input>
+            元/GB
+          </el-form-item>
+          <el-form-item label="流量价格">
+            <el-input :value="cloud.trafficPrice" class="read-only"></el-input>
+            元/GB
+          </el-form-item>
+          <el-form-item label="可用性">
+            <el-input :value="cloud.availability" class="read-only"> </el-input>
+          </el-form-item>
+          <el-divider></el-divider>
+          <el-form-item label="存储接入点">
+            https://
+            <el-input :value="cloud.endpoint" class="read-only"></el-input>
+          </el-form-item>
+          <el-form-item label="accessKey">
+            <el-input :value="cloud.accessKey" class="read-only"></el-input>
+          </el-form-item>
+          <el-form-item label="secretKey">
+            <el-input :value="cloud.secretKey" class="read-only"></el-input>
+          </el-form-item>
+          <el-form-item label="bucket 名称">
+            <el-input :value="cloud.bucket" class="read-only"></el-input>
+          </el-form-item>
+          <el-divider></el-divider>
+          <el-form-item label="云际地址">
+            https://
+            <el-input :value="cloud.address" class="read-only"></el-input>
+          </el-form-item>
+          <el-form-item label="地理位置">
+            <el-input :value="cloud.location" class="read-only"></el-input>
+          </el-form-item>
+          <el-button type="primary" @click="submit" :loading="loading">点击提交</el-button>
+          <el-button type="info" plain @click="goBack"> 返回修改 </el-button>
+        </el-form>
       </el-col>
     </el-row>
     <el-row> </el-row>
@@ -66,52 +56,70 @@
 </template>
 
 <script>
+import Clouds from "@/api/clouds";
+
 export default {
   name: "addNewCloudConfirm",
+  props: {
+    cloud: {
+      type: Object,
+      required: true,
+      default() {
+        return {
+          storagePrice: "0.01",
+          cloudName: "",
+          cloudId: "",
+          location: "",
+          resource: "阿里",
+          trafficPrice: "0.01",
+          availability: "0.9995",
+          endPoint: "",
+          accessKey: "",
+          secretKey: "",
+          bucket: "",
+          address: ""
+        };
+      }
+    }
+  },
   data() {
     return {
-      form: null
+      loading: false
     };
-  },
-  created() {
-    this.form = this.$route.params.formData;
   },
   methods: {
     goBack() {
-      this.$router.push({ name: "addNewCloud", params: { formData: this.form } });
+      this.$emit("cancel");
+    },
+    async submit() {
+      this.loading = true;
+      Clouds.addNewCloud(this.cloud)
+        .then(resp => {
+          if (resp) {
+            this.$notify.success("成功添加云！请等待投票……");
+            this.$emit("success");
+          } else {
+            this.$emit("fail");
+          }
+          this.loading = false;
+        })
+        .catch(() => {
+          this.loading = false;
+        });
     }
   }
 };
 </script>
 
 <style scoped lang="scss">
-.kuberx {
-  text-align: left;
-  padding-top: 20px;
-
-  .el-icon-question {
-    color: #dddddd;
-    margin: 0 5px;
-  }
-
-  table {
-    border-spacing: 0;
-
-    td {
-      white-space: nowrap;
-    }
-  }
+.confirm-container {
+  width: 25vw;
 }
-
-.input {
+.read-only {
   width: 200px;
-}
-
-.el-input__inner {
-  width: 50px;
-}
-
-.formTable {
-  white-space: nowrap;
+  /deep/ .el-input__inner {
+    border: none;
+    padding: 0;
+  }
 }
 </style>

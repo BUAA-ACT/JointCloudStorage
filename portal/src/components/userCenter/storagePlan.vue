@@ -161,6 +161,11 @@ export default {
     havePlan() {
       return this.$store.getters.haveStoragePlan;
     }
+  },
+  beforeMount() {
+    if (this.havePlan) {
+      this.getStoragePlans();
+    }
   }
 };
 </script>

@@ -1,7 +1,11 @@
 import request from "@/utils/request";
-
+import store from "@/store";
 // 云厂商接口
 export default {
+  /**
+   * @deprecated
+   * @see getAllClouds()
+   */
   getAllCloud() {
     return {
       clouds: [
@@ -101,6 +105,69 @@ export default {
       url: "/score/page",
       method: "get",
       params: query
+    });
+  },
+  /**
+   * `新`获取所有云的接口
+   * @see http://gitlab.act.buaa.edu.cn/jointcloudstorage/jcspan/-/wikis/httpserver-%E8%AE%BE%E8%AE%A1%E6%96%87%E6%A1%A3
+   */
+  getAllClouds() {
+    return request({
+      url: `/cloud/getAllClouds`,
+      method: "post",
+      data: {
+        AccessToken: store.getters.token
+      }
+    });
+  },
+  addNewCloud(Cloud) {
+    return request({
+      url: `/cloud/newCloud`,
+      method: "post",
+      data: {
+        AccessToken: store.getters.token,
+        Cloud
+      }
+    });
+  },
+  /**
+   * @description DO NOT CHANGE CLOUD ID!
+   * @param Cloud
+   * @returns Promise
+   */
+  changeCloudInfo(Cloud) {
+    return request({
+      url: `/cloud/changeCloudInfo`,
+      method: "post",
+      data: {
+        AccessToken: store.getters.token,
+        Cloud
+      }
+    });
+  },
+  getVoteRequests() {
+    return request({
+      url: `/cloud/getVoteRequests`,
+      method: "post",
+      data: {
+        AccessToken: store.getters.token
+      }
+    });
+  },
+  /**
+   * @param {String} CloudID
+   * @param {Boolean} VoteResult
+   * @returns {Promise}
+   */
+  voteForCloud(CloudID, VoteResult) {
+    return request({
+      url: `/cloud/vote`,
+      method: "post",
+      data: {
+        AccessToken: store.getters.token,
+        CloudID,
+        VoteResult
+      }
     });
   }
 };

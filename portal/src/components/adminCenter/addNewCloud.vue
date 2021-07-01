@@ -16,23 +16,21 @@
             <el-form-item label="云存储名称">
               <el-input v-model="form.cloudName" class="input"></el-input>
             </el-form-item>
-            <el-form-item label="云际 id">
+            <el-form-item label="云际 ID">
               <el-input v-model="form.cloudId" class="input"></el-input>
             </el-form-item>
             <el-divider></el-divider>
             <el-form-item label="存储价格">
-              <el-input v-model="form.storagePrice" class="input"></el-input>
+              <el-input-number v-model="form.storagePrice" class="input" controls-position="right" :precision="precision" />
               元/GB
             </el-form-item>
             <el-form-item label="流量价格">
-              <el-input v-model="form.trafficPrice" class="input"></el-input>
+              <el-input-number v-model="form.trafficPrice" class="input" controls-position="right" :precision="precision" />
               元/GB
             </el-form-item>
             <el-form-item label="可用性">
               <el-radio-group v-model="form.availability">
-                <el-radio-button label="0.99995"></el-radio-button>
-                <el-radio-button label="0.9995"></el-radio-button>
-                <el-radio-button label="0.995"></el-radio-button>
+                <el-radio-button v-for="val in availability" :label="val" :key="String(val)" />
               </el-radio-group>
             </el-form-item>
             <el-divider></el-divider>
@@ -57,22 +55,26 @@
             <el-form-item label="地理位置">
               <select-point @getPoint="getPoint"></select-point>
             </el-form-item>
-
             <el-divider></el-divider>
           </el-form>
           <el-button type="primary" class="submitBtn" @click="onSubmit">确认提交</el-button>
         </el-card>
       </el-col>
     </el-row>
+    <el-dialog title="请确认云信息" :visible.sync="confirmVisible" top="20px">
+      <add-new-cloud-confirm :cloud="form" @cancel="confirmVisible = false" />
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import selectPoint from "@/components/adminCenter/selectPoint.vue";
+import addNewCloudConfirm from "@/components/adminCenter/addNewCloudConfirm.vue";
 
 export default {
   components: {
-    selectPoint
+    selectPoint,
+    addNewCloudConfirm
   },
   data() {
     return {
@@ -90,35 +92,14 @@ export default {
         bucket: "",
         address: ""
       },
-      cpuList: [],
-      storageList: [],
-      dataDisk: [],
-      tableData: [
-        {
-          name: "S1.large.1",
-          cpu: "2核",
-          storage: "4G",
-          net: "20Mbps"
-        },
-        {
-          name: "S1.large.1",
-          cpu: "2核",
-          storage: "4G",
-          net: "20Mbps"
-        },
-        {
-          name: "S1.large.1",
-          cpu: "2核",
-          storage: "4G",
-          net: "20Mbps"
-        }
-      ],
-      netDialogVisible: false
+      confirmVisible: false,
+      precision: 0.01,
+      availability: [0.99995, 0.9995, 0.995, 0.99, 0.95]
     };
   },
   methods: {
     onSubmit() {
-      this.$router.push({ name: "addNewCloudConfirm", params: { formData: this.form } });
+      this.confirmVisible = true;
     },
     getPoint(point) {
       this.form.location = `${point.lng},${point.lat}`;
@@ -155,10 +136,6 @@ export default {
 
 .input {
   width: 200px;
-}
-
-.el-input__inner {
-  width: 50px;
 }
 
 .formTable {
