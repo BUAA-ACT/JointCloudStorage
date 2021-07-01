@@ -1,6 +1,9 @@
 package model
 
-import "testing"
+import (
+	"io/ioutil"
+	"testing"
+)
 
 func TestAWSBucketStorageClient(t *testing.T) {
 	endpoint := "s3.fsh.bcebos.com"
@@ -19,4 +22,10 @@ func TestAWSBucketStorageClient(t *testing.T) {
 	if err != nil {
 		t.Fatalf("upload err %v", err)
 	}
+	reader, err := bucketClient.GetObject("test.txt", "t")
+	if err != nil {
+		t.Fatalf("get err %v", err)
+	}
+	p, err := ioutil.ReadAll(reader)
+	t.Log(string(p))
 }

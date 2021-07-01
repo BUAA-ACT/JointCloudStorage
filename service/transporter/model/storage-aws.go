@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	log "github.com/sirupsen/logrus"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -85,6 +86,16 @@ func (client *AWSBucketStorageClient) Download(remotePath string, localPath stri
 		Key:    aws.String(remotePath),
 	})
 	return err
+}
+
+// todo check
+func (client *AWSBucketStorageClient) GetObject(remotePath string, uid string) (reader io.Reader, err error) {
+	remotePath = client.realRemotePath(remotePath, uid)
+	output, err := client.awsClient.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(client.bucketName),
+		Key:    aws.String(remotePath),
+	})
+	return output.Body, err
 }
 
 func (client *AWSBucketStorageClient) Remove(remotePath string, uid string) (err error) {

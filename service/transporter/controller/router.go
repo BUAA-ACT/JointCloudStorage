@@ -24,22 +24,12 @@ type Router struct {
 }
 
 type RequestTask struct {
-	TaskType               string             `json:"TaskType"`
-	Uid                    string             `json:"UserID"`
-	DestinationPath        string             `json:"DestinationPath"`
-	SourcePath             string             `json:"SourcePath"`
-	SourceStoragePlan      RequestStoragePlan `json:"SourceStoragePlan"`
-	DestinationStoragePlan RequestStoragePlan `json:"DestinationStoragePlan"`
-}
-
-type RequestStoragePlan struct {
-	N            int           `bson:"n"`
-	K            int           `bson:"k"`
-	StorageMode  string        `bson:"storage_mode"`
-	Clouds       []model.Cloud `bson:"clouds"`
-	StoragePrice float64       `bson:"storage_price"`
-	TrafficPrice float64       `bson:"traffic_price"`
-	Availability float64       `bson:"availability"`
+	TaskType               string                `json:"TaskType"`
+	Uid                    string                `json:"UserID"`
+	DestinationPath        string                `json:"DestinationPath"`
+	SourcePath             string                `json:"SourcePath"`
+	SourceStoragePlan      model.UserStoragePlan `json:"SourceStoragePlan"`
+	DestinationStoragePlan model.UserStoragePlan `json:"DestinationStoragePlan"`
 }
 
 type RequestCloud struct {
