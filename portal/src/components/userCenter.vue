@@ -1,5 +1,5 @@
 <template>
-  <el-container>
+  <el-container class="user-center-container">
     <el-aside width="200px">
       <el-menu class="el-menu-vertical-demo" @select="handleSelect" :default-active="activeEntry">
         <el-submenu index="1">
@@ -75,6 +75,9 @@ export default {
 };
 </script>
 <style scoped lang="scss">
+.user-center-container {
+  height: calc(100% - 60px);
+}
 .el-menu {
   border-right: 0;
   position: fixed;
