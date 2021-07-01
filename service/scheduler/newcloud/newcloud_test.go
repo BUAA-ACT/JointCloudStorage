@@ -66,11 +66,34 @@ func TestPostCloudVote(t *testing.T) {
 	//初始化服务
 	r:=gin.Default()
 	Router(r,"mongodb://192.168.105.8:20100","dev","aliyun-beijing","localDebug")
-	data:=`{"CloudID":"test-wanggj","Endpoint":"asdfasdasd",
-			"StoragePrice":0.5,"TrafficPrice":0.5,"Availability":0.9999,
-			"Status":"UP","Location":"116.381252,20.0","Address":""}`
+	data:=`{"id":"test-wanggj"}`
+	data2:=`{"id":"test_cloud_id"}`
+	//testCloud:=`{"id":"test_cloud_id","vote_num":1,"address":"aliyun-beijing","cloud":{"CloudID":"test_cloud_id","Endpoint":"asdfasdasd",
+	//		"StoragePrice":0.5,"TrafficPrice":0.5,"Availability":0.9999,
+	//		"Status":"UP","Location":"116.381252,20.0","Address":""}}`
 
-	req,_:=http.NewRequest("POST","/new_cloud",strings.NewReader(data))
+	req,_:=http.NewRequest("POST","/cloud_vote",strings.NewReader(data))
+	w:=httptest.NewRecorder()
+	r.ServeHTTP(w,req)
+	assert.Equal(t, 200,w.Code)
+	t.Log(w.Body.String())
+
+	req,_=http.NewRequest("POST","/cloud_vote",strings.NewReader(data2))
+	w=httptest.NewRecorder()
+	r.ServeHTTP(w,req)
+	assert.Equal(t, 200,w.Code)
+	t.Log(w.Body.String())
+}
+
+func TestPostMasterCloudVote(t *testing.T) {
+	t.Log("Start testing endpoint /new_cloud, func:PostNewCloud.")
+
+	//初始化服务
+	r:=gin.Default()
+	Router(r,"mongodb://192.168.105.8:20100","dev","aliyun-beijing","localDebug")
+	data:=`{"id":"test-wanggj","vote":1}`
+
+	req,_:=http.NewRequest("POST","/master_cloud_vote",strings.NewReader(data))
 	w:=httptest.NewRecorder()
 	r.ServeHTTP(w,req)
 
