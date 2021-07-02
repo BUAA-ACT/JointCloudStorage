@@ -41,7 +41,6 @@ request.interceptors.response.use(
     //   // please modify it according to the actual situation
     //   config.headers['X-Token'] = getToken()
     // }
-
     if (response.status === 200) {
       const res = response.data;
       console.log(res);
@@ -54,9 +53,16 @@ request.interceptors.response.use(
     return false;
   },
   error => {
+    // Dealing with Timeout
+    if (error.code === "ECONNABORTED" || error.message === "Network Error" || error.message.includes("timeout")) {
+      Message.error("请求超时！");
+      Promise.reject(error);
+      return;
+    }
     // do something with request error
     console.log(error.response); // for debug
     Message.error(`Status: ${error.response.status} , Message: ${error.response.data.error}`);
+    Promise.reject(error);
   }
 );
 export default request;

@@ -81,7 +81,8 @@ export default {
           Bucket: ""
         };
       }
-    }
+    },
+    modify: { type: Boolean, required: false }
   },
   data() {
     return {
@@ -94,19 +95,35 @@ export default {
     },
     async submit() {
       this.loading = true;
-      Clouds.addNewCloud(this.cloud)
-        .then(resp => {
-          if (resp) {
-            this.$notify.success("成功添加云！请等待投票……");
-            this.$emit("success");
-          } else {
-            this.$emit("fail");
-          }
-          this.loading = false;
-        })
-        .catch(() => {
-          this.loading = false;
-        });
+      if (!this.modify) {
+        Clouds.addNewCloud(this.cloud)
+          .then(resp => {
+            if (resp) {
+              this.$notify.success("成功添加云！请等待投票……");
+              this.$emit("success");
+            } else {
+              this.$emit("fail");
+            }
+            this.loading = false;
+          })
+          .catch(() => {
+            this.loading = false;
+          });
+      } else {
+        Clouds.changeCloudInfo(this.cloud)
+          .then(resp => {
+            if (resp) {
+              this.$notify.success("成功修改云信息！");
+              this.$emit("success");
+            } else {
+              this.$emit("fail");
+            }
+            this.loading = false;
+          })
+          .catch(() => {
+            this.loading = false;
+          });
+      }
     }
   }
 };

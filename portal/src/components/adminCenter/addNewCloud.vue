@@ -21,11 +21,11 @@
             </el-form-item>
             <el-divider></el-divider>
             <el-form-item label="存储价格">
-              <el-input-number v-model="form.StoragePrice" class="input" controls-position="right" :precision="precision" />
+              <el-input-number v-model="form.StoragePrice" class="input" controls-position="right" :precision="precision" :step="step" />
               元/GB
             </el-form-item>
             <el-form-item label="流量价格">
-              <el-input-number v-model="form.TrafficPrice" class="input" controls-position="right" :precision="precision" />
+              <el-input-number v-model="form.TrafficPrice" class="input" controls-position="right" :precision="precision" :step="step" />
               元/GB
             </el-form-item>
             <el-form-item label="可用性">
@@ -62,7 +62,7 @@
       </el-col>
     </el-row>
     <el-dialog title="请确认云信息" :visible.sync="confirmVisible" top="20px">
-      <add-new-cloud-confirm ref="confirmDiag" :cloud="form" @cancel="closeConfirm" @success="closeConfirm" />
+      <add-new-cloud-confirm ref="confirmDiag" :cloud="form" @cancel="cancelConfirm" @success="successConfirm" />
     </el-dialog>
   </div>
 </template>
@@ -75,6 +75,10 @@ export default {
   components: {
     selectPoint,
     addNewCloudConfirm
+  },
+  prop: {
+    cloud: Object,
+    required: false
   },
   data() {
     return {
@@ -95,6 +99,7 @@ export default {
       },
       confirmVisible: false,
       precision: 2,
+      step: 0.1,
       availability: [0.99995, 0.9995, 0.995, 0.99, 0.95]
     };
   },
@@ -106,8 +111,21 @@ export default {
       this.form.Location = `${point.lng},${point.lat}`;
       this.$log(this.form.Location);
     },
+    successConfirm() {
+      this.closeConfirm();
+      this.$emit("success");
+    },
+    cancelConfirm() {
+      this.closeConfirm();
+      this.$emit("cancel");
+    },
     closeConfirm() {
       this.confirmVisible = false;
+    }
+  },
+  beforeMount() {
+    if (this.cloud) {
+      this.form = this.cloud;
     }
   }
 };

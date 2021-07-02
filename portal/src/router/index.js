@@ -351,6 +351,10 @@ const router = [
           {
             path: "voteForClouds",
             component: () => import("../components/adminCenter/voteForClouds.vue")
+          },
+          {
+            path: "manageClouds",
+            component: () => import("../components/adminCenter/manageClouds.vue")
           }
         ]
       }

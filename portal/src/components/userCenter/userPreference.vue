@@ -45,7 +45,7 @@ export default {
     onSubmit() {
       this.loading = true;
       cloudStorage
-        .updatePreference(this.form)
+        .updatePreference({ ...this.form, Latency: { beijing: 20 } })
         .then(() => {
           this.$message.success("个人偏好更新成功");
           this.loading = false;
