@@ -105,8 +105,9 @@ portal_build:
   image: node@sha256:95de040aa148ca391a29674ca99931bf486e87c33eca566c3f6af984609d1c84
   stage: build
   only:
-    - master
-    - dev
+    refs:
+      - master
+      - dev
     changes:
       - portal/**/*
   script:
