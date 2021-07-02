@@ -105,20 +105,24 @@ portal_build:
   image: node@sha256:95de040aa148ca391a29674ca99931bf486e87c33eca566c3f6af984609d1c84
   stage: build
   only:
-    - master
-    - dev
+    refs:
+      - master
+      - dev
+    changes:
+      - portal/**/*
   script:
     - echo '下载依赖'
     - pwd
+    - npm config set cache "/builds/jointcloudstorage/jcspan/npm_cache"
     - ls
     - cd portal
-    - SASS_BINARY_SITE=https://npm.taobao.org/mirrors/node-sass/ npm install --registry=https://registry.npm.taobao.org
+    - SASS_BINARY_SITE=https://npm.taobao.org/mirrors/node-sass/ npm ci --registry=https://registry.npm.taobao.org
     - echo '开始构建'
     - npm run build
     - echo '构建完成'
     - cd ..
     - cd navigation
-    - SASS_BINARY_SITE=https://npm.taobao.org/mirrors/node-sass/ npm install --registry=https://registry.npm.taobao.org
+    - SASS_BINARY_SITE=https://npm.taobao.org/mirrors/node-sass/ npm ci --registry=https://registry.npm.taobao.org
     - echo '开始构建'
     - npm run build
     - echo '构建完成'
@@ -132,10 +136,19 @@ portal_build:
     when: always
     expire_in: 4 weeks
   cache:
-    key: portal_env
-    paths:
-      - portal/node_modules
-      - navigation/node_modules
+    - key: $CI_COMMIT_REF_SLUG
+      paths:
+        - npm_cache/
+    - key:
+        files:
+          - portal/package-lock.json
+      paths:
+        - portal/node_modules
+    - key:
+        files:
+          - navigation/package-lock.json
+      paths:
+        - navigation/node_modules
 
 scheduler_docker_build:
   stage: docker_build

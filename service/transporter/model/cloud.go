@@ -28,6 +28,7 @@ type Cloud struct {
 	Address      string  `bson:"address"`
 	CloudName    string  `bson:"cloud_name"`
 	ProviderName string  `bson:"provider_name"`
+	Bucket       string  `bson:"bucket"`
 }
 
 // S3 客户端结构

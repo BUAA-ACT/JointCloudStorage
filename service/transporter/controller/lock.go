@@ -165,9 +165,9 @@ func (l *Lock) UnLock(path string) error {
 	// 发送多个子请求
 	_, err := l.c.Multi(ops...)
 	if err != nil {
-		logrus.Errorf("unlock %v fail: %v", path, err)
-		return err
+		logrus.Warnf("unlock %v fail: %v", path, err)
+	} else {
+		logrus.Infof("unlock success")
 	}
-	logrus.Infof("unlock success")
 	return nil
 }
