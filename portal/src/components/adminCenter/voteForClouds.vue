@@ -66,6 +66,7 @@ export default {
           if (resp) {
             this.$message.success("投票成功！");
           }
+          this.getPendingClouds();
         })
         .catch(() => {});
     },
@@ -82,7 +83,7 @@ export default {
     }
   },
   beforeMount() {
-    // this.getPendingClouds();
+    this.getPendingClouds();
   }
 };
 </script>
