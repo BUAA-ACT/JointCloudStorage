@@ -180,9 +180,6 @@ func UserChooseStoragePlan(con *gin.Context) {
 	}
 	if postPlanResponse.Code != args.CodeOK {
 		// error in scheduler
-		fmt.Println("scheduler fault:")
-		fmt.Println("Code: ", postPlanResponse.Code)
-		fmt.Println("Msg: ", postPlanResponse.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": postPlanResponse.Code,
 			"msg":  postPlanResponse.Msg,
