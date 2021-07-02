@@ -1,7 +1,7 @@
 <template>
   <div class="key-manager-container">
-    <el-popover placement="top" width="160" v-model="addKeyDiagVis">
-      <el-input v-model="newKeyComment" placeholer="请输入备注" />
+    <el-popover placement="top" width="160" v-model="addKeyDiagVis" title="请输入备注">
+      <el-input v-model="newKeyComment" />
       <div class="new-key-footer">
         <el-button
           size="mini"
@@ -16,8 +16,8 @@
       </div>
       <el-button type="primary" slot="reference" class="btn-add-key">添加密钥对</el-button>
     </el-popover>
-    <el-card class="box-card"
-      ><el-table v-loading="listLoading" :data="keys" fit highlight-current-row>
+    <el-card class="box-card">
+      <el-table v-loading="listLoading" :data="keys" fit highlight-current-row>
         <el-table-column label="备注" prop="Comment" width="400px" min-width="300px">
           <template slot-scope="comments">
             <el-input v-model="comments.row.Comment" @change="changeComment(comments.row.Comment, comments.$index)" class="no-border" size="large" />
@@ -59,8 +59,8 @@
             </el-popconfirm>
           </template>
         </el-table-column>
-      </el-table></el-card
-    >
+      </el-table>
+    </el-card>
   </div>
 </template>
 
@@ -187,6 +187,9 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.new-key-footer {
+  margin-top: 10px;
+}
 .btn-add-key {
   margin-bottom: 10px;
 }
