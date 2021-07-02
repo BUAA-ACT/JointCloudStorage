@@ -39,12 +39,6 @@ func TestMain(m *testing.M) {
 		ReloadCloudInfo:  true,
 		CloudDatabase:    clientDatabase,
 	}
-	//scheduler := JcsPanScheduler{
-	//	LocalCloudID:     "aliyun-hohhot",
-	//	SchedulerHostUrl: "http://192.168.105.13:8082",
-	//	ReloadCloudInfo:  true,
-	//	CloudDatabase:    clientDatabase,
-	//}
 	processor.Scheduler = &scheduler
 	// 初始化 Monitor
 	userDB, _ := model.NewMongoUserDatabase()
