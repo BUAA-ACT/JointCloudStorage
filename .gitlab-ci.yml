@@ -219,8 +219,11 @@ portal_docker_build:
   dependencies:
     - portal_build
   only:
-    - master
-    - dev
+    refs:
+      - master
+      - dev
+    changes:
+      - portal/**/*
   before_script:
     - docker info
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_TOKEN $CI_REGISTRY
