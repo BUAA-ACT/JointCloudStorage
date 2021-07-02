@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 func main() {
@@ -110,6 +111,9 @@ func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
 	userDB, _ := model.NewMongoUserDatabase()
 	processor.Monitor = controller.NewTrafficMonitor(userDB)
 	processor.UserDatabase = userDB
+	// 初始化 tempFile
+	tfs, _ := util.NewTempFileStorage(util.Config.DownloadFileTempPath, time.Hour*8)
+	processor.TempFileStorage = tfs
 	// 初始化路由
 	router := controller.NewRouter(processor)
 	// 启动 processor

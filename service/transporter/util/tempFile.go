@@ -14,12 +14,12 @@ type TempFileStorage struct {
 	ExpireDuration time.Duration
 }
 
-func NewTempFileStorage(tempPath string, expireDuration time.Duration) *TempFileStorage {
+func NewTempFileStorage(tempPath string, expireDuration time.Duration) (*TempFileStorage, error) {
 	return &TempFileStorage{
 		TempPath:       tempPath,
 		TempFiles:      []*TempFile{},
 		ExpireDuration: expireDuration,
-	}
+	}, nil
 }
 
 type TempFile struct {
@@ -33,7 +33,7 @@ func (ts *TempFileStorage) CreateTmpFile(key string) (*os.File, *TempFile) {
 	prefix := uuid.New().String()
 	fileName := "/" + prefix
 	if key != "" {
-		fileName += key
+		fileName += "_" + key
 	}
 	filePath := path.Join(ts.TempPath, fileName)
 	tmpFile := TempFile{

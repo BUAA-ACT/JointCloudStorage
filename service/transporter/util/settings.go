@@ -23,6 +23,7 @@ var Config = Configuration{
 		Port:         "20100",
 		DatabaseName: "dev",
 	},
+	TempFilePath:         "./tmp/",
 	UploadFileTempPath:   "./tmp/upload/",
 	DownloadFileTempPath: "./tmp/download/",
 	DefaultStorageClient: AwsS3Client,
@@ -47,6 +48,7 @@ type Configuration struct {
 	DebugMode            bool
 	DebugLevel           string
 	Database             DBConfiguration
+	TempFilePath         string
 	UploadFileTempPath   string
 	DownloadFileTempPath string
 	DefaultStorageClient string

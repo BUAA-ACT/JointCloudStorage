@@ -4,13 +4,20 @@ import (
 	"act.buaa.edu.cn/jcspan/transporter/controller"
 	"act.buaa.edu.cn/jcspan/transporter/model"
 	"act.buaa.edu.cn/jcspan/transporter/util"
+	"bytes"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
+	"time"
 )
 
-func TestNewInterface(t *testing.T) {
+var JSI *JointStorageInterface
+
+func TestMain(m *testing.M) {
 	util.ClearAll()
+	util.CheckConfig()
 	storage, _ := model.NewMongoTaskStorage()
 	clientDatabase, _ := model.NewMongoCloudDatabase()
 	fileDatabase, _ := model.NewMongoFileDatabase()
@@ -43,10 +50,43 @@ func TestNewInterface(t *testing.T) {
 	userDB, _ := model.NewMongoUserDatabase()
 	processor.Monitor = controller.NewTrafficMonitor(userDB)
 	processor.UserDatabase = userDB
+	// 初始化 tempFile
+	tfs, _ := util.NewTempFileStorage(util.Config.TempFilePath, time.Hour*8)
+	processor.TempFileStorage = tfs
 
-	jsi := NewInterface(&processor)
+	JSI = NewInterface(&processor)
+	exitCode := m.Run()
+	os.Exit(exitCode)
+}
+
+func TestNewInterface(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	recorder := httptest.NewRecorder()
-	jsi.ServeHTTP(recorder, req)
+	JSI.ServeHTTP(recorder, req)
 	t.Log(string(recorder.Body.Bytes()))
+}
+
+func TestJointStorageInterface_PutObject(t *testing.T) {
+	bodyBuf := new(bytes.Buffer)
+	fh, err := os.Open("../test/test.txt")
+	if err != nil {
+		t.Errorf("error opening file")
+	}
+	io.Copy(bodyBuf, fh)
+	req, err := http.NewRequest("PUT", "/test.txt", bodyBuf)
+	recorder := httptest.NewRecorder()
+	JSI.ServeHTTP(recorder, req)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("http code incorrect")
+	}
+}
+
+func TestJointStorageInterface_GetMethod(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/test.txt", nil)
+	recorder := httptest.NewRecorder()
+	JSI.ServeHTTP(recorder, req)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("http code incorrect")
+	}
+	t.Logf("body: %s", recorder.Body.String())
 }
