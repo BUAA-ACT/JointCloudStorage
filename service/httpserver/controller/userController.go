@@ -468,47 +468,6 @@ func UserSetPreference(con *gin.Context) {
 	})
 }
 
-func UserAddKey(con *gin.Context) {
-	fieldRequired := map[string]bool{
-		args.FieldWordAccessToken: true,
-		args.FieldWordComment:     false,
-	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
-	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
-		return
-	}
-	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
-	var comment string
-	if (*existMap)[args.FieldWordComment] {
-		comment = (*valueMap)[args.FieldWordComment].(string)
-	} else {
-		comment = ""
-	}
-	// check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
-	if !valid {
-		return
-	}
-	// gen ak & sk
-	var accessKey, secretKey string
-	accessKey = code.GenAccessKey()
-	secretKey = code.GenSecretKey()
-	// save it into mongodb
-	insertKeySuccess := dao.AccessKeyDao.InsertKey(userID, accessKey, secretKey, comment)
-	if !checkDaoSuccess(con, insertKeySuccess) {
-		return
-	}
-	// success with gen keys
-	con.JSON(http.StatusOK, gin.H{
-		"code": args.CodeOK,
-		"msg":  "生成密钥成功",
-		"data": gin.H{
-			"AccessKey": accessKey,
-			"SecretKey": secretKey,
-		},
-	})
-}
-
 func UserGetKeys(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
@@ -538,6 +497,75 @@ func UserGetKeys(con *gin.Context) {
 	})
 }
 
+func UserAddKey(con *gin.Context) {
+	fieldRequired := map[string]bool{
+		args.FieldWordAccessToken: true,
+		args.FieldWordComment:     false,
+	}
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
+		return
+	}
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	var comment string
+	if (*existMap)[args.FieldWordComment] {
+		comment = (*valueMap)[args.FieldWordComment].(string)
+	} else {
+		comment = ""
+	}
+	// check token
+	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
+	if !valid {
+		return
+	}
+	// gen ak & sk
+	var accessKey, secretKey string
+	accessKey = code.GenAccessKey()
+	secretKey = code.GenSecretKey()
+
+	// save it into mongodb
+	//insertKeySuccess := dao.AccessKeyDao.InsertKey(userID, accessKey, secretKey, comment)
+	//if !checkDaoSuccess(con, insertKeySuccess) {
+	//	return
+	//}
+
+	// sync it with scheduler
+	key := model.AccessKey{
+		UserID:    userID,
+		AccessKey: accessKey,
+		SecretKey: secretKey,
+		Comment:   comment,
+		Available: true,
+	}
+	postKeyResponse, postKeySuccess := scheduler.PostKeyToScheduler(&key)
+	if !postKeySuccess {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeJsonError,
+			"msg":  "解析scheduler-json信息有误",
+			"data": gin.H{},
+		})
+		return
+	}
+	if postKeyResponse.Code != args.CodeOK {
+		// error in scheduler
+		con.JSON(http.StatusOK, gin.H{
+			"code": postKeyResponse.Code,
+			"msg":  postKeyResponse.Msg,
+			"data": gin.H{},
+		})
+		return
+	}
+	// success with gen keys
+	con.JSON(http.StatusOK, gin.H{
+		"code": args.CodeOK,
+		"msg":  "生成密钥成功",
+		"data": gin.H{
+			"AccessKey": accessKey,
+			"SecretKey": secretKey,
+		},
+	})
+}
+
 func UserDeleteKey(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
@@ -554,16 +582,37 @@ func UserDeleteKey(con *gin.Context) {
 	if !valid {
 		return
 	}
-	// delete keys
-	deleteKeyResult, deleteKeySuccess := dao.AccessKeyDao.DeleteKey(userID, accessKey)
-	if !checkDaoSuccess(con, deleteKeySuccess) {
+
+	// delete keys with dao
+	//deleteKeyResult, deleteKeySuccess := dao.AccessKeyDao.DeleteKey(userID, accessKey)
+	//if !checkDaoSuccess(con, deleteKeySuccess) {
+	//	return
+	//}
+	// no key has been deleted
+	//if deleteKeyResult.DeletedCount == 0 {
+	//	con.JSON(http.StatusOK, gin.H{
+	//		"code": args.CodeDeleteNothing,
+	//		"msg":  "此密钥本来就不存在,你删nmn¿",
+	//		"data": gin.H{},
+	//	})
+	//	return
+	//}
+
+	// delete & sync with scheduler
+	deleteKeyResponse, deleteKeySuccess := scheduler.DeleteKeyToScheduler(userID, accessKey)
+	if !deleteKeySuccess {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeJsonError,
+			"msg":  "解析scheduler-json信息有误",
+			"data": gin.H{},
+		})
 		return
 	}
-	// no key has been deleted
-	if deleteKeyResult.DeletedCount == 0 {
+	if deleteKeyResponse.Code != args.CodeOK {
+		// error in scheduler
 		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeDeleteNothing,
-			"msg":  "此密钥本来就不存在,你删nmn¿",
+			"code": deleteKeyResponse.Code,
+			"msg":  deleteKeyResponse.Msg,
 			"data": gin.H{},
 		})
 		return
@@ -594,20 +643,48 @@ func UserChangeKeyStatus(con *gin.Context) {
 	if !valid {
 		return
 	}
-	// change key status
-	changeKeyStatusResult, changeKeyStatusSuccess := dao.AccessKeyDao.ChangeKeyStatus(userID, accessKey, status)
-	if !checkDaoSuccess(con, changeKeyStatusSuccess) {
+
+	// change key status with dao
+	//changeKeyStatusResult, changeKeyStatusSuccess := dao.AccessKeyDao.ChangeKeyStatus(userID, accessKey, status)
+	//if !checkDaoSuccess(con, changeKeyStatusSuccess) {
+	//	return
+	//}
+	// no key has been changed
+	//if changeKeyStatusResult.MatchedCount == 0 {
+	//	con.JSON(http.StatusOK, gin.H{
+	//		"code": args.CodeDeleteNothing,
+	//		"msg":  "此密钥不存在,你改nmn¿",
+	//		"data": gin.H{},
+	//	})
+	//	return
+	//}
+
+	// get origin key
+	getKeyResult, getKeySuccess := dao.AccessKeyDao.GetWithAccessKey(userID, accessKey)
+	if !checkDaoSuccess(con, getKeySuccess) {
 		return
 	}
-	// no key has been changed
-	if changeKeyStatusResult.MatchedCount == 0 {
+	getKeyResult.Available = status
+	// sync with scheduler
+	postKeyResponse, postKeySuccess := scheduler.PostKeyToScheduler(getKeyResult)
+	if !postKeySuccess {
 		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeDeleteNothing,
-			"msg":  "此密钥不存在,你改nmn¿",
+			"code": args.CodeJsonError,
+			"msg":  "解析scheduler-json信息有误",
 			"data": gin.H{},
 		})
 		return
 	}
+	if postKeyResponse.Code != args.CodeOK {
+		// error in scheduler
+		con.JSON(http.StatusOK, gin.H{
+			"code": postKeyResponse.Code,
+			"msg":  postKeyResponse.Msg,
+			"data": gin.H{},
+		})
+		return
+	}
+
 	// success
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
@@ -639,20 +716,48 @@ func UserChangeKeyComment(con *gin.Context) {
 	if !valid {
 		return
 	}
-	// change key comment
-	changeKeyCommentResult, changeKeyCommentSuccess := dao.AccessKeyDao.ChangeKeyComment(userID, accessKey, newComment)
-	if !checkDaoSuccess(con, changeKeyCommentSuccess) {
+
+	// change key comment with dao
+	//changeKeyCommentResult, changeKeyCommentSuccess := dao.AccessKeyDao.ChangeKeyComment(userID, accessKey, newComment)
+	//if !checkDaoSuccess(con, changeKeyCommentSuccess) {
+	//	return
+	//}
+	// no key has been changed
+	//if changeKeyCommentResult.MatchedCount == 0 {
+	//	con.JSON(http.StatusOK, gin.H{
+	//		"code": args.CodeDeleteNothing,
+	//		"msg":  "此密钥不存在,你改nmn¿",
+	//		"data": gin.H{},
+	//	})
+	//	return
+	//}
+
+	// get origin key
+	getKeyResult, getKeySuccess := dao.AccessKeyDao.GetWithAccessKey(userID, accessKey)
+	if !checkDaoSuccess(con, getKeySuccess) {
 		return
 	}
-	// no key has been changed
-	if changeKeyCommentResult.MatchedCount == 0 {
+	getKeyResult.Comment = newComment
+	// sync with scheduler
+	postKeyResponse, postKeySuccess := scheduler.PostKeyToScheduler(getKeyResult)
+	if !postKeySuccess {
 		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeDeleteNothing,
-			"msg":  "此密钥不存在,你改nmn¿",
+			"code": args.CodeJsonError,
+			"msg":  "解析scheduler-json信息有误",
 			"data": gin.H{},
 		})
 		return
 	}
+	if postKeyResponse.Code != args.CodeOK {
+		// error in scheduler
+		con.JSON(http.StatusOK, gin.H{
+			"code": postKeyResponse.Code,
+			"msg":  postKeyResponse.Msg,
+			"data": gin.H{},
+		})
+		return
+	}
+
 	// success
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
@@ -680,20 +785,48 @@ func UserRemakeKey(con *gin.Context) {
 	// generate a new secret key
 	var secretKey string
 	secretKey = code.GenSecretKey()
-	// remake key with secret key
-	remakeKeyResult, remakeKeySuccess := dao.AccessKeyDao.RemakeKey(userID, accessKey, secretKey)
-	if !checkDaoSuccess(con, remakeKeySuccess) {
+
+	// remake secret key with dao
+	//remakeKeyResult, remakeKeySuccess := dao.AccessKeyDao.RemakeKey(userID, accessKey, secretKey)
+	//if !checkDaoSuccess(con, remakeKeySuccess) {
+	//	return
+	//}
+	// no key has been remade
+	//if remakeKeyResult.MatchedCount == 0 {
+	//	con.JSON(http.StatusOK, gin.H{
+	//		"code": args.CodeDeleteNothing,
+	//		"msg":  "此密钥不存在,你/remake nmn¿",
+	//		"data": gin.H{},
+	//	})
+	//	return
+	//}
+
+	// get origin key
+	getKeyResult, getKeySuccess := dao.AccessKeyDao.GetWithAccessKey(userID, accessKey)
+	if !checkDaoSuccess(con, getKeySuccess) {
 		return
 	}
-	// no key has been remade
-	if remakeKeyResult.MatchedCount == 0 {
+	getKeyResult.SecretKey = secretKey
+	// sync with scheduler
+	postKeyResponse, postKeySuccess := scheduler.PostKeyToScheduler(getKeyResult)
+	if !postKeySuccess {
 		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeDeleteNothing,
-			"msg":  "此密钥不存在,你/remake nmn¿",
+			"code": args.CodeJsonError,
+			"msg":  "解析scheduler-json信息有误",
 			"data": gin.H{},
 		})
 		return
 	}
+	if postKeyResponse.Code != args.CodeOK {
+		// error in scheduler
+		con.JSON(http.StatusOK, gin.H{
+			"code": postKeyResponse.Code,
+			"msg":  postKeyResponse.Msg,
+			"data": gin.H{},
+		})
+		return
+	}
+
 	// success
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
