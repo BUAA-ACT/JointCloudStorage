@@ -443,7 +443,7 @@ func (d *Dao) DeleteUser(uid string) error {
  * 下面函数用于操作投票类型voteCloud
  */
 type VoteCloud struct {
-	Id      string `bson:"cid" json:"id"`
+	Id      string `bson:"cloud_id" json:"id"`
 	Cloud   Cloud  `bson:"cloud" json:"cloud"`
 	VoteNum int    `bson:"vote_num" json:"vote_num"`
 	Address string `bson:"address" json:"address"`
