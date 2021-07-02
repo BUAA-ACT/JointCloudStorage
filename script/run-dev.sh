@@ -45,7 +45,7 @@ screen_do(){
 
 pushd "$build_dir" || exit
 screen_do "aliyun-hohhot-h" "./httpserver"
-screen_do "aliyun-hohhot-s" "./scheduler -addr=:8082 -cid=aliyun-hohhot  -env=dev -heartbeat=10s -reschedule=60s "
+screen_do "aliyun-hohhot-s" "./scheduler -addr=:8082 -cid=aliyun-hohhot  -env=aliyun-hohhot -heartbeat=10s -reschedule=60s -mongo=mongodb://localhost:27017"
 
 screen_do "aliyun-qingdao-s" "./scheduler -addr=:8282 -cid=aliyun-qingdao -env=aliyun-qingdao -heartbeat=10s -reschedule=60s -mongo=mongodb://localhost:27017"
 
