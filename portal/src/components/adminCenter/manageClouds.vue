@@ -5,9 +5,9 @@
         <el-button type="primary" @click="showChangeCloud(props)">修改云信息</el-button>
       </template>
     </cloud-list>
-    <el-dialog title="修改云信息" :visible.sync="changeCloudDiagVis"
-      ><add-new-cloud :cloud="modifyingCloud" @success="hideChangeCloud" @cancel="hideChangeCloud"
-    /></el-dialog>
+    <el-dialog title="修改云信息" :visible.sync="changeCloudDiagVis">
+      <add-new-cloud :cloud="modifyingCloud" @success="hideChangeCloud" @cancel="hideChangeCloud" />
+    </el-dialog>
   </div>
 </template>
 
@@ -39,6 +39,7 @@ export default {
     hideChangeCloud() {
       this.changeCloudDiagVis = false;
       this.modifyingCloud = {};
+      this.getAllClouds();
     },
     showChangeCloud(cloud) {
       this.modifyingCloud = cloud;
