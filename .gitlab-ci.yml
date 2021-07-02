@@ -108,8 +108,6 @@ portal_build:
     refs:
       - master
       - dev
-    changes:
-      - portal/**/*
   script:
     - echo '下载依赖'
     - pwd
@@ -224,6 +222,7 @@ portal_docker_build:
       - dev
     changes:
       - portal/**/*
+      - navigation/**/*
   before_script:
     - docker info
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_TOKEN $CI_REGISTRY
