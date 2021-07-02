@@ -5,6 +5,7 @@ import (
 	"cloud-storage-httpserver/dao"
 	"cloud-storage-httpserver/model"
 	"cloud-storage-httpserver/service/code"
+	"cloud-storage-httpserver/service/scheduler"
 	"cloud-storage-httpserver/service/tools"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -276,8 +277,25 @@ func UserChangePassword(con *gin.Context) {
 		return
 	}
 	// let scheduler change and sync password
-	// TODO
-
+	storagePlan := &user.StoragePlan
+	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(userID, storagePlan)
+	if !postPlanSuccess {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeJsonError,
+			"msg":  "解析scheduler-json信息有误",
+			"data": gin.H{},
+		})
+		return
+	}
+	if postPlanResponse.Code != args.CodeOK {
+		// error in scheduler
+		con.JSON(http.StatusOK, gin.H{
+			"code": postPlanResponse.Code,
+			"msg":  postPlanResponse.Msg,
+			"data": gin.H{},
+		})
+		return
+	}
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
 		"msg":  "修改密码成功",
