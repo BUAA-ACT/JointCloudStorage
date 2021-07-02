@@ -30,7 +30,7 @@ request.interceptors.request.use(
   error => {
     // do something with request error
     console.log(error); // for debug
-    Promise.reject(error);
+    // Promise.reject(error);
   }
 );
 request.interceptors.response.use(
@@ -41,7 +41,6 @@ request.interceptors.response.use(
     //   // please modify it according to the actual situation
     //   config.headers['X-Token'] = getToken()
     // }
-
     if (response.status === 200) {
       const res = response.data;
       console.log(res);
