@@ -443,7 +443,7 @@ func (d *Dao) DeleteUser(uid string) error {
  * 下面函数用于操作投票类型voteCloud
  */
 type VoteCloud struct {
-	Id      string `bson:"id" json:"id"`
+	Id      string `bson:"cid" json:"id"`
 	Cloud   Cloud  `bson:"cloud" json:"cloud"`
 	VoteNum int    `bson:"vote_num" json:"vote_num"`
 	Address string `bson:"address" json:"address"`
@@ -515,24 +515,24 @@ func (d *Dao) GetVoteCloud(id string) (VoteCloud, error) {
 }
 
 //Get all voteCloud in collection voteCloud
-func (d *Dao)GetAllVoteCloud()([]VoteCloud,error){
-	col:=d.client.Database(d.database).Collection(d.cloudCollection)
+func (d *Dao) GetAllVoteCloud() ([]VoteCloud, error) {
+	col := d.client.Database(d.database).Collection(d.cloudCollection)
 
 	var result []VoteCloud
-	cur,err:=col.Find(context.TODO(),bson.M{})
+	cur, err := col.Find(context.TODO(), bson.M{})
 	defer cur.Close(context.TODO())
-	if err!=nil{
-		return result,err
+	if err != nil {
+		return result, err
 	}
 
-	for cur.Next(context.TODO()){
+	for cur.Next(context.TODO()) {
 		var cloud VoteCloud
-		if err=cur.Decode(&cloud);err!=nil {
+		if err = cur.Decode(&cloud); err != nil {
 			return result, err
 		}
-		result= append(result, cloud)
+		result = append(result, cloud)
 	}
-	return result,nil
+	return result, nil
 }
 
 //Get the vote number of the cloud with id
