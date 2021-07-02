@@ -29,7 +29,7 @@
           </template>
         </el-table-column>
         <el-table-column label="Access Key" prop="AccessKey" width="300px">
-          <template slot-scope="akProp">
+          <template v-slot="akProp">
             <el-tooltip placement="top" content="点击复制">
               <div @click="copy(akProp.row.AccessKey)">
                 <span>{{ akProp.row.AccessKey }}</span>
@@ -38,15 +38,16 @@
           </template>
         </el-table-column>
         <el-table-column label="Secret Key" prop="SecretKey" width="400px">
-          <template slot-scope="skProp" class="secret-key-container">
-            <el-input :value="skProp.row.SecretKey" show-password class="secret-key-display no-border" />
-            <el-popconfirm title="确定重置密钥吗？" @confirm="reset(scope.row.AccessKey)">
-              <el-button size="mini" type="warning" slot="reference">重置</el-button>
-            </el-popconfirm>
+          <template v-slot="skProp" class="secret-key-container">
+            <el-input :value="skProp.row.SecretKey" show-password class="secret-key-display no-border">
+              <template #append>
+                <el-button><i class="el-icon-document-copy" @click="copy(skProp.row.SecretKey)"></i></el-button>
+              </template>
+            </el-input>
           </template>
         </el-table-column>
         <el-table-column label="创建时间" prop="CreateTime" width="100px">
-          <template slot-scope="time" class="date-container">
+          <template v-slot="time" class="date-container">
             <el-tooltip :content="formatDate(time.row.CreateTime, 'full')">
               <div>{{ formatDate(time.row.CreateTime) }}</div>
             </el-tooltip>
@@ -55,7 +56,10 @@
         <el-table-column label="操作">
           <template slot-scope="scope">
             <el-popconfirm title="确定删除该密钥对吗？" @confirm="deleteKey(scope.row.AccessKey)">
-              <el-button size="mini" type="danger" slot="reference">删除</el-button>
+              <el-button size="mini" type="danger" slot="reference" class="btn-key-op">删除</el-button>
+            </el-popconfirm>
+            <el-popconfirm title="确定重置密钥吗？" @confirm="resetKey(scope.row.AccessKey)">
+              <el-button size="mini" type="warning" slot="reference" class="btn-key-op">重置</el-button>
             </el-popconfirm>
           </template>
         </el-table-column>
@@ -171,11 +175,11 @@ export default {
     copy(ak) {
       this.$copyText(ak).then(
         () => {
-          this.$message.success("AccessKey已复制");
+          this.$message.success("已复制到剪贴板");
         },
         e => {
           this.$log(e);
-          this.$message.warning(`AccessKey复制失败！原因：${e}`);
+          this.$message.warning(`复制失败！原因：${e}`);
         }
       );
     }
@@ -197,6 +201,13 @@ export default {
   border: 0;
 }
 .secret-key-display {
-  width: 300px;
+  width: 350px;
+  /deep/ .el-input-group__append {
+    border-left: 1px solid #dcdfe6;
+    border-radius: 4px;
+  }
+}
+.btn-key-op {
+  margin: 0 5px;
 }
 </style>
