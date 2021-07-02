@@ -120,10 +120,6 @@ portal_build:
     - echo '构建完成'
     - cd ..
     - cd navigation
-    - npm ci
-    - echo '开始构建'
-    - npm run build
-    - echo '构建完成'
     - cd ..
   tags:
     - docker
