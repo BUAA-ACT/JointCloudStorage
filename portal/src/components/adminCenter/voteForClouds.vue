@@ -136,7 +136,7 @@ export default {
     }
   },
   beforeMount() {
-    // this.getPendingClouds();
+    this.getPendingClouds();
   }
 };
 </script>
