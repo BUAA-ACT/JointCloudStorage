@@ -76,9 +76,11 @@ export default {
     selectPoint,
     addNewCloudConfirm
   },
-  prop: {
-    cloud: Object,
-    required: false
+  props: {
+    cloud: {
+      type: Object,
+      required: false
+    }
   },
   data() {
     return {
@@ -126,6 +128,13 @@ export default {
   beforeMount() {
     if (this.cloud) {
       this.form = this.cloud;
+    }
+  },
+  watch: {
+    cloud(newVal) {
+      if (newVal) {
+        this.form = newVal;
+      }
     }
   }
 };
