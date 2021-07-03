@@ -83,7 +83,7 @@ func PostNewCloud(c *gin.Context) {
 		return
 	}
 
-	//2.将新的Cloud存入Mongo中
+	//2.将新的Cloud存入Mongo中的tempCloud和voteCLoud
 	temp := dao.VoteCloud{
 		Id:      tempCloud.CloudID,
 		Cloud:   tempCloud,
@@ -96,7 +96,17 @@ func PostNewCloud(c *gin.Context) {
 			"RequestID": requestID,
 			"Code":      codeInternalError,
 			"Msg":       errorMsg[codeInternalError],
-			"Test":      "New cloud store error:" + err.Error(),
+			"Test":      "New cloud store tempCloud error:" + err.Error(),
+		})
+		return
+	}
+	err=localMongoVoteRequest.InsertVoteCloud(temp)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"RequestID": requestID,
+			"Code":      codeInternalError,
+			"Msg":       errorMsg[codeInternalError],
+			"Test":      "New cloud store voteCloud error:" + err.Error(),
 		})
 		return
 	}
@@ -593,6 +603,18 @@ func PostCloudSyn(c *gin.Context) {
 				log.Error("新云信息插入数据库失败 package:NewCloud, func:PostCloudSyn, message:", err, "RequestID:", requestID)
 				return
 			}
+		}
+
+		err=localMongoVoteRequest.DeleteVoteCloud(cloud.CloudID)
+		if err!=nil{
+			c.JSON(http.StatusBadRequest, gin.H{
+				"RequestID": requestID,
+				"Code":      codeInternalError,
+				"Msg":       errorMsg[codeInternalError],
+				"Test":      "Insert new cloud to collection Cloud error:" + err.Error(),
+			})
+			log.Error("新云信息删除voteCloud失败 package:NewCloud, func:PostCloudSyn, message:", err, "RequestID:", requestID)
+			return
 		}
 	}
 
