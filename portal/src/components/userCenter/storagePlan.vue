@@ -124,6 +124,8 @@ export default {
           // });
           this.$log(resp);
           const { StoragePriceFirst, TrafficPriceFirst } = resp;
+          StoragePriceFirst.Clouds = StoragePriceFirst.Clouds || [];
+          TrafficPriceFirst.Clouds = TrafficPriceFirst.Clouds || [];
           this.candidates = [StoragePriceFirst, TrafficPriceFirst];
           // { name: "China", value: [104.195397, 35.86166, Caption] }
         });
@@ -137,7 +139,14 @@ export default {
      * 获取所有云
      *
      */ async getAllCloud() {
-      this.inactiveClouds = Clouds.getAllCloud().clouds;
+      // this.inactiveClouds = Clouds.getAllCloud().clouds;
+      Clouds.getAllClouds()
+        .then(resp => {
+          if (resp && resp.Clouds) this.inactiveClouds = resp.Clouds || [];
+        })
+        .catch(() => {
+          this.inactiveClouds = [];
+        });
       this.$log(this.inactiveClouds);
     },
     /**
@@ -193,7 +202,7 @@ export default {
     }
   },
   beforeMount() {
-    if (this.havePlan) {
+    if (!this.havePlan) {
       this.getStoragePlans();
     }
   }
