@@ -195,17 +195,16 @@ export default {
         this.$log(this.clouds);
         // eslint-disable-next-line no-restricted-syntax
         return !this.clouds.some(value => {
-          return value.CloudID === item.cloud_id;
+          return value.CloudID === item.CloudID;
         });
       }).map(value => {
         return {
-          name: value.cloud_id,
-          value: value.location
-            .split(",") // longitude ,latitude
+          name: value.CloudID,
+          value: value.Location.split(",") // longitude ,latitude
             .concat([
-              `存储价格：${value.storage_price}元/GB/月<br/>
-          流量价格：${value.traffic_price}元/GB<br/>
-          可用性：${value.availability}<br />`
+              `存储价格：${value.StoragePrice}元/GB/月<br/>
+          流量价格：${value.TrafficPrice}元/GB<br/>
+          可用性：${value.Availability}<br />`
             ])
         };
       });
