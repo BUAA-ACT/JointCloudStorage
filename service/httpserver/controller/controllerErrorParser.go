@@ -150,7 +150,7 @@ func getQueryAndReturn(con *gin.Context, fields *map[string]bool) (*map[string]i
 	return fieldValues, fieldExists
 }
 
-func UserCheckAccessToken(con *gin.Context, accessToken string, permitRoles *[]string) (string, bool) {
+func UserCheckAccessToken(con *gin.Context, accessToken string, permitRoles *[]string) (string, string, bool) {
 	userID, valid := dao.AccessTokenDao.CheckValid(accessToken)
 	if !valid {
 		con.JSON(http.StatusOK, gin.H{
@@ -158,13 +158,13 @@ func UserCheckAccessToken(con *gin.Context, accessToken string, permitRoles *[]s
 			"msg":  "用户令牌无效",
 			"data": gin.H{},
 		})
-		return "", false
+		return "", args.UserNoRole, false
 	}
 	user, valid := dao.UserDao.GetUserInfo(userID)
 	for _, role := range *permitRoles {
 		// role == UserAllRole can be all permit
 		if user.Role == role || role == args.UserAllRole {
-			return userID, true
+			return userID, user.Role, true
 		}
 	}
 	con.JSON(http.StatusOK, gin.H{
@@ -172,7 +172,7 @@ func UserCheckAccessToken(con *gin.Context, accessToken string, permitRoles *[]s
 		"msg":  "用户权限错误",
 		"data": gin.H{},
 	})
-	return "", false
+	return "", user.Role, false
 }
 
 func UserCheckStatus(con *gin.Context, user *model.User, statusMap *map[string]bool) bool {

@@ -179,7 +179,7 @@ func UserLogout(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token is valid
-	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	_, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -214,7 +214,7 @@ func UserCheckValidity(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	//check token
-	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	_, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -242,7 +242,7 @@ func UserChangePassword(con *gin.Context) {
 	originPassword := (*valueMap)[args.FieldWordOriginPassword].(string)
 	newPassword := (*valueMap)[args.FieldWordNewPassword].(string)
 	// check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -316,17 +316,17 @@ func UserChangeEmail(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	newEmail := (*valueMap)[args.FieldWordNewEmail].(string)
 	// check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	userID, userRole, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
 	// can't change email now!
-	user, infoSuccess := dao.UserDao.GetUserInfo(userID)
-	if !checkDaoSuccess(con, infoSuccess) {
-		return
-	}
+	//user, infoSuccess := dao.UserDao.GetUserInfo(userID)
+	//if !checkDaoSuccess(con, infoSuccess) {
+	//	return
+	//}
 	// it can be modify into roles
-	if user.Role == args.UserHostRole || user.Role == args.UserGuestRole {
+	if userRole == args.UserHostRole || userRole == args.UserGuestRole {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodePasswordNotRight,
 			"msg":  "禁止修改邮箱",
@@ -378,7 +378,7 @@ func UserChangeNickname(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	newNickname := (*valueMap)[args.FieldWordNickname].(string)
 	// check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -403,7 +403,7 @@ func UserGetInfo(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -445,7 +445,7 @@ func UserSetPreference(con *gin.Context) {
 		latency = &map[string]uint64{}
 	}
 	//check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
@@ -478,7 +478,7 @@ func UserGetKeys(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
 	if !valid {
 		return
 	}
@@ -514,7 +514,7 @@ func UserAddKey(con *gin.Context) {
 		comment = ""
 	}
 	// check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
 	if !valid {
 		return
 	}
@@ -578,7 +578,7 @@ func UserDeleteKey(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	accessKey := (*valueMap)[args.FieldWordAccessKey].(string)
 	// check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
 	if !valid {
 		return
 	}
@@ -639,7 +639,7 @@ func UserChangeKeyStatus(con *gin.Context) {
 	accessKey := (*valueMap)[args.FieldWordAccessKey].(string)
 	status := (*valueMap)[args.FieldWordStatus].(bool)
 	// check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
 	if !valid {
 		return
 	}
@@ -712,7 +712,7 @@ func UserChangeKeyComment(con *gin.Context) {
 		newComment = ""
 	}
 	// check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
 	if !valid {
 		return
 	}
@@ -778,7 +778,7 @@ func UserRemakeKey(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	accessKey := (*valueMap)[args.FieldWordAccessKey].(string)
 	// check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
 	if !valid {
 		return
 	}

@@ -64,7 +64,7 @@ func setupRouter(r *gin.Engine) {
 	r.POST("/task/getTask", controller.UserGetTask)
 
 	/* admin & cloud function */
-	r.POST("/cloud/getAllClouds", controller.AdminGetAllClouds)
+	r.POST("/cloud/getAllClouds", controller.GetAllClouds)
 	r.POST("/cloud/newCloud", controller.AdminAddCloud)
 	r.POST("/cloud/changeCloudInfo", controller.AdminChangeCloudInfo)
 	r.POST("/cloud/vote", controller.AdminVoteForCloud)

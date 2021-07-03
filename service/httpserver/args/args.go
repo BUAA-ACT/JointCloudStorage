@@ -107,6 +107,7 @@ const (
 	UserHostRole     = "HOST"
 	UserGuestRole    = "GUEST"
 	UserAllRole      = "ALL"
+	UserNoRole       = "ILLEGAL"
 
 	/* user status */
 	UserVerifyStatus       = "VERIFYING"

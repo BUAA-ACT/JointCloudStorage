@@ -23,7 +23,7 @@ func UserGetAllStoragePlan(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check access token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
@@ -52,9 +52,6 @@ func UserGetAllStoragePlan(con *gin.Context) {
 	}
 	// wrong in scheduler
 	if response.Code != args.CodeOK {
-		fmt.Println("scheduler fault:")
-		fmt.Println("Code: ", response.Code)
-		fmt.Println("Msg: ", response.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": response.Code,
 			"msg":  response.Msg,
@@ -83,7 +80,7 @@ func UserGetAdvice(con *gin.Context) {
 		return
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
@@ -113,7 +110,7 @@ func UserAbandonAdvice(con *gin.Context) {
 		return
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
@@ -150,7 +147,7 @@ func UserChooseStoragePlan(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	storagePlan := (*valueMap)[args.FieldWordStoragePlan].(*model.StoragePlan)
 	// check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
@@ -214,7 +211,7 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	userID, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
 	if !valid {
 		return
 	}
