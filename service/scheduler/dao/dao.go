@@ -39,6 +39,7 @@ type Cloud struct {
 	Address      string  `bson:"address"`
 	CloudName    string  `bson:"cloud_name"`
 	ProviderName string  `bson:"provider_name"`
+	Bucket       string  `json:"Bucket" bson:"bucket"`
 }
 
 type User struct {
