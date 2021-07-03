@@ -2,7 +2,7 @@
   <div>
     <cloud-list :clouds="allClouds">
       <template #operations="props">
-        <el-button type="primary" @click="showChangeCloud(props)">修改云信息</el-button>
+        <el-button type="primary" @click="showChangeCloud(props.cloud)">修改云信息</el-button>
       </template>
     </cloud-list>
     <el-dialog title="修改云信息" :visible.sync="changeCloudDiagVis">
