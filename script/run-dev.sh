@@ -19,6 +19,7 @@ screen_exit "aliyun-hohhot-h"
 screen_exit "aliyun-hohhot-s" 
 screen_exit "aliyun-qingdao-s" 
 screen_exit "aliyun-hangzhou-s" 
+screen_exit "txyun-chengdu-s" 
 
 
 pushd "$base_dir/service" || exit
@@ -40,7 +41,7 @@ echo "编译 httpserver"
 pushd "httpserver" || exit
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-w -s -extldflags "-static"' -o build/bin/httpserver
 cp build/bin/httpserver $build_dir
-cp httpserver.properties $build_dir
+cp httpserver.properties.example $build_dir/httpserver.properties
 popd || exit
 echo "Done"
 
@@ -61,12 +62,13 @@ screen_do(){
 
 pushd "$build_dir" || exit
 screen_do "aliyun-hohhot-h" "./httpserver"
-screen_do "aliyun-hohhot-s" "./scheduler -addr=:8082 -cid=aliyun-hohhot  -env=aliyun-hohhot -heartbeat=10s -reschedule=60s -mongo=mongodb://localhost:27017"
+screen_do "aliyun-hohhot-s" "./scheduler -addr=:8082 -cid=aliyun-hohhot  -env=hohhot -heartbeat=10s -reschedule=60s -mongo=mongodb://localhost:27017"
 
-screen_do "aliyun-qingdao-s" "./scheduler -addr=:8282 -cid=aliyun-qingdao -env=aliyun-qingdao -heartbeat=10s -reschedule=60s -mongo=mongodb://localhost:27017"
+screen_do "aliyun-qingdao-s" "./scheduler -addr=:8282 -cid=aliyun-qingdao -env=qingdao -heartbeat=10s -reschedule=60s -mongo=mongodb://localhost:27017"
 
-screen_do "aliyun-hangzhou-s" "./scheduler -addr=:8182 -cid=aliyun-hangzhou -env=aliyun-hangzhou -heartbeat=10s -reschedule=60s -mongo=mongodb://localhost:27017"
+screen_do "aliyun-hangzhou-s" "./scheduler -addr=:8182 -cid=aliyun-hangzhou -env=hangzhou -heartbeat=10s -reschedule=60s -mongo=mongodb://localhost:27017"
 
+screen_do "txyun-chengdu-s" "./scheduler -addr=:8382 -cid=txyun-chengdu -env=chengdu -heartbeat=10s -reschedule=60s -mongo=mongodb://localhost:27017"
 
 
 
