@@ -264,8 +264,8 @@ func PostCloudVote(c *gin.Context) {
 		log.Error("bind json err, package:NewCloud, func:PostCloudVote, message:", err, " Can't get id.", "RequestID:", requestID)
 		return
 	}
-	if _, ok := req["id"]; ok {
-		id = req["id"].(string)
+	if _, ok := req["CloudID"]; ok {
+		id = req["CloudID"].(string)
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
@@ -315,7 +315,7 @@ func PostCloudVote(c *gin.Context) {
 
 		//序列化投票信息{id：”“，json：num}
 		voteMsg := make(map[string]interface{})
-		voteMsg["id"] = voteCloud.Cloud.CloudID
+		voteMsg["CloudID"] = voteCloud.Cloud.CloudID
 		voteMsg["vote"] = 1
 		b, err := json.Marshal(voteMsg)
 		if err != nil {
@@ -391,7 +391,7 @@ func PostMasterCloudVote(c *gin.Context) {
 		log.Error("json 解析失败 package:NewCloud, func:PostMasterCloudVote, message:", err, "RequestID:", requestID)
 		return
 	}
-	_, ok1 := req["id"]
+	_, ok1 := req["CloudID"]
 	_, ok2 := req["vote"]
 	if !(ok1 && ok2) {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -403,7 +403,7 @@ func PostMasterCloudVote(c *gin.Context) {
 		log.Error("未获取到 id 和 vote， package:NewCloud, func:PostMasterCloudVote, message:Can't get id and vote from context\n", req, "RequestID:", requestID)
 		return
 	}
-	id = req["id"].(string)
+	id = req["CloudID"].(string)
 	vote = int(req["vote"].(float64))
 	//向tempcloud表中投票
 	modifyNum, err := localMongoTempCloud.AddVoteNum(vote, id)
