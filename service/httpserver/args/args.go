@@ -50,7 +50,7 @@ const (
 	CodeTransporterError = 1500
 )
 
-/* http request method */
+/* http request method and head*/
 const (
 	HttpMethodGet             = "GET"
 	HttpMethodPost            = "POST"
@@ -62,6 +62,8 @@ const (
 	HttpContentTypeJson       = "application/json"
 	HttpContentTypeXML        = "application/xml"
 	HttpContentTypeMS         = "application/x-msdownload"
+	HttpHeaderKeyForScheduler = "Caller"
+	HttpHeaderValueMe         = "http-server"
 )
 
 /* http body field const */

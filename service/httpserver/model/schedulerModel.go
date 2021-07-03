@@ -97,6 +97,24 @@ type PostCloudVoteResponse struct {
 	Msg       string `json:"Msg" bson:"msg"`
 }
 
+// PostKeyToScheduler data struct
+type PostKeyToScheduler = AccessKey
+
+type PostKeyToSchedulerResponse struct {
+	Code      uint64 `json:"Code" json:"code"`
+	RequestID string `json:"RequestID" bson:"request_id"`
+	Msg       string `json:"Msg" bson:"msg"`
+}
+
+// DeleteKeyToScheduler data struct
+type DeleteKeyToScheduler = AccessKey
+
+type DeleteKeyToSchedulerResponse struct {
+	Code      uint64 `json:"Code" json:"code"`
+	RequestID string `json:"RequestID" bson:"request_id"`
+	Msg       string `json:"Msg" bson:"msg"`
+}
+
 func (thisPlan *StoragePlan) isEqual(otherPlan *StoragePlan) bool {
 	if thisPlan.StorageMode != otherPlan.StorageMode {
 		return false

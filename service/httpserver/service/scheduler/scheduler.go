@@ -26,6 +26,7 @@ func GetAllStoragePlanFromScheduler(preference *model.GetStoragePlan) (*model.Ge
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
+	req.Header.Set(args.HttpHeaderKeyForScheduler, args.HttpHeaderValueMe)
 	resp, errDoRequest := client.Do(req)
 	if tools.PrintError(errDoRequest) {
 		return nil, false
@@ -54,6 +55,7 @@ func GetDownloadPlanFromScheduler(userID string, fileId string) (*model.GetDownl
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
+	req.Header.Set(args.HttpHeaderKeyForScheduler, args.HttpHeaderValueMe)
 	resp, errDoRequest := client.Do(req)
 	if tools.PrintError(errDoRequest) {
 		return nil, false
@@ -83,6 +85,7 @@ func SetStoragePlanToScheduler(userID string, storagePlan *model.StoragePlan) (*
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
+	req.Header.Set(args.HttpHeaderKeyForScheduler, args.HttpHeaderValueMe)
 	resp, errDoRequest := client.Do(req)
 	if tools.PrintError(errDoRequest) {
 		return nil, false
@@ -108,6 +111,7 @@ func GetAllCloudsFromScheduler() (*model.GetAllCloudsResponse, bool) {
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
+	req.Header.Set(args.HttpHeaderKeyForScheduler, args.HttpHeaderValueMe)
 	resp, errDoRequest := client.Do(req)
 	if tools.PrintError(errDoRequest) {
 		return nil, false
@@ -135,6 +139,7 @@ func PostUpdateCloudToScheduler(updateCloud *model.PostUpdateCloud) (*model.Post
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
+	req.Header.Set(args.HttpHeaderKeyForScheduler, args.HttpHeaderValueMe)
 	resp, errDoRequest := client.Do(req)
 	if tools.PrintError(errDoRequest) {
 		return nil, false
@@ -159,6 +164,7 @@ func PostNewCloudToScheduler(newCloud *model.PostNewCloud) (*model.PostNewCloudR
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
+	req.Header.Set(args.HttpHeaderKeyForScheduler, args.HttpHeaderValueMe)
 	resp, errDoRequest := client.Do(req)
 	if tools.PrintError(errDoRequest) {
 		return nil, false
@@ -184,6 +190,7 @@ func GetVoteRequestsFromScheduler() (*model.GetVoteRequestsResponse, bool) {
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
+	req.Header.Set(args.HttpHeaderKeyForScheduler, args.HttpHeaderValueMe)
 	resp, errDoRequest := client.Do(req)
 	if tools.PrintError(errDoRequest) {
 		return nil, false
@@ -215,6 +222,7 @@ func PostCloudVoteToScheduler(cloudID string, voteResult bool) (*model.PostCloud
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
+	req.Header.Set(args.HttpHeaderKeyForScheduler, args.HttpHeaderValueMe)
 	resp, errDoRequest := client.Do(req)
 	if tools.PrintError(errDoRequest) {
 		return nil, false
@@ -222,6 +230,60 @@ func PostCloudVoteToScheduler(cloudID string, voteResult bool) (*model.PostCloud
 	defer closeBody(resp.Body)
 	// decode json
 	var response model.PostCloudVoteResponse
+	errDecoder := json.NewDecoder(resp.Body).Decode(&response)
+	if tools.PrintError(errDecoder) {
+		return nil, false
+	}
+	return &response, true
+}
+
+func PostKeyToScheduler(key *model.AccessKey) (*model.PostKeyToSchedulerResponse, bool) {
+	client := http.Client{}
+	postKeyJson, errMarshal := json.Marshal(*key)
+	if tools.PrintError(errMarshal) {
+		return nil, false
+	}
+	req, errNewRequest := http.NewRequest("POST", *args.SchedulerUrl+"/add_key", bytes.NewReader(postKeyJson))
+	if tools.PrintError(errNewRequest) {
+		return nil, false
+	}
+	req.Header.Set(args.HttpHeaderKeyForScheduler, args.HttpHeaderValueMe)
+	resp, errDoRequest := client.Do(req)
+	if tools.PrintError(errDoRequest) {
+		return nil, false
+	}
+	defer closeBody(resp.Body)
+	// decode json
+	var response model.PostKeyToSchedulerResponse
+	errDecoder := json.NewDecoder(resp.Body).Decode(&response)
+	if tools.PrintError(errDecoder) {
+		return nil, false
+	}
+	return &response, true
+}
+
+func DeleteKeyToScheduler(userID string, accessKey string) (*model.DeleteKeyToSchedulerResponse, bool) {
+	client := http.Client{}
+	deleteKey := model.AccessKey{
+		UserID:    userID,
+		AccessKey: accessKey,
+	}
+	deleteKeyJson, errMarshal := json.Marshal(deleteKey)
+	if tools.PrintError(errMarshal) {
+		return nil, false
+	}
+	req, errNewRequest := http.NewRequest("POST", *args.SchedulerUrl+"/delete_key", bytes.NewReader(deleteKeyJson))
+	if tools.PrintError(errNewRequest) {
+		return nil, false
+	}
+	req.Header.Set(args.HttpHeaderKeyForScheduler, args.HttpHeaderValueMe)
+	resp, errDoRequest := client.Do(req)
+	if tools.PrintError(errDoRequest) {
+		return nil, false
+	}
+	defer closeBody(resp.Body)
+	// decode json
+	var response model.DeleteKeyToSchedulerResponse
 	errDecoder := json.NewDecoder(resp.Body).Decode(&response)
 	if tools.PrintError(errDecoder) {
 		return nil, false

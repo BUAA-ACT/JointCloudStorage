@@ -31,6 +31,20 @@ func (d *Dao) GetAllKeys(userID string) (*[]model.AccessKey, bool) {
 	return &keys, true
 }
 
+func (d *Dao) GetWithAccessKey(userID string, accessKey string) (*model.AccessKey, bool) {
+	col := d.client.Database(d.database).Collection(d.collection)
+	filter := bson.M{
+		"user_id":    userID,
+		"access_key": accessKey,
+	}
+	var key model.AccessKey
+	err := col.FindOne(context.TODO(), filter).Decode(&key)
+	if tools.PrintError(err) {
+		return nil, false
+	}
+	return &key, true
+}
+
 func (d *Dao) InsertKey(userID string, accessKey string, secretKey string, comment string) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
 	timeNow := time.Now()

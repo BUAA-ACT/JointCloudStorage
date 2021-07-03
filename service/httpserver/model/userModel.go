@@ -18,6 +18,7 @@ type Cloud struct {
 	Address      string  `json:"Address" bson:"address"`
 	CloudName    string  `json:"CloudName" bson:"cloud_name"`
 	ProviderName string  `json:"ProviderName" bson:"provider_name"`
+	Bucket       string  `json:"Bucket" bson:"bucket"`
 }
 
 type Preference struct {
