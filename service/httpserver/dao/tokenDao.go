@@ -4,10 +4,10 @@ import (
 	"cloud-storage-httpserver/model"
 	"cloud-storage-httpserver/service/tools"
 	"context"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
 	"time"
 )
 
@@ -70,7 +70,7 @@ func (d *Dao) CheckValid(token string) (string, bool) {
 	var originToken model.AccessTokenCode
 	err := col.FindOneAndUpdate(context.TODO(), filter, update).Decode(&originToken)
 	if err != nil {
-		fmt.Println("无效token")
+		log.Println("无效token")
 		return "", false
 	}
 	return originToken.UserID, true

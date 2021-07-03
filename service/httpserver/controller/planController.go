@@ -7,7 +7,7 @@ import (
 	"cloud-storage-httpserver/service/scheduler"
 	"cloud-storage-httpserver/service/tools"
 	"cloud-storage-httpserver/service/transporter"
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -88,8 +88,8 @@ func UserGetAdvice(con *gin.Context) {
 	if !checkDaoSuccess(con, adviceSuccess) {
 		return
 	}
-	fmt.Print("advices: ")
-	fmt.Println(*advices)
+	log.Print("advices: ")
+	log.Println(*advices)
 	// return advices
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
@@ -251,9 +251,9 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	}
 	if postPlanToSchedulerResponse.Code != args.CodeOK {
 		// error in scheduler
-		fmt.Println("scheduler fault:")
-		fmt.Println("Code: ", postPlanToSchedulerResponse.Code)
-		fmt.Println("Msg: ", postPlanToSchedulerResponse.Msg)
+		log.Println("scheduler fault:")
+		log.Println("Code: ", postPlanToSchedulerResponse.Code)
+		log.Println("Msg: ", postPlanToSchedulerResponse.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": postPlanToSchedulerResponse.Code,
 			"msg":  postPlanToSchedulerResponse.Msg,

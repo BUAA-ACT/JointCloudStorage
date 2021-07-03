@@ -3,7 +3,6 @@ package smtp
 import (
 	"bytes"
 	"encoding/base64"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/smtp"
@@ -51,13 +50,13 @@ func Email() {
 		</body>
 		</html>
 		`
-	fmt.Println("send email")
+	log.Println("send email")
 	err := SendToMail(user, password, host, to, subject, body, "html")
 	if err != nil {
-		fmt.Println("Send mail error!")
-		fmt.Println(err)
+		log.Println("Send mail error!")
+		log.Println(err)
 	} else {
-		fmt.Println("Send mail success!")
+		log.Println("Send mail success!")
 	}
 
 }
