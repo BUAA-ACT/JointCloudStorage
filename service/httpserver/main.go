@@ -69,6 +69,7 @@ func setupRouter(r *gin.Engine) {
 	r.POST("/cloud/changeCloudInfo", controller.AdminChangeCloudInfo)
 	r.POST("/cloud/vote", controller.AdminVoteForCloud)
 	r.POST("/cloud/getVoteRequests", controller.AdminGetVoteRequests)
+	r.POST("/cloud/getAddedClouds", controller.AdminGetAddedClouds)
 }
 
 func Cors() gin.HandlerFunc {

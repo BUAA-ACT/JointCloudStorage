@@ -445,7 +445,7 @@ func UserSetPreference(con *gin.Context) {
 		latency = &map[string]uint64{}
 	}
 	//check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -478,7 +478,7 @@ func UserGetKeys(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -514,7 +514,7 @@ func UserAddKey(con *gin.Context) {
 		comment = ""
 	}
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -578,7 +578,7 @@ func UserDeleteKey(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	accessKey := (*valueMap)[args.FieldWordAccessKey].(string)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -639,7 +639,7 @@ func UserChangeKeyStatus(con *gin.Context) {
 	accessKey := (*valueMap)[args.FieldWordAccessKey].(string)
 	status := (*valueMap)[args.FieldWordStatus].(bool)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -712,7 +712,7 @@ func UserChangeKeyComment(con *gin.Context) {
 		newComment = ""
 	}
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -778,7 +778,7 @@ func UserRemakeKey(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	accessKey := (*valueMap)[args.FieldWordAccessKey].(string)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserGuestRole, args.UserHostRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
