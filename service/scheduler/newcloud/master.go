@@ -111,7 +111,7 @@ func PostNewCloud(c *gin.Context) {
 			"Msg":       errorMsg[codeInternalError],
 			"Test":      "get all clouds error:" + err.Error(),
 		})
-		log.Error("package:NewCloud, func:PostNewCloud, message:", err, "RequestID:", requestID)
+		log.Error("get all clouds err package:NewCloud, func:PostNewCloud, message:", err, "RequestID:", requestID)
 		return
 	}
 	//初始化tempCloud，将address设为本地的address
@@ -129,7 +129,7 @@ func PostNewCloud(c *gin.Context) {
 			"Msg":       errorMsg[codeInternalError],
 			"Test":      "tempCloud marshal error:" + err.Error(),
 		})
-		log.Error("package:NewCloud, func:PostNewCloud, message:", err, " Can't marshal temp vote cloud.", "RequestID:", requestID)
+		log.Error("gen json err, package:NewCloud, func:PostNewCloud, message:", err, " Can't marshal temp vote cloud.", "RequestID:", requestID)
 		return
 	}
 	body := bytes.NewBuffer(b)
@@ -146,7 +146,7 @@ func PostNewCloud(c *gin.Context) {
 						"Msg":       errorMsg[codeInternalError],
 						"Test":      "Send to other clouds error:" + err.Error(),
 					})
-					log.Error("package:NewCloud, func:PostNewCloud, message:", err, " Send temp cloud error! ", "RequestID:", requestID)
+					log.Error("send to other clouds error, package:NewCloud, func:PostNewCloud, message:", err, " Send temp cloud error! ", "RequestID:", requestID)
 					return
 				}
 				log.Info("package:NewCloud, func:PostNewCloud, code:", resp.StatusCode, " Code shoule be 200.", " RequestID:", requestID)
@@ -177,7 +177,7 @@ func PostNewCloudVote(c *gin.Context) {
 			"Msg":       errorMsg[codeBadRequest],
 			"Test":      err,
 		})
-		log.Error("package:NewCloud, func:PostNewCloudRequest, message:", err, "RequestID:", requestID)
+		log.Error("Bind Json error package:NewCloud, func:PostNewCloudRequest, message:", err, "RequestID:", requestID)
 		return
 	}
 
@@ -190,7 +190,7 @@ func PostNewCloudVote(c *gin.Context) {
 			"Msg":       errorMsg[codeInternalError],
 			"Test":      err,
 		})
-		log.Error("package:NewCloud, func:PostNewCloudRequest, message:", err, "RequestID:", requestID)
+		log.Error("insert vote Cloud error package:NewCloud, func:PostNewCloudRequest, message:", err, "RequestID:", requestID)
 		return
 	}
 
@@ -216,7 +216,7 @@ func GetVoteRequest(c *gin.Context) {
 			"Msg":       errorMsg[codeInternalError],
 			"Test":      "Read from mongo error:" + err.Error(),
 		})
-		log.Error("package:NewCloud, func:GetVoteRequest, message:", err)
+		log.Error("get all vote cloud from db error, package:NewCloud, func:GetVoteRequest, message:", err)
 		return
 	}
 
@@ -244,7 +244,7 @@ func PostCloudVote(c *gin.Context) {
 			"Code":      codeBadRequest,
 			"Msg":       errorMsg[codeBadRequest],
 		})
-		log.Error("package:NewCloud, func:PostCloudVote, message:", err, " Can't get id.", "RequestID:", requestID)
+		log.Error("bind json err, package:NewCloud, func:PostCloudVote, message:", err, " Can't get id.", "RequestID:", requestID)
 		return
 	}
 	if _, ok := req["id"]; ok {
@@ -267,7 +267,7 @@ func PostCloudVote(c *gin.Context) {
 			"Code":      codeInternalError,
 			"Msg":       errorMsg[codeInternalError],
 		})
-		log.Error("package:NewCloud, func:PostCloudVote, message:", err, " count cloud error.", "RequestID:", requestID)
+		log.Error("count clouds err, package:NewCloud, func:PostCloudVote, message:", err, " count cloud error.", "RequestID:", requestID)
 		return
 	}
 	if count > 0 {
@@ -279,7 +279,7 @@ func PostCloudVote(c *gin.Context) {
 				"Code":      codeInternalError,
 				"Msg":       errorMsg[codeInternalError],
 			})
-			log.Error("package:NewCloud, func:PostCloudVote, message:", err, "RequestID:", requestID)
+			log.Error("add vote num err, package:NewCloud, func:PostCloudVote, message:", err, "RequestID:", requestID)
 			return
 		}
 	} else {
@@ -292,7 +292,7 @@ func PostCloudVote(c *gin.Context) {
 				"Code":      codeInternalError,
 				"Msg":       errorMsg[codeInternalError],
 			})
-			log.Error("package:NewCloud, func:PostCloudVote, message:", err, " Can't get the vote request!", " RequestID:", requestID)
+			log.Error("get vote cloud err, package:NewCloud, func:PostCloudVote, message:", err, " Can't get the vote request!", " RequestID:", requestID)
 			return
 		}
 
@@ -307,7 +307,7 @@ func PostCloudVote(c *gin.Context) {
 				"Code":      codeInternalError,
 				"Msg":       errorMsg[codeInternalError],
 			})
-			log.Error("package:NewCloud, func:PostCloudVote, message:", err, " Can't marshal the cloud", "RequestID:", requestID)
+			log.Error("marshal voteMsg err, package:NewCloud, func:PostCloudVote, message:", err, " Can't marshal the cloud", "RequestID:", requestID)
 			return
 		}
 		body := bytes.NewBuffer(b)
@@ -320,7 +320,7 @@ func PostCloudVote(c *gin.Context) {
 					"Code":      codeInternalError,
 					"Msg":       errorMsg[codeInternalError],
 				})
-				log.Error("package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
+				log.Error("post vote msg err, package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
 				return
 			}
 			if resp.StatusCode != 200 {
@@ -329,7 +329,7 @@ func PostCloudVote(c *gin.Context) {
 					"Code":      codeBadRequest,
 					"Msg":       errorMsg[codeBadRequest],
 				})
-				log.Error("package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
+				log.Error("vote msg statusCode err, package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
 				return
 			}
 		}
@@ -343,7 +343,7 @@ func PostCloudVote(c *gin.Context) {
 				"Msg":       errorMsg[codeInternalError],
 				"Test":      "Delete cloud fail:" + err.Error(),
 			})
-			log.Error("package:NewCloud, func:PostCloudVote, message:", err, " Delete cloud error. ", "RequestID:", requestID)
+			log.Error("delete vote cloud err, package:NewCloud, func:PostCloudVote, message:", err, " Delete cloud error. ", "RequestID:", requestID)
 			return
 		}
 	}
@@ -371,7 +371,7 @@ func PostMasterCloudVote(c *gin.Context) {
 			"Msg":       errorMsg[codeBadRequest],
 			"Test:":     "Get vote request fail:" + err.Error(),
 		})
-		log.Error("package:NewCloud, func:PostMasterCloudVote, message:", err, "RequestID:", requestID)
+		log.Error("json 解析失败 package:NewCloud, func:PostMasterCloudVote, message:", err, "RequestID:", requestID)
 		return
 	}
 	_, ok1 := req["id"]
@@ -383,7 +383,7 @@ func PostMasterCloudVote(c *gin.Context) {
 			"Msg":       errorMsg[codeBadRequest],
 			"Test":      "Get field id and vote fail.",
 		})
-		log.Error("package:NewCloud, func:PostMasterCloudVote, message:Can't get id and vote from context\n", req, "RequestID:", requestID)
+		log.Error("未获取到 id 和 vote， package:NewCloud, func:PostMasterCloudVote, message:Can't get id and vote from context\n", req, "RequestID:", requestID)
 		return
 	}
 	id = req["id"].(string)
@@ -397,7 +397,7 @@ func PostMasterCloudVote(c *gin.Context) {
 			"Msg":       errorMsg[codeInternalError],
 			"Test":      "Write mongo fail:" + err.Error(),
 		})
-		log.Error("package:NewCloud, func:PostMasterCloudVote, message:", err, "RequestID:", requestID)
+		log.Error("投票记录入库失败， package:NewCloud, func:PostMasterCloudVote, message:", err, "RequestID:", requestID)
 		return
 	}
 	if modifyNum <= 0 {
@@ -415,7 +415,7 @@ func PostMasterCloudVote(c *gin.Context) {
 			"Msg":       errorMsg[codeInternalError],
 			"Test":      "Check vote num fail:" + err.Error(),
 		})
-		log.Error("package:NewCloud, func:PostMasterCloudVote, message:", err, " Can't get vote cloud. ", "RequestID:", requestID)
+		log.Error("获取现有投票数量失败，package:NewCloud, func:PostMasterCloudVote, message:", err, " Can't get vote cloud. ", "RequestID:", requestID)
 		return
 	}
 
@@ -428,7 +428,7 @@ func PostMasterCloudVote(c *gin.Context) {
 			"Msg":       errorMsg[codeInternalError],
 			"Test":      "Get cloud num fail:" + err.Error(),
 		})
-		log.Error("package:NewCloud, func:PostMasterCloudVote, message:", err, " Can't get total number. ", "RequestID:", requestID)
+		log.Error("获取所有云信息失败，package:NewCloud, func:PostMasterCloudVote, message:", err, " Can't get total number. ", "RequestID:", requestID)
 		return
 	}
 
@@ -442,7 +442,7 @@ func PostMasterCloudVote(c *gin.Context) {
 				"Code":      codeInternalError,
 				"Msg":       errorMsg[codeInternalError],
 			})
-			log.Error("package:NewCloud, func:PostMasterCloudVote, message:", err, " Can't get all clouds. ", "RequestID:", requestID)
+			log.Error("获取所有云信息失败，package:NewCloud, func:PostMasterCloudVote, message:", err, " Can't get all clouds. ", "RequestID:", requestID)
 			return
 		}
 
@@ -455,7 +455,7 @@ func PostMasterCloudVote(c *gin.Context) {
 				"Msg":       errorMsg[codeInternalError],
 				"Test":      "Insert new cloud to collection Cloud error:" + err.Error(),
 			})
-			log.Error("package:NewCloud, func:PostMasterCloudVote, message:", err, "RequestID:", requestID)
+			log.Error("写入本地 cloud 表失败，package:NewCloud, func:PostMasterCloudVote, message:", err, "RequestID:", requestID)
 			return
 		}
 
@@ -470,7 +470,7 @@ func PostMasterCloudVote(c *gin.Context) {
 				"Msg":       errorMsg[codeInternalError],
 				"Test":      "Marshal newclouds fail:" + err.Error(),
 			})
-			log.Error("package:NewCloud, func:PostMasterCloudVote, message:", err, " Can't marshal the cloud", "RequestID:", requestID)
+			log.Error("解析新云信息失败，package:NewCloud, func:PostMasterCloudVote, message:", err, " Can't marshal the cloud", "RequestID:", requestID)
 			return
 		}
 		body := bytes.NewBuffer(b)
@@ -485,14 +485,14 @@ func PostMasterCloudVote(c *gin.Context) {
 						"Msg":       errorMsg[codeInternalError],
 						"Test":      "syn to others fail:" + err.Error(),
 					})
-					log.Error("package:NewCloud, func:PostMasterCloudVote, message:", err, "RequestID:", requestID)
+					log.Error("发送新云信息到其他节点失败，package:NewCloud, func:PostMasterCloudVote, message:", err, "RequestID:", requestID)
 					return
 				}
 			}
 
 		}
 
-		//向新云同步
+		//向新云同步 所有云节点信息？？
 		b, err = json.Marshal(clouds)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -512,7 +512,7 @@ func PostMasterCloudVote(c *gin.Context) {
 				"Msg":       errorMsg[codeInternalError],
 				"Test":      "Syn to new cloud fail:" + err.Error(),
 			})
-			log.Error("package:NewCloud, func:PostMasterCloudVote, message:", err, " Send to new cloud error! ", "RequestID:", requestID, requestID, "voteNum:", voteCloud, "totalNum:", totalNum)
+			log.Error("向新云同步所有云节点信息失败，package:NewCloud, func:PostMasterCloudVote, message:", err, " Send to new cloud error! ", "RequestID:", requestID, requestID, "voteNum:", voteCloud, "totalNum:", totalNum)
 			return
 		}
 
@@ -525,7 +525,7 @@ func PostMasterCloudVote(c *gin.Context) {
 				"Msg":       errorMsg[codeInternalError],
 				"Test":      "Delete cloud fail:" + err.Error(),
 			})
-			log.Error("package:NewCloud, func:PostMasterCloudVote, message:", err, " Delete cloud error. ", "RequestID:", requestID)
+			log.Error("删除临时云数据失败，package:NewCloud, func:PostMasterCloudVote, message:", err, " Delete cloud error. ", "RequestID:", requestID)
 			return
 		}
 	}
@@ -566,7 +566,7 @@ func PostCloudSyn(c *gin.Context) {
 			"Msg":       errorMsg[codeBadRequest],
 			"Test":      "Read Collection Clouds error:" + err.Error(),
 		})
-		log.Error("package:NewCloud, func:PostCloudSyn, message:", err, "RequestID:", requestID)
+		log.Error("获取现有云信息失败，package:NewCloud, func:PostCloudSyn, message:", err, "RequestID:", requestID)
 		return
 	}
 
@@ -588,7 +588,7 @@ func PostCloudSyn(c *gin.Context) {
 					"Msg":       errorMsg[codeInternalError],
 					"Test":      "Insert new cloud to collection Cloud error:" + err.Error(),
 				})
-				log.Error("package:NewCloud, func:PostCloudSyn, message:", err, "RequestID:", requestID)
+				log.Error("新云信息插入数据库失败 package:NewCloud, func:PostCloudSyn, message:", err, "RequestID:", requestID)
 				return
 			}
 		}

@@ -186,7 +186,7 @@ func GetStatus(c *gin.Context) {
 		})
 		return
 	}
-	logInfo("Receive GetStatus", requestID, param)
+	logTrace("Receive GetStatus", requestID, param)
 
 	// 验证请求来源是否合法
 	_, err = db.GetCloud(param.CloudID)
@@ -219,7 +219,7 @@ func GetStatus(c *gin.Context) {
 		"Data":      cloud,
 	})
 
-	logInfo("Response GetStatus", requestID, cloud)
+	logTrace("Response GetStatus", requestID, cloud)
 }
 
 func PostStoragePlan(c *gin.Context) {
@@ -515,7 +515,7 @@ func heartbeat(interval time.Duration) {
 	for {
 		<-t.C
 		requestID := uuid.New().String()
-		logInfo("Starting to send heartbeat packages", requestID)
+		logTrace("Starting to send heartbeat packages", requestID)
 
 		clouds, err := db.GetOtherClouds(*flagCloudID)
 		if err != nil {
@@ -551,7 +551,7 @@ func heartbeat(interval time.Duration) {
 			}
 		}
 
-		logInfo("Heartbeat finished", requestID, len(clouds), success)
+		logTrace("Heartbeat finished", requestID, len(clouds), success)
 	}
 }
 

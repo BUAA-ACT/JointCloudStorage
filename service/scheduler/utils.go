@@ -19,6 +19,10 @@ func logInfo(msg string, requestID string, params ...interface{}) {
 	log.Infof("Message: %s, RequestID: %s, Params: %v", msg, requestID, params)
 }
 
+func logTrace(msg string, requestID string, params ...interface{}) {
+	log.Tracef("Message: %s, RequestID: %s, Params: %v", msg, requestID, params)
+}
+
 func minInt(a, b int) int {
 	if a < b {
 		return a
