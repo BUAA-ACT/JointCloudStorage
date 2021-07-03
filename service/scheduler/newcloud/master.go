@@ -132,12 +132,12 @@ func PostNewCloud(c *gin.Context) {
 		log.Error("gen json err, package:NewCloud, func:PostNewCloud, message:", err, " Can't marshal temp vote cloud.", "RequestID:", requestID)
 		return
 	}
-	body := bytes.NewBuffer(b)
 	//将voetcloud发送给其他所有的云
 	//本地测试不测试本部分内容
 	if env != "localDebug" {
 		for _, cloud := range clouds {
 			if cloud.CloudID != localid {
+				body := bytes.NewBuffer(b)
 				resp, err := http.Post("http://"+cloud.Address+"/new_cloud_vote", "application/json", body)
 				if err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{
@@ -178,6 +178,7 @@ func PostNewCloudVote(c *gin.Context) {
 			"Test":      err,
 		})
 		log.Error("Bind Json error package:NewCloud, func:PostNewCloudRequest, message:", err, "RequestID:", requestID)
+		log.Error(c.Request.Body)
 		return
 	}
 
