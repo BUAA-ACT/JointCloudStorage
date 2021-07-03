@@ -3,8 +3,8 @@ package args
 import (
 	"bufio"
 	"flag"
-	"fmt"
 	"io"
+	"log"
 	"os"
 	"regexp"
 	"strconv"
@@ -166,6 +166,8 @@ var (
 	VerifyCodeCollection      = flag.String("VerifyCodeCollection", "", "verify code collection name")
 	MigrationAdviceCollection = flag.String("MigrationAdviceCollection", "", "migration advice collection name")
 	CloudCollection           = flag.String("CloudCollection", "", "cloud collection name")
+	TempCloudCollection       = flag.String("TempCloudCollection", "", "temp cloud collection name")
+	VoteCloudCollection       = flag.String("VoteCloudCollection", "", "vote cloud collection name")
 	AccessKeyCollection       = flag.String("AccessKeyCollection", "", "access key collection name")
 	EncryptKey                = flag.String("EncryptKey", "", "password encrypt key for AES")
 	CloudID                   = flag.String("CloudID", "", "server's cloud id")
@@ -176,12 +178,12 @@ func LoadProperties(configFilePath string) {
 	defer func(srcFile *os.File) {
 		err := srcFile.Close()
 		if err != nil {
-			fmt.Println("出错啦！错误信息为：")
-			fmt.Println(err)
+			log.Println("出错啦！错误信息为：")
+			log.Println(err)
 		}
 	}(srcFile)
 	if err != nil {
-		fmt.Println("The file not exits.")
+		log.Println("The file not exits.")
 	} else {
 		reg := regexp.MustCompile("\\s+")
 		srcReader := bufio.NewReader(srcFile)
@@ -242,6 +244,8 @@ func LoadProperties(configFilePath string) {
 	*TaskCollection = properties["TaskCollection"]
 	*MigrationAdviceCollection = properties["MigrationAdviceCollection"]
 	*CloudCollection = properties["CloudCollection"]
+	*TempCloudCollection = properties["TempCloudCollection"]
+	*VoteCloudCollection = properties["VoteCloudCollection"]
 	*AccessKeyCollection = properties["AccessKeyCollection"]
 	*EncryptKey = properties["EncryptKey"]
 	*CloudID = properties["CloudID"]

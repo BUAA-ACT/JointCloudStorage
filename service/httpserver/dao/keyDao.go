@@ -4,7 +4,6 @@ import (
 	"cloud-storage-httpserver/model"
 	"cloud-storage-httpserver/service/tools"
 	"context"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"time"
@@ -56,8 +55,7 @@ func (d *Dao) InsertKey(userID string, accessKey string, secretKey string, comme
 		CreateTime: timeNow,
 		Available:  true,
 	}
-	id, err := col.InsertOne(context.TODO(), key)
-	fmt.Println("insert a key with id:", id)
+	_, err := col.InsertOne(context.TODO(), key)
 	return !tools.PrintError(err)
 }
 

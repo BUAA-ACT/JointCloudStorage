@@ -24,9 +24,6 @@ func PreUploadFile(path string, user *model.User) (*model.TaskResponse, bool) {
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
-	// debug
-	//body, errDoRequest := ioutil.ReadAll(resp.Body)
-	//fmt.Println(body)
 	var response model.TaskResponse
 	errDecoder := json.NewDecoder(resp.Body).Decode(&response)
 	if tools.PrintError(errDecoder) {
@@ -50,9 +47,6 @@ func DownLoadFile(downloadName string, userID string, downloadPlan model.Storage
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
-	// debug
-	//body, _ := ioutil.ReadAll(resp.Body)
-	//fmt.Println(string(body))
 	var response model.TaskResponse
 	errDecoder := json.NewDecoder(resp.Body).Decode(&response)
 	if tools.PrintError(errDecoder) {
@@ -76,9 +70,6 @@ func DeleteFile(deleteName string, user *model.User) bool {
 	if tools.PrintError(errNewRequest) {
 		return false
 	}
-	// debug
-	//body, _ := ioutil.ReadAll(resp.Body)
-	//fmt.Println(string(body))
 	var response model.TaskResponse
 	errDecoder := json.NewDecoder(resp.Body).Decode(&response)
 	if tools.PrintError(errDecoder) {
@@ -104,9 +95,6 @@ func SyncFile(path string, userID string, oldPlan *model.StoragePlan, newPlan *m
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
-	// debug
-	//body, _ := ioutil.ReadAll(resp.Body)
-	//fmt.Println(string(body))
 	var response model.TaskResponse
 	errDecoder := json.NewDecoder(resp.Body).Decode(&response)
 	if tools.PrintError(errDecoder) {

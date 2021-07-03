@@ -6,8 +6,8 @@ import (
 	"cloud-storage-httpserver/model"
 	"cloud-storage-httpserver/service/regex"
 	"cloud-storage-httpserver/service/tools"
-	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"net/textproto"
 	"strings"
@@ -62,8 +62,8 @@ func getValueAndExist(con *gin.Context, fields *map[string]bool) (*map[string]in
 			//resultJson,err := json.Marshal(result)
 			//con.Request.Body = ioutil.NopCloser(bytes.NewBuffer(resultJson))
 			if err != nil {
-				fmt.Println("error in get value:")
-				fmt.Println(err)
+				log.Println("error in get value:")
+				log.Println(err)
 			}
 			for field := range *fields {
 				jsonValue, ok := result[field]
