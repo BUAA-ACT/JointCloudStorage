@@ -521,9 +521,10 @@ func PostMasterCloudVote(c *gin.Context) {
 			log.Error("package:NewCloud, func:PostMasterCloudVote, message:", err, " Can't marshal all clouds", "RequestID:")
 			return
 		}
+
+		body = bytes.NewBuffer(b)
 		_, err = http.Post("http://"+voteCloud.Cloud.Address+"/cloud_syn", "application/json", body)
 		if err != nil {
-			body = bytes.NewBuffer(b)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"RequestID": requestID,
 				"Code":      codeInternalError,
