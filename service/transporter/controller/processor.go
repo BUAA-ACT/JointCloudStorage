@@ -438,6 +438,16 @@ func (processor *TaskProcessor) ProcessPathIndex(t *model.Task) <-chan model.Obj
 	return storageClient.Index(t.GetSourcePath(), t.Uid)
 }
 
+// ProcessIndexFile 处理列取用户所有文件请求（从数据库中读取）
+func (processor *TaskProcessor) ProcessIndexFile(t *model.Task) ([]*model.File, error) {
+	// 列举所有对象
+	objects, err := processor.FileDatabase.Index(t.GetRealSourcePath())
+	if err != nil {
+		return nil, err
+	}
+	return objects, nil
+}
+
 // 处理同步任务
 func (processor *TaskProcessor) ProcessSync(t *model.Task) (err error) {
 	subTask := model.Task{}
@@ -580,6 +590,8 @@ func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
 	logrus.Debugf("Task %v Process: %v", t.Tid, t.Progress)
 	return nil //todo
 }
+
+
 
 func (processor *TaskProcessor) CheckTaskType(t *model.Task, taskType model.TaskType) (err error) {
 	if t.GetTaskType() != taskType {

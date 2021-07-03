@@ -84,3 +84,13 @@ func TestJointStorageInterface_GetMethod(t *testing.T) {
 	}
 	t.Logf("body: %s", recorder.Body.String())
 }
+
+func TestJointStorageInterface_GetObjectList(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/", nil)
+	recorder := httptest.NewRecorder()
+	JSI.ServeHTTP(recorder, req)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("http code incorrect")
+	}
+	t.Logf("body: %s", recorder.Body.String())
+}

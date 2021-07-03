@@ -33,7 +33,7 @@ func NewInterface(processor *controller.TaskProcessor) *JointStorageInterface {
 func (jsi *JointStorageInterface) GetMethod(c *gin.Context) {
 	key := c.Param("key")
 	if key == "/" {
-		jsi.defaultReply(c)
+		jsi.GetObjectList(c)
 	} else {
 		jsi.checkKey(c)
 		jsi.GetObject(c)
@@ -108,6 +108,53 @@ func (jsi *JointStorageInterface) GetObject(c *gin.Context) {
 			"", "err", err.Error())
 	}
 	c.File(path)
+}
+
+func (jsi *JointStorageInterface) DeleteObject(c *gin.Context) {
+	uid := c.MustGet("uid").(string)
+	key := c.MustGet("key").(string)
+	userInfo, err := jsi.processor.UserDatabase.GetUserFromID(uid)
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "JSI DeleteObject", "get Userinfo fail",
+			"", "err", err.Error())
+		c.String(http.StatusInternalServerError, "")
+		return
+	}
+	// 获取用户存储方案
+	storagePlan := userInfo.StoragePlan
+	fmt.Print(storagePlan)
+	task := createTask(userInfo.UserId, model.DELETE, key, "", &storagePlan, nil)
+
+	err = jsi.processor.DeleteFileInfo(task)
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "JSI DeleteObject", "processor delete file info fail",
+			"", "err", err.Error())
+	}
+	err = jsi.processor.DeleteStorageFile(task)
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "JSI DeleteObject", "processor delete fail",
+			"", "err", err.Error())
+	}
+}
+
+func (jsi *JointStorageInterface) GetObjectList(c *gin.Context) {
+	uid := c.MustGet("uid").(string)
+	userInfo, err := jsi.processor.UserDatabase.GetUserFromID(uid)
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "JSI GetObjectList", "get Userinfo fail",
+			"", "err", err.Error())
+		c.String(http.StatusInternalServerError, "")
+		return
+	}
+	task := createTask(userInfo.UserId, model.INDEX, "/", "", nil, nil)
+	files, err := jsi.processor.ProcessIndexFile(task)
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "JSI GetObjectList", "get Userinfo fail",
+			"", "err", err.Error())
+		c.String(http.StatusInternalServerError, "")
+		return
+	}
+	c.JSON(http.StatusOK, files)
 }
 
 func createTask(uid string, taskType model.TaskType, srcPath string, dstPath string, srcStoragePlan *model.UserStoragePlan,
