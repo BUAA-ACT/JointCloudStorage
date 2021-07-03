@@ -231,12 +231,18 @@ func GetVoteRequest(c *gin.Context) {
 		return
 	}
 
+	//解析voteCloud，获取cloud信息
+	var cloudMsg []dao.Cloud
+	for _,cloud:=range clouds{
+		cloudMsg= append(cloudMsg, cloud.Cloud)
+	}
+
 	//2.返回所有clouds
 	c.JSON(http.StatusOK, gin.H{
 		"RequestID": requestID,
 		"Code":      codeOK,
 		"Msg":       errorMsg[codeOK],
-		"Data":      clouds,
+		"Data":      cloudMsg,
 	})
 	log.Info("package:NewCloud, func:GetVoteRequest, message:successed!")
 }
