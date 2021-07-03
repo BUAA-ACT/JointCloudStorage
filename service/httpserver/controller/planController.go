@@ -23,7 +23,7 @@ func UserGetAllStoragePlan(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check access token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -80,7 +80,7 @@ func UserGetAdvice(con *gin.Context) {
 		return
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -110,7 +110,7 @@ func UserAbandonAdvice(con *gin.Context) {
 		return
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -147,7 +147,7 @@ func UserChooseStoragePlan(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	storagePlan := (*valueMap)[args.FieldWordStoragePlan].(*model.StoragePlan)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -211,7 +211,7 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserHostRole, args.UserGuestRole})
+	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
