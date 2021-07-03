@@ -6,31 +6,55 @@
     </div>
     <div v-if="plansLoaded" class="plans-viewer-container">
       <div v-if="!havePlan" class="plans-selector">
-        <el-card class="box-card">
-          <div slot="header" class="clearfix">
-            <el-radio v-model="storagePlanIndex" :label="0">存储价格优先</el-radio>
-          </div>
-          <div class="text item">
-            存储模式： {{ modifyStorageMode(storagePlans.StoragePriceFirst) }}<br />
-            存储价格： {{ storagePlans.StoragePriceFirst.StoragePrice }}<br />
-            流量价格： {{ storagePlans.StoragePriceFirst.TrafficPrice }}<br />
-            可用性：{{ storagePlans.StoragePriceFirst.Availability }}
-          </div>
-        </el-card>
-        <el-card class="box-card">
-          <div slot="header" class="clearfix">
-            <el-radio v-model="storagePlanIndex" :label="1">流量价格优先</el-radio>
-          </div>
-          <div class="text item">
-            存储模式： {{ modifyStorageMode(storagePlans.TrafficPriceFirst) }}<br />
-            存储价格： {{ storagePlans.TrafficPriceFirst.StoragePrice }}<br />
-            流量价格： {{ storagePlans.TrafficPriceFirst.TrafficPrice }}<br />
-            可用性：{{ storagePlans.TrafficPriceFirst.Availability }}
-          </div>
-        </el-card>
+        <el-row type="flex" class="row-bg" justify="space-around">
+          <el-col :span="6">
+            <el-card class="box-card">
+              <div slot="header" class="clearfix">
+                <el-radio v-model="storagePlanIndex" :label="0">存储价格优先</el-radio>
+              </div>
+              <div class="text item">
+                存储模式： {{ modifyStorageMode(storagePlans.StoragePriceFirst) }}<br />
+                存储价格： {{ storagePlans.StoragePriceFirst.StoragePrice }}<br />
+                流量价格： {{ storagePlans.StoragePriceFirst.TrafficPrice }}<br />
+                可用性：{{ storagePlans.StoragePriceFirst.Availability }}
+              </div>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card class="box-card">
+              <div slot="header" class="clearfix">
+                <el-radio v-model="storagePlanIndex" :label="1">流量价格优先</el-radio>
+              </div>
+              <div class="text item">
+                存储模式： {{ modifyStorageMode(storagePlans.TrafficPriceFirst) }}<br />
+                存储价格： {{ storagePlans.TrafficPriceFirst.StoragePrice }}<br />
+                流量价格： {{ storagePlans.TrafficPriceFirst.TrafficPrice }}<br />
+                可用性：{{ storagePlans.TrafficPriceFirst.Availability }}
+              </div>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card class="box-card">
+              <div slot="header" class="clearfix">
+                <el-radio v-model="storagePlanIndex" :label="2">自定义存储方案</el-radio>
+              </div>
+              <div class="text item">
+                <el-button type="primary" :disabled="storagePlanIndex !== 2" @click="startCustomize">点击这里开始自定义</el-button>
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
       </div>
     </div>
-    <location-viewer v-if="plansLoaded" :clouds="candidates[storagePlanIndex].Clouds" :inactive-clouds="inactiveClouds" class="location-viewer" />
+    <location-viewer
+      v-if="plansLoaded && storagePlanIndex !== 2"
+      :clouds="candidates[storagePlanIndex].Clouds || []"
+      :inactive-clouds="inactiveClouds"
+      class="location-viewer"
+    />
+    <el-dialog :visible.sync="customizing">
+      <customize-storage-plan />
+    </el-dialog>
   </div>
 </template>
 
@@ -38,10 +62,12 @@
 import Plan from "@/api/plan";
 import Clouds from "@/api/clouds";
 import locationViewer from "@/components/viewer/locationViewer.vue";
+import CustomizeStoragePlan from "@/components/userCenter/customizeStoragePlan.vue";
 
 export default {
   name: "storagePlan",
   components: {
+    CustomizeStoragePlan,
     locationViewer
   },
   data() {
@@ -74,7 +100,8 @@ export default {
       inactiveClouds: {},
       formattedClouds: [],
       plansLoaded: false,
-      submitLoading: false
+      submitLoading: false,
+      customizing: false
     };
   },
   methods: {
@@ -97,6 +124,8 @@ export default {
           // });
           this.$log(resp);
           const { StoragePriceFirst, TrafficPriceFirst } = resp;
+          StoragePriceFirst.Clouds = StoragePriceFirst.Clouds || [];
+          TrafficPriceFirst.Clouds = TrafficPriceFirst.Clouds || [];
           this.candidates = [StoragePriceFirst, TrafficPriceFirst];
           // { name: "China", value: [104.195397, 35.86166, Caption] }
         });
@@ -110,7 +139,14 @@ export default {
      * 获取所有云
      *
      */ async getAllCloud() {
-      this.inactiveClouds = Clouds.getAllCloud().clouds;
+      // this.inactiveClouds = Clouds.getAllCloud().clouds;
+      Clouds.getAllClouds()
+        .then(resp => {
+          if (resp && resp.Clouds) this.inactiveClouds = resp.Clouds || [];
+        })
+        .catch(() => {
+          this.inactiveClouds = [];
+        });
       this.$log(this.inactiveClouds);
     },
     /**
@@ -150,6 +186,9 @@ export default {
         .catch(() => {
           this.submitLoading = false;
         });
+    },
+    startCustomize() {
+      this.customizing = true;
     }
   },
   watch: {
@@ -163,7 +202,7 @@ export default {
     }
   },
   beforeMount() {
-    if (this.havePlan) {
+    if (!this.havePlan) {
       this.getStoragePlans();
     }
   }
@@ -190,8 +229,9 @@ export default {
 
 .box-card {
   width: 250px;
+  height: 200px;
   display: inline-block;
-  margin: 0 100px;
+  margin: 0 10px;
 }
 .plans-viewer-container {
   display: -webkit-box;
