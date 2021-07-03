@@ -6,60 +6,10 @@ import (
 	"cloud-storage-httpserver/model"
 	"cloud-storage-httpserver/service/scheduler"
 	"cloud-storage-httpserver/service/tools"
-	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 )
-
-func GetAllClouds(con *gin.Context) {
-	fieldRequired := map[string]bool{
-		args.FieldWordAccessToken: true,
-	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
-	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
-		return
-	}
-	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
-	// check token
-	_, userRole, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
-	if !valid {
-		return
-	}
-	// get clouds from scheduler
-	getCloudsResponse, getCloudsSuccess := scheduler.GetAllCloudsFromScheduler()
-	if !getCloudsSuccess {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeJsonError,
-			"msg":  "解析scheduler-json信息有误",
-			"data": gin.H{},
-		})
-		return
-	}
-	// wrong in scheduler
-	if getCloudsResponse.Code != args.CodeOK {
-		con.JSON(http.StatusOK, gin.H{
-			"code": getCloudsResponse.Code,
-			"msg":  getCloudsResponse.Msg,
-			"data": gin.H{},
-		})
-		return
-	}
-	// if user is not admin then cover clouds ak&sk
-	if userRole != args.UserAdminRole {
-		for _, cloud := range getCloudsResponse.Data {
-			cloud.SecretKey = ""
-			cloud.AccessKey = ""
-		}
-	}
-	// success
-	con.JSON(http.StatusOK, gin.H{
-		"code": args.CodeOK,
-		"msg":  "获取所有云节点成功",
-		"data": gin.H{
-			"Clouds": getCloudsResponse.Data,
-		},
-	})
-}
 
 func AdminAddCloud(con *gin.Context) {
 	fieldRequired := map[string]bool{
@@ -98,9 +48,9 @@ func AdminAddCloud(con *gin.Context) {
 	}
 	// wrong in scheduler
 	if postNewCloudResponse.Code != args.CodeOK {
-		fmt.Println("scheduler fault:")
-		fmt.Println("Code: ", postNewCloudResponse.Code)
-		fmt.Println("Msg: ", postNewCloudResponse.Msg)
+		log.Println("scheduler fault:")
+		log.Println("Code: ", postNewCloudResponse.Code)
+		log.Println("Msg: ", postNewCloudResponse.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": postNewCloudResponse.Code,
 			"msg":  postNewCloudResponse.Msg,
@@ -153,9 +103,9 @@ func AdminChangeCloudInfo(con *gin.Context) {
 	}
 	// wrong in scheduler
 	if postUpdateCloudResponse.Code != args.CodeOK {
-		fmt.Println("scheduler fault:")
-		fmt.Println("Code: ", postUpdateCloudResponse.Code)
-		fmt.Println("Msg: ", postUpdateCloudResponse.Msg)
+		log.Println("scheduler fault:")
+		log.Println("Code: ", postUpdateCloudResponse.Code)
+		log.Println("Msg: ", postUpdateCloudResponse.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": postUpdateCloudResponse.Code,
 			"msg":  postUpdateCloudResponse.Msg,
@@ -201,9 +151,9 @@ func AdminVoteForCloud(con *gin.Context) {
 	}
 	// wrong in scheduler
 	if postCloudVoteResponse.Code != args.CodeOK {
-		fmt.Println("scheduler fault:")
-		fmt.Println("Code: ", postCloudVoteResponse.Code)
-		fmt.Println("Msg: ", postCloudVoteResponse.Msg)
+		log.Println("scheduler fault:")
+		log.Println("Code: ", postCloudVoteResponse.Code)
+		log.Println("Msg: ", postCloudVoteResponse.Msg)
 		con.JSON(http.StatusOK, gin.H{
 			"code": postCloudVoteResponse.Code,
 			"msg":  postCloudVoteResponse.Msg,
@@ -234,35 +184,46 @@ func AdminGetVoteRequests(con *gin.Context) {
 	if !valid {
 		return
 	}
-	// get the voting clouds from scheduler
-	getVoteRequestsResponse, getVoteRequestsSuccess := scheduler.GetVoteRequestsFromScheduler()
-	if !getVoteRequestsSuccess {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeJsonError,
-			"msg":  "解析scheduler-json信息有误",
-			"data": gin.H{},
-		})
+	// get the voting clouds with dao
+	voteCloudsResult, voteCloudsSuccess := dao.VoteCloudDao.GetAllVoteCloud()
+	if !checkDaoSuccess(con, voteCloudsSuccess) {
 		return
 	}
-	// wrong in scheduler
-	if getVoteRequestsResponse.Code != args.CodeOK {
-		fmt.Println("scheduler fault:")
-		fmt.Println("Code: ", getVoteRequestsResponse.Code)
-		fmt.Println("Msg: ", getVoteRequestsResponse.Msg)
-		con.JSON(http.StatusOK, gin.H{
-			"code": getVoteRequestsResponse.Code,
-			"msg":  getVoteRequestsResponse.Msg,
-			"data": gin.H{},
-		})
-		return
-	}
-
 	// success
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
 		"msg":  "管理员获取正在投票的云列表成功",
 		"data": gin.H{
-			"Clouds": getVoteRequestsResponse.Data,
+			"Clouds": *voteCloudsResult,
+		},
+	})
+}
+
+func AdminGetAddedClouds(con *gin.Context) {
+	fieldRequired := map[string]bool{
+		args.FieldWordAccessToken: true,
+	}
+	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
+		return
+	}
+	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	// check token
+	_, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
+	if !valid {
+		return
+	}
+	// get the added clouds with dao
+	addedCloudsResult, addedCloudsSuccess := dao.TempCloudDao.GetAllAddedCloud()
+	if !checkDaoSuccess(con, addedCloudsSuccess) {
+		return
+	}
+	// success
+	con.JSON(http.StatusOK, gin.H{
+		"code": args.CodeOK,
+		"msg":  "管理员获取已添加的云列表成功",
+		"data": gin.H{
+			"Clouds": *addedCloudsResult,
 		},
 	})
 }

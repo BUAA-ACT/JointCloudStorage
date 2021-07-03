@@ -3,7 +3,6 @@ package dao
 import (
 	"cloud-storage-httpserver/args"
 	"context"
-	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -19,6 +18,8 @@ var (
 	VerifyCodeDao      *Dao
 	MigrationAdviceDao *Dao
 	CloudDao           *Dao
+	VoteCloudDao       *Dao
+	TempCloudDao       *Dao
 	AccessKeyDao       *Dao
 )
 
@@ -51,8 +52,8 @@ func ConnectDao(mongoURI string, database string, collection string) (*Dao, erro
 func DisconnectDao(d *Dao) {
 	err := d.client.Disconnect(context.TODO())
 	if err != nil {
-		fmt.Println("disconnect failed")
-		log.Fatal(err)
+		log.Println("disconnect failed")
+		log.Println(err)
 	}
 }
 
@@ -60,34 +61,42 @@ func ConnectInitDao() {
 	var err error
 	UserDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.UserCollection)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	AccessTokenDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.AccessTokenCollection)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	FileDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.FileCollection)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
-	//TaskDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.TaskCollection)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
+	TaskDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.TaskCollection)
+	if err != nil {
+		log.Println(err)
+	}
 	VerifyCodeDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.VerifyCodeCollection)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	MigrationAdviceDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.MigrationAdviceCollection)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	CloudDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.CloudCollection)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+	}
+	VoteCloudDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.VoteCloudCollection)
+	if err != nil {
+		log.Println(err)
+	}
+	TempCloudDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.TempCloudCollection)
+	if err != nil {
+		log.Println(err)
 	}
 	AccessKeyDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.AccessKeyCollection)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 }

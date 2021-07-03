@@ -2,7 +2,7 @@ package tools
 
 import (
 	"cloud-storage-httpserver/args"
-	"fmt"
+	"log"
 	"strings"
 )
 
@@ -96,8 +96,8 @@ func RequiredFieldNotExist(requiredMap *map[string]bool, existMap *map[string]bo
 // PrintError put out the err out if has error
 func PrintError(err error) bool {
 	if err != nil {
-		fmt.Println("出错啦！错误信息为：")
-		fmt.Println(err)
+		log.Println("出错啦！错误信息为：")
+		log.Println(err)
 		return true
 	}
 	return false
