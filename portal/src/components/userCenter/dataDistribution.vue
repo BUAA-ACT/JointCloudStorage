@@ -47,12 +47,10 @@ export default {
         };
       });
     },
-    formatInactiveClouds(clouds) {
+    formatInactiveClouds(clouds, activeClouds = []) {
       return clouds
         .filter(item => {
-          this.$log(this.clouds);
-          // eslint-disable-next-line no-restricted-syntax
-          return !this.clouds.some(value => {
+          return !activeClouds.some(value => {
             return value.CloudID === item.CloudID;
           });
         })
@@ -60,19 +58,17 @@ export default {
           return {
             name: value.CloudID,
             value: value.Location.split(",") // longitude ,latitude
-              .concat([
-                `存储价格：${value.StoragePrice}元/GB/月<br/>
-          流量价格：${value.TrafficPrice}元/GB<br/>
-          可用性：${value.Availability}<br />`
-              ])
+              .concat([`${value.CloudName}`])
           };
         });
     },
     async getAllCloud() {
       // this.inactiveClouds = Clouds.getAllCloud().clouds;
-      Clouds.getAllClouds()
+      await Clouds.getAllClouds()
         .then(resp => {
-          if (resp && resp.Clouds) this.inactiveClouds = resp.Clouds || [];
+          if (resp && resp.Clouds) {
+            this.inactiveClouds = resp.Clouds || [];
+          }
         })
         .catch(() => {
           this.inactiveClouds = [];
@@ -80,8 +76,9 @@ export default {
       this.$log(this.inactiveClouds);
     }
   },
-  async mounted() {
+  async beforeMount() {
     await this.$store.dispatch("getInfo");
+    await this.getAllCloud();
   }
 };
 </script>
