@@ -6,6 +6,21 @@ build_dir="$base_dir/build/"
 if [ ! -d "$base_dir/build/" ]; then
     mkdir "$base_dir/build/"
 fi
+
+
+screen_exit(){
+    screen_name=$1
+    if screen -ls "$screen_name" > /dev/null ; then 
+        screen -S "$screen_name" -X quit
+    fi
+}
+
+screen_exit "aliyun-hohhot-h" 
+screen_exit "aliyun-hohhot-s" 
+screen_exit "aliyun-qingdao-s" 
+screen_exit "aliyun-hangzhou-s" 
+
+
 pushd "$base_dir/service" || exit
 echo "编译 transporter"
 pushd "transporter" || exit
@@ -30,6 +45,7 @@ popd || exit
 echo "Done"
 
 popd || exit
+
 
 screen_do(){
     screen_name=$1

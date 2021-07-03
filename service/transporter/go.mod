@@ -9,6 +9,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.2.0
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-zookeeper/zk v1.0.2
+	github.com/google/uuid v1.1.1
 	github.com/jinzhu/copier v0.2.8
 	github.com/klauspost/cpuid/v2 v2.0.4 // indirect
 	github.com/klauspost/reedsolomon v1.9.12

@@ -98,6 +98,9 @@ module.exports = {
       "/user": {
         target: `http://127.0.0.1:8081`
       },
+      "/cloud": {
+        target: `http://127.0.0.1:8081`
+      },
       "/upload": {
         target: `http://192.168.105.13:8083`
       }
