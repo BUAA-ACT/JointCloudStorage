@@ -67,7 +67,7 @@ func TestJointStorageInterface_PutObject(t *testing.T) {
 		t.Errorf("error opening file")
 	}
 	io.Copy(bodyBuf, fh)
-	req, err := http.NewRequest("PUT", "/test.txt", bodyBuf)
+	req, err := http.NewRequest("PUT", "/jsiTest.txt", bodyBuf)
 	recorder := httptest.NewRecorder()
 	JSI.ServeHTTP(recorder, req)
 	if recorder.Code != http.StatusOK {
@@ -93,4 +93,14 @@ func TestJointStorageInterface_GetObjectList(t *testing.T) {
 		t.Fatalf("http code incorrect")
 	}
 	t.Logf("body: %s", recorder.Body.String())
+}
+
+func TestJointStorageInterface_DeleteObject(t *testing.T) {
+	TestJointStorageInterface_PutObject(t)
+	req, _ := http.NewRequest("DELETE", "/jsiTest.txt", nil)
+	recorder := httptest.NewRecorder()
+	JSI.ServeHTTP(recorder, req)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("http code incorrect")
+	}
 }

@@ -25,7 +25,7 @@ func NewInterface(processor *controller.TaskProcessor) *JointStorageInterface {
 	engine.Use(util.CORSMiddleware())
 	jsi = JointStorageInterface{engine, processor}
 	jsi.PUT("/*key", JSIAuthMiddleware(), jsi.checkKey, jsi.PutObject)
-	jsi.DELETE("/*key", jsi.defaultReply)
+	jsi.DELETE("/*key", JSIAuthMiddleware(), jsi.checkKey, jsi.DeleteObject)
 	jsi.GET("/*key", JSIAuthMiddleware(), jsi.GetMethod)
 	return &jsi
 }

@@ -134,7 +134,7 @@ func (processor *TaskProcessor) DeleteFileInfo(t *model.Task) error {
 	err = processor.FileDatabase.DeleteFileInfo(fileInfo)
 	// 同步文件源信息到其他云
 	// todo 由于 fileInfo 需要同步删除，文件源信息的同步只能一并处理，但这会增加耗时
-	err = processor.Scheduler.DeleteFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo) // todo 此处错误被隐藏
+	err = processor.Scheduler.DeleteFileMetadata(t.TaskOptions.SourceStoragePlan.Clouds, t.Uid, fileInfo) // todo 此处错误被隐藏
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "Processor DeleteFileInfo", "metadata sync fail", "ok", "err", err.Error())
 	}
@@ -590,8 +590,6 @@ func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
 	logrus.Debugf("Task %v Process: %v", t.Tid, t.Progress)
 	return nil //todo
 }
-
-
 
 func (processor *TaskProcessor) CheckTaskType(t *model.Task, taskType model.TaskType) (err error) {
 	if t.GetTaskType() != taskType {
