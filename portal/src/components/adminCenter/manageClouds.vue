@@ -6,7 +6,7 @@
       </template>
     </cloud-list>
     <el-dialog title="修改云信息" :visible.sync="changeCloudDiagVis">
-      <add-new-cloud :cloud="modifyingCloud" @success="hideChangeCloud" @cancel="hideChangeCloud" />
+      <add-new-cloud :cloud="modifyingCloud" modify @success="hideChangeCloud" @cancel="hideChangeCloud" />
     </el-dialog>
   </div>
 </template>

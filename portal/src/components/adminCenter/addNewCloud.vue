@@ -61,8 +61,8 @@
         </el-card>
       </el-col>
     </el-row>
-    <el-dialog title="请确认云信息" :visible.sync="confirmVisible" top="20px">
-      <add-new-cloud-confirm ref="confirmDiag" :cloud="form" @cancel="cancelConfirm" @success="successConfirm" />
+    <el-dialog title="请确认云信息" :visible.sync="confirmVisible" top="20px" append-to-body>
+      <add-new-cloud-confirm ref="confirmDiag" :cloud="form" :modify="modify" @cancel="cancelConfirm" @success="successConfirm" />
     </el-dialog>
   </div>
 </template>
@@ -80,24 +80,28 @@ export default {
     cloud: {
       type: Object,
       required: false
+    },
+    modify: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
       form: {
-        CloudID: "",
-        Endpoint: "",
+        CloudID: "ksyun-beijing",
+        Endpoint: "ks3-cn-beijing.ksyun.com",
         AccessKey: "",
         SecretKey: "",
-        StoragePrice: 0.01,
-        TrafficPrice: 0.01,
-        Availability: 0.99995,
+        StoragePrice: 0.12,
+        TrafficPrice: 0.4,
+        Availability: 0.9995,
         Status: "DOWN",
-        Location: "",
-        Address: "",
-        CloudName: "",
-        ProviderName: "阿里",
-        Bucket: ""
+        Location: "116.411087,39.912695",
+        Address: "ksyun-beijing.jointcloudstorage.cn",
+        CloudName: "金山云-北京",
+        ProviderName: "金山",
+        Bucket: "jcspan-beijing"
       },
       confirmVisible: false,
       precision: 2,
@@ -119,7 +123,7 @@ export default {
     },
     cancelConfirm() {
       this.closeConfirm();
-      this.$emit("cancel");
+      this.$emit("cancel-confirm");
     },
     closeConfirm() {
       this.confirmVisible = false;
