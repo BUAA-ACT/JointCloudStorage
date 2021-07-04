@@ -18,7 +18,7 @@
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="onSubmit" :loading="loading">更新个人偏好</el-button>
-        <el-button>取消</el-button>
+        <!--        <el-button>取消</el-button>-->
       </el-form-item>
     </el-form>
   </div>
@@ -31,10 +31,10 @@ export default {
   data() {
     return {
       form: {
-        Vendor: 1,
-        StoragePrice: 1.0,
-        TrafficPrice: 1.0,
-        Availability: 0.5,
+        Vendor: 3,
+        StoragePrice: 0.5,
+        TrafficPrice: 0.9,
+        Availability: 0.8,
         AllowDelay: true,
         Latency: { beijing: 20 }
       },
@@ -62,8 +62,11 @@ export default {
         setTimeout(() => this.getUserPreference(), 50);
         return;
       }
-      this.form = { ...this.$store.getters.preference, AllowDelay: this.form.AllowDelay };
-      this.$log(this.form);
+      if (this.$store.getters.preference.Vendor !== 0) {
+        this.form = { ...this.$store.getters.preference, AllowDelay: this.form.AllowDelay };
+      } else {
+        this.$notify.info({ title: "请先设置存储偏好", message: "您可以点击“更新存储偏好”按钮来使用默认的存储偏好", offset: 50 });
+      }
     }
   },
   beforeMount() {
