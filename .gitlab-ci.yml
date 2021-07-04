@@ -115,11 +115,15 @@ portal_build:
     - ls
     - cd portal
     - SASS_BINARY_SITE=https://npm.taobao.org/mirrors/node-sass/ npm ci --registry=https://registry.npm.taobao.org
-    - echo '开始构建'
+    - echo '开始构建 portal'
     - npm run build
-    - echo '构建完成'
+    - echo '构建完成 portal'
     - cd ..
     - cd navigation
+    - SASS_BINARY_SITE=https://npm.taobao.org/mirrors/node-sass/ npm ci --registry=https://registry.npm.taobao.org
+    - echo '开始构建 navigation'
+    - npm run build
+    - echo '构建完成 navigation'
     - cd ..
   tags:
     - docker
@@ -157,9 +161,13 @@ scheduler_docker_build:
   dependencies:
     - scheduler_build
   only:
-    - master
-    - dev-scheduler
-    - dev
+    refs:
+      - master
+      - dev-scheduler
+      - dev
+    changes:
+      - service/scheduler/**/*
+    
   before_script:
     - docker info
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_TOKEN $CI_REGISTRY
@@ -185,9 +193,12 @@ transporter_docker_build:
   dependencies:
     - transporter_build
   only:
-    - master
-    - dev-transporter
-    - dev
+    refs:
+      - master
+      - dev-transporter
+      - dev
+    changes:
+      - servece/transporter/**/*
   before_script:
     - docker info
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_TOKEN $CI_REGISTRY
@@ -251,8 +262,11 @@ httpserver_docker_build:
     DOCKER_HOST: tcp://docker:2375
   needs: ["httpserver_build"]
   only:
-    - master
-    - dev
+    refs:
+      - master
+      - dev
+    changes:
+      - service/httpserver/**/*
   before_script:
     - docker info
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_TOKEN $CI_REGISTRY
@@ -272,9 +286,13 @@ transporter_deploy_job:
   image: kroniak/ssh-client:latest
   needs: ["transporter_docker_build"]
   only:
-    - master
-    - dev-transporter
-    - dev
+    refs:
+      - master
+      - dev-transporter
+      - dev
+    changes:
+      - service/transporter/**/*
+      
   before_script:
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
