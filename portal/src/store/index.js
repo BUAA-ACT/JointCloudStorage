@@ -122,6 +122,7 @@ export default new Vuex.Store({
       }
       await Common.checkToken(token).then(async resp => {
         if (!resp) {
+          commit("RESET_ALL");
           return;
         }
         commit("SET_TOKEN", token);
