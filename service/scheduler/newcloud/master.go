@@ -13,8 +13,8 @@ import (
 
 const (
 	CollectionCloud     = "Cloud"
-	CollectionTempCloud = "tempCloud"
-	CollectionVoteCloud = "voteCloud"
+	CollectionTempCloud = "TempCloud"
+	CollectionVoteCloud = "VoteCloud"
 	CollectionUser      = "User"
 	CollectionFile      = "File"
 	MigrationAdvice     = "MigrationAdvice"
@@ -100,7 +100,7 @@ func PostNewCloud(c *gin.Context) {
 		})
 		return
 	}
-	err=localMongoVoteRequest.InsertVoteCloud(temp)
+	err = localMongoVoteRequest.InsertVoteCloud(temp)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
@@ -233,8 +233,8 @@ func GetVoteRequest(c *gin.Context) {
 
 	//解析voteCloud，获取cloud信息
 	var cloudMsg []dao.Cloud
-	for _,cloud:=range clouds{
-		cloudMsg= append(cloudMsg, cloud.Cloud)
+	for _, cloud := range clouds {
+		cloudMsg = append(cloudMsg, cloud.Cloud)
 	}
 
 	//2.返回所有clouds
@@ -612,8 +612,8 @@ func PostCloudSyn(c *gin.Context) {
 			}
 		}
 
-		err=localMongoVoteRequest.DeleteVoteCloud(cloud.CloudID)
-		if err!=nil{
+		err = localMongoVoteRequest.DeleteVoteCloud(cloud.CloudID)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"RequestID": requestID,
 				"Code":      codeInternalError,
