@@ -186,6 +186,10 @@ func AdminGetVoteRequests(con *gin.Context) {
 	}
 	// get the voting clouds with dao
 	voteCloudsResult, voteCloudsSuccess := dao.VoteCloudDao.GetAllVoteCloud()
+	var clouds = make([]model.Cloud, 0)
+	for _, cloudController := range *voteCloudsResult {
+		clouds = append(clouds, cloudController.Cloud)
+	}
 	if !checkDaoSuccess(con, voteCloudsSuccess) {
 		return
 	}
@@ -194,7 +198,7 @@ func AdminGetVoteRequests(con *gin.Context) {
 		"code": args.CodeOK,
 		"msg":  "管理员获取正在投票的云列表成功",
 		"data": gin.H{
-			"Clouds": *voteCloudsResult,
+			"Clouds": clouds,
 		},
 	})
 }
