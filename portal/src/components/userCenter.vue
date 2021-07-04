@@ -71,7 +71,7 @@ export default {
       return currentRoute;
     },
     isAdmin() {
-      return true || this.$store.getters.isAdmin;
+      return this.$store.getters.isAdmin;
     }
   }
 };

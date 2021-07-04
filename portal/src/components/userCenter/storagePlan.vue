@@ -53,7 +53,7 @@
       class="location-viewer"
     />
     <el-dialog :visible.sync="customizing">
-      <customize-storage-plan />
+      <customize-storage-plan @success="customizing = false" @failed="customizing = false" />
     </el-dialog>
   </div>
 </template>
