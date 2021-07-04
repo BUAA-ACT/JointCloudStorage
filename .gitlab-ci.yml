@@ -320,7 +320,6 @@ transporter_deploy_job:
 transporter_deploy_test_job:
   stage: after_deploy
   image: golang:1.16.2
-  needs: ["transporter_deploy_job"]
   only:
     - master
     - dev-transporter
