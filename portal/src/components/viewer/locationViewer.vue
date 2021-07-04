@@ -50,7 +50,7 @@ export default {
                 //
                 `存储价格：${value.StoragePrice}元/GB/月<br/>
           流量价格：${value.TrafficPrice}元/GB<br/>
-          可用性：${value.Availability}<br />`
+          可用性：${value.Availability * 100}%<br />`
               ])
           };
         });
@@ -71,7 +71,7 @@ export default {
               .concat([
                 `存储价格：${value.StoragePrice}元/GB/月<br/>
           流量价格：${value.TrafficPrice}元/GB<br/>
-          可用性：${value.Availability}<br />`
+          可用性：${value.Availability * 100}%<br />`
               ])
           };
         });
@@ -282,7 +282,7 @@ export default {
       return this.formatFunction(this.clouds);
     },
     formattedInactiveClouds() {
-      return this.formatInActiveCloudFunction(this.inactiveClouds, this.clouds);
+      return this.formatInActiveCloudFunction(this.inactiveClouds, this.clouds.concat(this.newClouds || []));
     },
     formattedNewClouds() {
       return this.formatFunction(this.newClouds);
