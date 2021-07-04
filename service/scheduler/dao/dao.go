@@ -201,8 +201,8 @@ func (d *Dao) GetAllClouds() ([]Cloud, error) {
 			return nil, err
 		}
 		// 隐藏访问凭证
-		elem.AccessKey = ""
-		elem.SecretKey = ""
+		//elem.AccessKey = ""
+		//elem.SecretKey = ""
 		clouds = append(clouds, elem)
 	}
 

@@ -100,16 +100,6 @@ func PostNewCloud(c *gin.Context) {
 		})
 		return
 	}
-	err=localMongoVoteRequest.InsertVoteCloud(temp)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"RequestID": requestID,
-			"Code":      codeInternalError,
-			"Msg":       errorMsg[codeInternalError],
-			"Test":      "New cloud store voteCloud error:" + err.Error(),
-		})
-		return
-	}
 
 	//3.将新cloud发送给其他的节点
 	//获取所有云信息
@@ -125,12 +115,23 @@ func PostNewCloud(c *gin.Context) {
 		return
 	}
 	//初始化tempCloud，将address设为本地的address
-	//并将tempCloud序列化，生成io.reader
 	for _, cloud := range clouds {
 		if cloud.CloudID == localid {
 			temp.Address = cloud.Address
 		}
 	}
+	//存入自己的voteCloud
+	err=localMongoVoteRequest.InsertVoteCloud(temp)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"RequestID": requestID,
+			"Code":      codeInternalError,
+			"Msg":       errorMsg[codeInternalError],
+			"Test":      "New cloud store voteCloud error:" + err.Error(),
+		})
+		return
+	}
+	//并将tempCloud序列化，生成io.reader
 	b, err := json.Marshal(temp)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -277,92 +278,141 @@ func PostCloudVote(c *gin.Context) {
 	}
 
 	//查询自己的tempcloud，看是不是主节点
-	count, err := localMongoTempCloud.CloudsCount(id)
+	//count, err := localMongoTempCloud.CloudsCount(id)
+	//if err != nil {
+	//	c.JSON(http.StatusBadRequest, gin.H{
+	//		"RequestID": requestID,
+	//		"Code":      codeInternalError,
+	//		"Msg":       errorMsg[codeInternalError],
+	//	})
+	//	log.Error("count clouds err, package:NewCloud, func:PostCloudVote, message:", err, " count cloud error.", "RequestID:", requestID)
+	//	return
+	//}
+	//if count > 0 {
+	//	//若是主节点，则直接加一
+	//	_, err = localMongoTempCloud.AddVoteNum(1, id)
+	//	if err != nil {
+	//		c.JSON(http.StatusBadRequest, gin.H{
+	//			"RequestID": requestID,
+	//			"Code":      codeInternalError,
+	//			"Msg":       errorMsg[codeInternalError],
+	//		})
+	//		log.Error("add vote num err, package:NewCloud, func:PostCloudVote, message:", err, "RequestID:", requestID)
+	//		return
+	//	}
+	//} else {
+	//	//若不是主节点，给其他云投票
+	//	//获取相关的votecloud信息
+	//	voteCloud, err := localMongoVoteRequest.GetVoteCloud(id)
+	//	if err != nil {
+	//		c.JSON(http.StatusBadRequest, gin.H{
+	//			"RequestID": requestID,
+	//			"Code":      codeInternalError,
+	//			"Msg":       errorMsg[codeInternalError],
+	//		})
+	//		log.Error("get vote cloud err, package:NewCloud, func:PostCloudVote, message:", err, " Can't get the vote request!", " RequestID:", requestID)
+	//		return
+	//	}
+	//
+	//	//序列化投票信息{id：”“，json：num}
+	//	voteMsg := make(map[string]interface{})
+	//	voteMsg["CloudID"] = voteCloud.Cloud.CloudID
+	//	voteMsg["vote"] = 1
+	//	b, err := json.Marshal(voteMsg)
+	//	if err != nil {
+	//		c.JSON(http.StatusBadRequest, gin.H{
+	//			"RequestID": requestID,
+	//			"Code":      codeInternalError,
+	//			"Msg":       errorMsg[codeInternalError],
+	//		})
+	//		log.Error("marshal voteMsg err, package:NewCloud, func:PostCloudVote, message:", err, " Can't marshal the cloud", "RequestID:", requestID)
+	//		return
+	//	}
+	//	//发出投票请求
+	//	body := bytes.NewBuffer(b)
+	//	if env != "localDebug" {
+	//		resp, err := http.Post("http://"+voteCloud.Address+"/master_cloud_vote", "application/json", body)
+	//		if err != nil {
+	//			c.JSON(http.StatusBadRequest, gin.H{
+	//				"RequestID": requestID,
+	//				"Code":      codeInternalError,
+	//				"Msg":       errorMsg[codeInternalError],
+	//			})
+	//			log.Error("post vote msg err, package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
+	//			return
+	//		}
+	//		if resp.StatusCode != 200 {
+	//			c.JSON(http.StatusBadRequest, gin.H{
+	//				"RequestID": requestID,
+	//				"Code":      codeBadRequest,
+	//				"Msg":       errorMsg[codeBadRequest],
+	//			})
+	//			log.Error("vote msg statusCode err, package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
+	//			return
+	//		}
+	//	}
+	//}
+	//获取相关的votecloud信息
+	voteCloud, err := localMongoVoteRequest.GetVoteCloud(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
 			"Code":      codeInternalError,
 			"Msg":       errorMsg[codeInternalError],
 		})
-		log.Error("count clouds err, package:NewCloud, func:PostCloudVote, message:", err, " count cloud error.", "RequestID:", requestID)
+		log.Error("get vote cloud err, package:NewCloud, func:PostCloudVote, message:", err, " Can't get the vote request!", " RequestID:", requestID)
 		return
 	}
-	if count > 0 {
-		//若是主节点，则直接加一
-		_, err = localMongoTempCloud.AddVoteNum(1, id)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"RequestID": requestID,
-				"Code":      codeInternalError,
-				"Msg":       errorMsg[codeInternalError],
-			})
-			log.Error("add vote num err, package:NewCloud, func:PostCloudVote, message:", err, "RequestID:", requestID)
-			return
-		}
-	} else {
-		//若不是主节点，给其他云投票
-		//获取相关的votecloud信息
-		voteCloud, err := localMongoVoteRequest.GetVoteCloud(id)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"RequestID": requestID,
-				"Code":      codeInternalError,
-				"Msg":       errorMsg[codeInternalError],
-			})
-			log.Error("get vote cloud err, package:NewCloud, func:PostCloudVote, message:", err, " Can't get the vote request!", " RequestID:", requestID)
-			return
-		}
 
-		//序列化投票信息{id：”“，json：num}
-		voteMsg := make(map[string]interface{})
-		voteMsg["CloudID"] = voteCloud.Cloud.CloudID
-		voteMsg["vote"] = 1
-		b, err := json.Marshal(voteMsg)
+	//序列化投票信息{id：”“，json：num}
+	voteMsg := make(map[string]interface{})
+	voteMsg["CloudID"] = voteCloud.Cloud.CloudID
+	voteMsg["vote"] = 1
+	b, err := json.Marshal(voteMsg)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"RequestID": requestID,
+			"Code":      codeInternalError,
+			"Msg":       errorMsg[codeInternalError],
+		})
+		log.Error("marshal voteMsg err, package:NewCloud, func:PostCloudVote, message:", err, " Can't marshal the cloud", "RequestID:", requestID)
+		return
+	}
+	//发出投票请求
+	body := bytes.NewBuffer(b)
+	if env != "localDebug" {
+		resp, err := http.Post("http://"+voteCloud.Address+"/master_cloud_vote", "application/json", body)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"RequestID": requestID,
 				"Code":      codeInternalError,
 				"Msg":       errorMsg[codeInternalError],
 			})
-			log.Error("marshal voteMsg err, package:NewCloud, func:PostCloudVote, message:", err, " Can't marshal the cloud", "RequestID:", requestID)
+			log.Error("post vote msg err, package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
 			return
 		}
-		//发出投票请求
-		body := bytes.NewBuffer(b)
-		if env != "localDebug" {
-			resp, err := http.Post("http://"+voteCloud.Address+"/master_cloud_vote", "application/json", body)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"RequestID": requestID,
-					"Code":      codeInternalError,
-					"Msg":       errorMsg[codeInternalError],
-				})
-				log.Error("post vote msg err, package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
-				return
-			}
-			if resp.StatusCode != 200 {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"RequestID": requestID,
-					"Code":      codeBadRequest,
-					"Msg":       errorMsg[codeBadRequest],
-				})
-				log.Error("vote msg statusCode err, package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
-				return
-			}
+		if resp.StatusCode != 200 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"RequestID": requestID,
+				"Code":      codeBadRequest,
+				"Msg":       errorMsg[codeBadRequest],
+			})
+			log.Error("vote msg statusCode err, package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
+			return
 		}
+	}
 
-		//删除voteCloud
-		err = localMongoVoteRequest.DeleteVoteCloud(id)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"RequestID": requestID,
-				"Code":      codeInternalError,
-				"Msg":       errorMsg[codeInternalError],
-				"Test":      "Delete cloud fail:" + err.Error(),
-			})
-			log.Error("delete vote cloud err, package:NewCloud, func:PostCloudVote, message:", err, " Delete cloud error. ", "RequestID:", requestID)
-			return
-		}
+	//删除voteCloud
+	err = localMongoVoteRequest.DeleteVoteCloud(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"RequestID": requestID,
+			"Code":      codeInternalError,
+			"Msg":       errorMsg[codeInternalError],
+			"Test":      "Delete cloud fail:" + err.Error(),
+		})
+		log.Error("delete vote cloud err, package:NewCloud, func:PostCloudVote, message:", err, " Delete cloud error. ", "RequestID:", requestID)
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
