@@ -1,7 +1,7 @@
 <template>
   <el-card>
     <el-steps :active="curStep" finish-status="success">
-      <el-step v-for="index in finishStep" :title="`步骤 ${index}`" :key="String(index)"></el-step>
+      <el-step v-for="index in finishStep + 1" :title="`步骤 ${index}`" :key="String(index)"></el-step>
     </el-steps>
     <el-form v-if="curStep === 0" label-position="top">
       <el-form-item label="请选择存储方式" size="large">
@@ -31,7 +31,7 @@
     </el-form>
 
     <el-button v-if="curStep > 0" @click="prevStep">上一步</el-button>
-    <el-button type="primary" @click="nextStep">{{ curStep === finishStep ? "完成" : "下一步" }}</el-button>
+    <el-button type="primary" @click="nextStep" :disabled="!curStepFinish">{{ curStep === finishStep ? "完成" : "下一步" }}</el-button>
   </el-card>
 </template>
 
@@ -44,7 +44,6 @@ export default {
   data() {
     return {
       curStep: 0,
-      curStepFinish: false,
       curPlan: {
         StorageMode: "Replica"
       },
@@ -57,11 +56,8 @@ export default {
   methods: {
     prevStep() {
       this.curStep -= 1;
-      this.curStepFinish = true;
     },
     nextStep() {
-      this.curStep += 1;
-      this.curStepFinish = false;
       if (this.curStep === this.finishStep) {
         if (this.curPlan.StorageMode === "Replica") {
           Plan.changeStoragePlan({
@@ -103,6 +99,18 @@ export default {
           this.$message.error("存储方式不存在！");
           this.$emit("error");
         }
+      } else {
+        this.curStep += 1;
+        switch (this.curStep) {
+          case 1:
+            this.ReplicaClouds = [];
+            break;
+          case 2:
+            this.ECKClouds = [];
+            break;
+          default:
+            break;
+        }
       }
     },
     async getAllClouds() {
@@ -143,10 +151,10 @@ export default {
   computed: {
     finishStep() {
       if (this.curPlan.StorageMode === "Replica") {
-        return 3;
+        return 2;
       }
       if (this.curPlan.StorageMode === "EC") {
-        return 4;
+        return 3;
       }
       return -1;
     },
@@ -162,6 +170,30 @@ export default {
           label: this.allClouds[value].CloudName
         };
       });
+    },
+    curStepFinish() {
+      switch (this.curStep) {
+        case 0:
+          return !!this.curPlan.StorageMode;
+        case 1:
+          if (this.curPlan.StorageMode === "Replica") {
+            return this.ReplicaClouds.length > 0;
+          }
+          if (this.curPlan.StorageMode === "EC") {
+            return this.ReplicaClouds.length >= 2;
+          }
+          return false;
+        case 2:
+          if (this.curPlan.StorageMode === "Replica") {
+            return true;
+          }
+          if (this.curPlan.StorageMode === "EC") {
+            return this.ECKClouds.length > 0 && this.ECKClouds.length <= this.ReplicaClouds.length / 2;
+          }
+          return false;
+        default:
+          return this.curStep === this.finishStep;
+      }
     }
   },
   beforeMount() {
