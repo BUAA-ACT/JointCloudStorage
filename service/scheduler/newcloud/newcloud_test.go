@@ -66,8 +66,8 @@ func TestPostCloudVote(t *testing.T) {
 	//初始化服务
 	r:=gin.Default()
 	Router(r,"mongodb://192.168.105.8:20100","dev","aliyun-beijing","localDebug")
-	data:=`{"id":"test-wanggj"}`
-	data2:=`{"id":"test_cloud_id"}`
+	data:=`{"CloudID":"test-wanggj"}`
+	data2:=`{"CloudID":"test_cloud_id"}`
 	//testCloud:=`{"id":"test_cloud_id","vote_num":1,"address":"aliyun-beijing","cloud":{"CloudID":"test_cloud_id","Endpoint":"asdfasdasd",
 	//		"StoragePrice":0.5,"TrafficPrice":0.5,"Availability":0.9999,
 	//		"Status":"UP","Location":"116.381252,20.0","Address":""}}`
