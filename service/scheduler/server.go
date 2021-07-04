@@ -240,6 +240,10 @@ func PostStoragePlan(c *gin.Context) {
 
 	if param.CloudID == *flagCloudID {
 		// 来自本云httpserver的请求
+		plan := param.StoragePlan
+		plan.StoragePrice = calStoragePrice(plan)
+		plan.Availability = calStoragePrice(plan)
+		plan.TrafficPrice = calTrafficPrice(plan)
 		var users []dao.AccessCredential
 		ch := make(chan *dao.AccessCredential)
 
