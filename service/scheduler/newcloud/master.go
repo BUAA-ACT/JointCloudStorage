@@ -347,7 +347,10 @@ func PostCloudVote(c *gin.Context) {
 				log.Error("post vote msg err, package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
 				return
 			}
-			if resp.StatusCode != 200 {
+			//处理返回结果
+			if resp.StatusCode==510{
+				c.JSON(510,nil)
+			}else if resp.StatusCode != 200 {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"RequestID": requestID,
 					"Code":      codeBadRequest,

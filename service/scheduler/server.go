@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -618,6 +620,47 @@ func PostUpdateClouds(c *gin.Context) {
 			"Msg":       errorMsg[codeInternalError],
 		})
 		return
+	}
+
+	//向其他云同步
+	if c.GetHeader("Caller")=="http-server"{
+		clouds,err:=db.GetAllClouds()
+		if err!=nil{
+			logError(err, requestID, "can't get other clouds")
+			c.JSON(http.StatusBadRequest, gin.H{
+				"RequestID": requestID,
+				"Code":      codeInternalError,
+				"Msg":       errorMsg[codeInternalError],
+			})
+			return
+		}
+
+		b,err:=json.Marshal(cloud)
+		if err!=nil{
+			logError(err, requestID, "can't Marshal the cloud")
+			c.JSON(http.StatusBadRequest, gin.H{
+				"RequestID": requestID,
+				"Code":      codeInternalError,
+				"Msg":       errorMsg[codeInternalError],
+			})
+			return
+		}
+
+		for _,otherCLoud:= range clouds{
+			if otherCLoud.CloudID!=*flagCloudID{
+				body:=bytes.NewBuffer(b)
+				resp,err:=http.Post("http://"+otherCLoud.Address+"/update_clouds","application/json",body)
+				if err!=nil||resp.StatusCode!=200{
+					logError(err, requestID, "can't syn to other clouds")
+					c.JSON(http.StatusBadRequest, gin.H{
+						"RequestID": requestID,
+						"Code":      codeInternalError,
+						"Msg":       errorMsg[codeInternalError],
+					})
+					return
+				}
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
