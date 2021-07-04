@@ -171,7 +171,7 @@ export default {
           value: value.Location.split(",").concat([
             `存储价格：${value.StoragePrice}元/GB/月<br/>
           流量价格：${value.TrafficPrice}元/GB<br/>
-          可用性：${value.Availability}<br />`
+          可用性：${value.Availability * 100}%<br />`
           ])
         };
       });
@@ -202,9 +202,7 @@ export default {
     }
   },
   beforeMount() {
-    if (!this.havePlan) {
-      this.getStoragePlans();
-    }
+    this.getStoragePlans();
   }
 };
 </script>

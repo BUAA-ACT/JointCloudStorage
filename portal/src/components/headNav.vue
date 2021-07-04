@@ -18,8 +18,8 @@
             <span class="el-dropdown-link"> {{ userName }}<i class="el-icon-arrow-down el-icon--right"></i> </span>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item command="userCenter">个人中心</el-dropdown-item>
-              <el-dropdown-item command="console">控制台</el-dropdown-item>
-              <el-dropdown-item command="logOut">退出登陆</el-dropdown-item>
+              <el-dropdown-item command="manageCenter" v-if="isAdmin">管理中心</el-dropdown-item>
+              <el-dropdown-item command="logOut">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
         </div>
@@ -71,6 +71,9 @@ export default {
   computed: {
     userName() {
       return this.$store.state.name;
+    },
+    isAdmin() {
+      return this.$store.getters.isAdmin;
     }
   },
   methods: {

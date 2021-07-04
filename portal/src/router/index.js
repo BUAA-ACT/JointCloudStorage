@@ -363,6 +363,10 @@ const router = [
   {
     path: "/userCenter",
     redirect: "/cloudStorage"
+  },
+  {
+    path: "/manageCenter",
+    redirect: "/cloudStorage/admin/manageClouds"
   }
 ];
 
