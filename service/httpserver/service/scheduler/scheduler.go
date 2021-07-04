@@ -70,11 +70,13 @@ func GetDownloadPlanFromScheduler(userID string, fileId string) (*model.GetDownl
 	return &response, true
 }
 
-func SetStoragePlanToScheduler(userID string, storagePlan *model.StoragePlan) (*model.PostStoragePlanResponse, bool) {
+func SetStoragePlanToScheduler(userID string, password string, storagePlan *model.StoragePlan) (*model.PostStoragePlanResponse, bool) {
 	client := http.Client{}
+
 	postStoragePlan := model.PostStoragePlan{
 		CloudID:     *args.CloudID,
 		UserID:      userID,
+		Password:    password,
 		StoragePlan: *storagePlan,
 	}
 	postStoragePlanJson, errMarshal := json.Marshal(postStoragePlan)

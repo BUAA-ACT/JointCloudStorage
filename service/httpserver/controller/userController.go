@@ -278,7 +278,7 @@ func UserChangePassword(con *gin.Context) {
 	}
 	// let scheduler change and sync password
 	storagePlan := &user.StoragePlan
-	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(userID, storagePlan)
+	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(userID, newPassword, storagePlan)
 	if !postPlanSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,

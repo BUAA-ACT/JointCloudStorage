@@ -4,6 +4,7 @@ import (
 	"cloud-storage-httpserver/args"
 	"cloud-storage-httpserver/dao"
 	"cloud-storage-httpserver/model"
+	"cloud-storage-httpserver/service/code"
 	"cloud-storage-httpserver/service/scheduler"
 	"cloud-storage-httpserver/service/tools"
 	"cloud-storage-httpserver/service/transporter"
@@ -166,7 +167,7 @@ func UserChooseStoragePlan(con *gin.Context) {
 		return
 	}
 	// post to notice scheduler this plan
-	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(userID, storagePlan)
+	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(userID, code.AesDecrypt(user.Password, *args.EncryptKey), storagePlan)
 	if !postPlanSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
@@ -239,7 +240,7 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	}
 	nowAdvice := (*newAdvices)[0]
 	// post to notice scheduler this plan
-	postPlanToSchedulerResponse, postPlanToSchedulerSuccess := scheduler.SetStoragePlanToScheduler(userID, &nowAdvice.StoragePlanNew)
+	postPlanToSchedulerResponse, postPlanToSchedulerSuccess := scheduler.SetStoragePlanToScheduler(userID, code.AesDecrypt(user.Password, *args.EncryptKey), &nowAdvice.StoragePlanNew)
 	// save new plan
 	if !postPlanToSchedulerSuccess {
 		con.JSON(http.StatusOK, gin.H{
