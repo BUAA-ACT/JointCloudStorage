@@ -64,7 +64,7 @@ module.exports = {
               // warnings: false,
               drop_console: true,
               drop_debugger: false,
-              pure_funcs: ["console.log"] // 移除console
+              pure_funcs: ["console.log", "this.$log"] // 移除console
             }
           }
         })
@@ -96,6 +96,9 @@ module.exports = {
         target: `http://127.0.0.1:8081`
       },
       "/user": {
+        target: `http://127.0.0.1:8081`
+      },
+      "/cloud": {
         target: `http://127.0.0.1:8081`
       },
       "/upload": {

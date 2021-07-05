@@ -2,11 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"shaoliyin.me/jcspan/dao"
+	"shaoliyin.me/jcspan/newcloud"
 )
 
 const (
@@ -31,8 +33,15 @@ var (
 	addrMap = make(map[string]string)
 )
 
-func init() {
+func FlagPrase(env string) {
+	if env == "debug" {
+		flagMongo=flag.String("mongo", "mongodb://192.168.105.8:20100", "mongodb address")
+		flagEnv=flag.String("env","dev","Database name used for Clouds storage.")
+	}
 	flag.Parse()
+}
+
+func Init() {
 
 	// Set logging format
 	log.SetFormatter(&log.TextFormatter{
@@ -62,18 +71,26 @@ func init() {
 	// }
 }
 
-func main() {
-	log.Infoln("Starting scheduler", Version)
-
-	r := gin.Default()
-
+func NewRouter(r *gin.Engine) {
 	r.GET("/storage_plan", GetStoragePlan)
 	r.GET("/download_plan", GetDownloadPlan)
 	r.GET("/status", GetStatus)
+	r.GET("/all_clouds_status", GetAllCloudsStatus)
 
 	r.POST("/storage_plan", PostStoragePlan)
 	r.POST("/metadata", PostMetadata)
+	r.POST("/update_clouds", PostUpdateClouds)
+}
 
+func main() {
+	fmt.Println("this is main func")
+	FlagPrase("")
+	Init()
+	log.Infoln("Starting scheduler", Version)
+
+	r := gin.Default()
+	NewRouter(r)
+	newcloud.Router(r,*flagMongo,*flagEnv,*flagCloudID,"production")
 	go reSchedule(*flagRescheduleInterval)
 	go heartbeat(*flagHeartbeatInterval)
 

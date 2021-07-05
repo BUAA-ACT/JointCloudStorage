@@ -12,7 +12,7 @@ import (
 func PreUploadFile(path string, user *model.User) (*model.TaskResponse, bool) {
 	task := model.Task{
 		TaskType:               args.TaskTypeUpload,
-		UserId:                 user.UserId,
+		UserID:                 user.UserID,
 		DestinationPath:        path,
 		DestinationStoragePlan: user.StoragePlan,
 	}
@@ -24,9 +24,6 @@ func PreUploadFile(path string, user *model.User) (*model.TaskResponse, bool) {
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
-	// debug
-	//body, errDoRequest := ioutil.ReadAll(resp.Body)
-	//fmt.Println(body)
 	var response model.TaskResponse
 	errDecoder := json.NewDecoder(resp.Body).Decode(&response)
 	if tools.PrintError(errDecoder) {
@@ -35,10 +32,10 @@ func PreUploadFile(path string, user *model.User) (*model.TaskResponse, bool) {
 	return &response, true
 }
 
-func DownLoadFile(downloadName string, userId string, downloadPlan model.StoragePlan) (*model.TaskResponse, bool) {
+func DownLoadFile(downloadName string, userID string, downloadPlan model.StoragePlan) (*model.TaskResponse, bool) {
 	task := model.Task{
 		TaskType:          args.TaskTypeDownload,
-		UserId:            userId,
+		UserID:            userID,
 		SourcePath:        downloadName,
 		SourceStoragePlan: downloadPlan,
 	}
@@ -50,9 +47,6 @@ func DownLoadFile(downloadName string, userId string, downloadPlan model.Storage
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
-	// debug
-	//body, _ := ioutil.ReadAll(resp.Body)
-	//fmt.Println(string(body))
 	var response model.TaskResponse
 	errDecoder := json.NewDecoder(resp.Body).Decode(&response)
 	if tools.PrintError(errDecoder) {
@@ -64,7 +58,7 @@ func DownLoadFile(downloadName string, userId string, downloadPlan model.Storage
 func DeleteFile(deleteName string, user *model.User) bool {
 	task := model.Task{
 		TaskType:          args.TaskTypeDelete,
-		UserId:            user.UserId,
+		UserID:            user.UserID,
 		SourcePath:        deleteName,
 		SourceStoragePlan: user.StoragePlan,
 	}
@@ -76,9 +70,6 @@ func DeleteFile(deleteName string, user *model.User) bool {
 	if tools.PrintError(errNewRequest) {
 		return false
 	}
-	// debug
-	//body, _ := ioutil.ReadAll(resp.Body)
-	//fmt.Println(string(body))
 	var response model.TaskResponse
 	errDecoder := json.NewDecoder(resp.Body).Decode(&response)
 	if tools.PrintError(errDecoder) {
@@ -87,10 +78,10 @@ func DeleteFile(deleteName string, user *model.User) bool {
 	return true
 }
 
-func SyncFile(path string, userId string, oldPlan *model.StoragePlan, newPlan *model.StoragePlan) (*model.TaskResponse, bool) {
+func SyncFile(path string, userID string, oldPlan *model.StoragePlan, newPlan *model.StoragePlan) (*model.TaskResponse, bool) {
 	task := model.Task{
 		TaskType:               args.TaskTypeSync,
-		UserId:                 userId,
+		UserID:                 userID,
 		SourcePath:             path,
 		SourceStoragePlan:      *oldPlan,
 		DestinationPath:        path,
@@ -104,9 +95,6 @@ func SyncFile(path string, userId string, oldPlan *model.StoragePlan, newPlan *m
 	if tools.PrintError(errNewRequest) {
 		return nil, false
 	}
-	// debug
-	//body, _ := ioutil.ReadAll(resp.Body)
-	//fmt.Println(string(body))
 	var response model.TaskResponse
 	errDecoder := json.NewDecoder(resp.Body).Decode(&response)
 	if tools.PrintError(errDecoder) {

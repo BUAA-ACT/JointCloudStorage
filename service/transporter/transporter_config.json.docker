@@ -1,18 +1,19 @@
 {
   "debugMode": true,
   "debugLevel": "Trace",
+  "TempFilePath": "./tmp/",
   "UploadFileTempPath": "/data/transporter/Upload",
   "DownloadFileTempPath": "/data/transporter/Download",
   "Database": {
     "Driver": "MongoDB",
-    "Host": "192.168.105.8",
-    "Port": "20100",
+    "Host": "192.168.105.13",
+    "Port": "27017",
     "DatabaseName": "dev"
   },
   "DefaultStorageClient": "Aws",
   "Host": "0.0.0.0",
   "Port": 8083,
   "ZookeeperHost":"192.168.105.13",
-  "LocalCloudID": "aliyun-hangzhou",
+  "LocalCloudID": "aliyun-hohhot",
   "SchedulerHost": "http://192.168.105.13:8082"
 }

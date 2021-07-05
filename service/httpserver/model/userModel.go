@@ -5,19 +5,6 @@ import (
 	"time"
 )
 
-type Cloud struct {
-	CloudID      string  `json:"CloudID,omitempty" bson:"cloud_id"`
-	Endpoint     string  `json:"Endpoint,omitempty" bson:"endpoint"`
-	AccessKey    string  `json:"AccessKey,omitempty" bson:"access_key"`
-	SecretKey    string  `json:"SecretKey,omitempty" bson:"secret_key"`
-	StoragePrice float64 `json:"StoragePrice" bson:"storage_price"`
-	TrafficPrice float64 `json:"TrafficPrice" bson:"traffic_price"`
-	Availability float64 `json:"Availability" bson:"availability"`
-	Status       string  `json:"Status" bson:"status"`     // "UP" | "DOWN"
-	Location     string  `json:"Location" bson:"location"` // "116.381252,39.906569"
-	Address      string  `json:"Address" bson:"address"`
-}
-
 type Preference struct {
 	Vendor       uint64            `json:"Vendor" binding:"gt=0" bson:"vendor"`
 	StoragePrice float64           `json:"StoragePrice" binding:"gt=0" bson:"storage_price"`
@@ -49,7 +36,7 @@ type AccessCredential struct {
 }
 
 type User struct {
-	UserId            string             `json:"UserId" bson:"user_id"`
+	UserID            string             `json:"UserID" bson:"user_id"`
 	Email             string             `json:"Email" bson:"email"`
 	Password          string             `json:"-" bson:"password"`
 	Nickname          string             `json:"Nickname" bson:"nickname"`
@@ -62,6 +49,7 @@ type User struct {
 	DataStats         DataStats          `json:"DataStats" bson:"data_stats"`
 	AccessCredentials []AccessCredential `json:"AccessCredentials" bson:"access_credentials"`
 	Status            string             `json:"Status" bson:"status"`
+	//TODO
 }
 
 func (user *User) UserHaveStoragePlan() bool {

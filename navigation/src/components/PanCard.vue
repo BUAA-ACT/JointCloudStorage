@@ -19,7 +19,7 @@
 </template>
 
 <script>
-const speedtest = require('speedtest-url');
+import speedtest from "/src/utils/speedtest"
 export default {
   name: "PanCard",
   data() {

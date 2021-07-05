@@ -23,13 +23,15 @@ var Config = Configuration{
 		Port:         "20100",
 		DatabaseName: "dev",
 	},
+	TempFilePath:         "./tmp/",
 	UploadFileTempPath:   "./tmp/upload/",
 	DownloadFileTempPath: "./tmp/download/",
 	DefaultStorageClient: AwsS3Client,
 	Port:                 8083,
 	Host:                 "0.0.0.0",
 	ZookeeperHost:        "192.168.105.13",
-	LocalCloudID:         "aliyun-beijing",
+	SchedulerHost:        "http://192.168.105.13:8082",
+	LocalCloudID:         "aliyun-hohhot",
 	EnableHttps:          true,
 }
 
@@ -46,6 +48,7 @@ type Configuration struct {
 	DebugMode            bool
 	DebugLevel           string
 	Database             DBConfiguration
+	TempFilePath         string
 	UploadFileTempPath   string
 	DownloadFileTempPath string
 	DefaultStorageClient string

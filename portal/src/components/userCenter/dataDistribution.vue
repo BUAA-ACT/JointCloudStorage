@@ -1,12 +1,20 @@
 <template>
   <div>
-    <location-viewer class="location-viewer" :clouds="cloudStat.cloudsDetails" :format-function="formatClouds"></location-viewer>
+    <location-viewer
+      class="location-viewer"
+      :clouds="cloudStat.cloudsDetails"
+      :format-function="formatClouds"
+      :inactive-clouds="inactiveClouds"
+      :format-in-active-cloud-function="formatInactiveClouds"
+    >
+    </location-viewer>
   </div>
 </template>
 
 <script>
 import locationViewer from "@/components/viewer/locationViewer.vue";
 import Utils from "@/utils/other";
+import Clouds from "@/api/clouds";
 
 export default {
   name: "dataDistribution",
@@ -15,7 +23,8 @@ export default {
   },
   data() {
     return {
-      cloudUsage: {}
+      cloudUsage: {},
+      inactiveClouds: []
     };
   },
   computed: {
@@ -24,9 +33,9 @@ export default {
     }
   },
   methods: {
-    formatClouds(Clouds) {
+    formatClouds(clouds) {
       const { Volume } = this.cloudStat;
-      return Clouds.map(value => {
+      return clouds.map(value => {
         return {
           name: value.CloudID,
           value: value.Location.split(",").concat([
@@ -37,10 +46,39 @@ export default {
           ])
         };
       });
+    },
+    formatInactiveClouds(clouds, activeClouds = []) {
+      return clouds
+        .filter(item => {
+          return !activeClouds.some(value => {
+            return value.CloudID === item.CloudID;
+          });
+        })
+        .map(value => {
+          return {
+            name: value.CloudID,
+            value: value.Location.split(",") // longitude ,latitude
+              .concat([`${value.CloudName}`])
+          };
+        });
+    },
+    async getAllCloud() {
+      // this.inactiveClouds = Clouds.getAllCloud().clouds;
+      await Clouds.getAllClouds()
+        .then(resp => {
+          if (resp && resp.Clouds) {
+            this.inactiveClouds = resp.Clouds || [];
+          }
+        })
+        .catch(() => {
+          this.inactiveClouds = [];
+        });
+      this.$log(this.inactiveClouds);
     }
   },
-  async mounted() {
+  async beforeMount() {
     await this.$store.dispatch("getInfo");
+    await this.getAllCloud();
   }
 };
 </script>

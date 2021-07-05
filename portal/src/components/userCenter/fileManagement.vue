@@ -30,7 +30,7 @@
       <el-table-column label="大小" prop="FileInfo.Size" :formatter="sizeFormatter" />
       <el-table-column label="修改时间" prop="FileInfo.LastModified" :formatter="dateFormatter" />
       <el-table-column align="right">
-        <template slot="header" slot-scope="scope">
+        <template slot="header">
           <el-input v-model="search" size="mini" placeholder="搜索文件" />
         </template>
         <template slot-scope="scope">

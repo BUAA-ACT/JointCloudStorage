@@ -12,9 +12,9 @@
     "core-js": "^3.6.5",
     "element-ui": "^2.15.2",
     "net": "^1.0.2",
+    "node-fetch": "^2.6.1",
     "ping": "^0.4.1",
     "public-ip": "^4.0.4",
-    "speedtest-url": "^1.0.3",
     "vue": "^2.6.11"
   },
   "devDependencies": {

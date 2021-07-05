@@ -318,45 +318,43 @@ const router = [
       },
       {
         path: "userPreference",
-        component: () => import("../components/userCenter/userPreference")
+        component: () => import("../components/userCenter/userPreference.vue")
       },
       {
         path: "storagePlan",
-        component: () => import("../components/userCenter/storagePlan")
+        component: () => import("../components/userCenter/storagePlan.vue")
       },
       {
         path: "userInfo",
-        component: () => import("../components/userCenter/userInfo")
+        component: () => import("../components/userCenter/userInfo.vue")
       },
       {
         path: "fileManagement",
-        component: () => import("../components/userCenter/fileManagement")
+        component: () => import("../components/userCenter/fileManagement.vue")
       },
       {
         path: "dataDistribution",
-        component: () => import("../components/userCenter/dataDistribution")
+        component: () => import("../components/userCenter/dataDistribution.vue")
       },
       {
         path: "dataMigration",
-        component: () => import("../components/userCenter/dataMigration")
+        component: () => import("../components/userCenter/dataMigration.vue")
       },
       {
         path: "admin",
-        component: () => import("../components/adminCenter/adminFrame"),
+        component: () => import("../components/adminCenter/adminFrame.vue"),
         children: [
           {
             path: "addNewCloud",
             component: () => import("../components/adminCenter/addNewCloud.vue")
           },
           {
-            path: "addNewCloud/:formData",
-            name: "addNewCloud",
-            component: () => import("../components/adminCenter/addNewCloud.vue")
+            path: "voteForClouds",
+            component: () => import("../components/adminCenter/voteForClouds.vue")
           },
           {
-            path: "addNewCloud/confirm/:formData",
-            name: "addNewCloudConfirm",
-            component: () => import("../components/adminCenter/addNewCloudConfirm.vue")
+            path: "manageClouds",
+            component: () => import("../components/adminCenter/manageClouds.vue")
           }
         ]
       }
@@ -365,6 +363,10 @@ const router = [
   {
     path: "/userCenter",
     redirect: "/cloudStorage"
+  },
+  {
+    path: "/manageCenter",
+    redirect: "/cloudStorage/admin/manageClouds"
   }
 ];
 

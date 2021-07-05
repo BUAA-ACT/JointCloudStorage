@@ -50,7 +50,7 @@ export default {
                 //
                 `存储价格：${value.StoragePrice}元/GB/月<br/>
           流量价格：${value.TrafficPrice}元/GB<br/>
-          可用性：${value.Availability}<br />`
+          可用性：${value.Availability * 100}%<br />`
               ])
           };
         });
@@ -59,24 +59,19 @@ export default {
     formatInActiveCloudFunction: {
       // 把云的信息，转化为 位置信息和注释
       type: Function,
-      default: Clouds => {
+      default: (Clouds, activeClouds = []) => {
         return Clouds.filter(item => {
-          console.log(this.clouds);
-          for (const cloud of this.clouds) {
-            if (cloud.CloudID === item.cloud_id) {
-              return false;
-            }
-          }
-          return true;
+          return !activeClouds.some(value => {
+            return value.CloudID === item.CloudID;
+          });
         }).map(value => {
           return {
-            name: value.cloud_id,
-            value: value.location
-              .split(",") // longitude ,latitude
+            name: value.CloudID,
+            value: value.Location.split(",") // longitude ,latitude
               .concat([
-                `存储价格：${value.storage_price}元/GB/月<br/>
-          流量价格：${value.traffic_price}元/GB<br/>
-          可用性：${value.availability}<br />`
+                `存储价格：${value.StoragePrice}元/GB/月<br/>
+          流量价格：${value.TrafficPrice}元/GB<br/>
+          可用性：${value.Availability * 100}%<br />`
               ])
           };
         });
@@ -195,29 +190,8 @@ export default {
         ]
       });
       window.onresize = () => {
-        console.log("resize");
         chart.resize();
       };
-    },
-    formatInActiveCloud(Clouds) {
-      return Clouds.filter(item => {
-        console.log(this.clouds);
-        // eslint-disable-next-line no-restricted-syntax
-        return !this.clouds.some(value => {
-          return value.CloudID === item.cloud_id;
-        });
-      }).map(value => {
-        return {
-          name: value.cloud_id,
-          value: value.location
-            .split(",") // longitude ,latitude
-            .concat([
-              `存储价格：${value.storage_price}元/GB/月<br/>
-          流量价格：${value.traffic_price}元/GB<br/>
-          可用性：${value.availability}<br />`
-            ])
-        };
-      });
     }
   },
   mounted() {
@@ -228,6 +202,9 @@ export default {
       this.initCharts();
     },
     dynamic() {
+      this.initCharts();
+    },
+    inactiveClouds() {
       this.initCharts();
     }
   },
@@ -305,7 +282,7 @@ export default {
       return this.formatFunction(this.clouds);
     },
     formattedInactiveClouds() {
-      return this.formatInActiveCloud(this.inactiveClouds); // todo
+      return this.formatInActiveCloudFunction(this.inactiveClouds, this.clouds.concat(this.newClouds || []));
     },
     formattedNewClouds() {
       return this.formatFunction(this.newClouds);
@@ -316,6 +293,7 @@ export default {
 
 <style lang="scss" scoped>
 .viewer-container {
+  text-align: left;
   .location-viewer {
     width: 100%;
     height: 100%;

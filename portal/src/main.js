@@ -11,6 +11,8 @@ import App from "./App.vue";
 import store from "./store";
 import router from "./router";
 import "@/styles/index.scss"; // global css
+import moment from "moment";
+import VueClipboard from "vue-clipboard2";
 
 // Vue.use(ElementUI);
 Vue.use(VueRouter);
@@ -18,6 +20,16 @@ Vue.use(VueI18n);
 Vue.config.productionTip = false;
 
 Vue.prototype.$Api = appApi;
+
+// Add Debug output
+Vue.prototype.$log = console.log;
+
+// Add DateTime formatter
+moment.locale("zh-cn");
+Vue.prototype.$moment = moment;
+
+// Add Clipboard Manager
+Vue.use(VueClipboard);
 
 const i18n = new VueI18n({
   locale: "zh-CN", // 语言标识

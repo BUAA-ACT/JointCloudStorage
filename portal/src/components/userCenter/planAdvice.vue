@@ -30,7 +30,14 @@
           </div>
         </el-card>
       </div>
-      <location-viewer :clouds="Advices.CloudsOld" :new-clouds="Advices.CloudsNew" :dynamic="migrating" class="location-viewer" ref="viewer" />
+      <location-viewer
+        :clouds="Advices.CloudsOld"
+        :new-clouds="Advices.CloudsNew"
+        :dynamic="migrating"
+        :inactive-clouds="allClouds"
+        class="location-viewer"
+        ref="viewer"
+      />
     </div>
     <div class="no-new-plan" v-else>
       <i class="el-icon-success tip-icon"></i><br />
@@ -42,6 +49,7 @@
 <script>
 import Plan from "@/api/plan";
 import locationViewer from "@/components/viewer/locationViewer.vue";
+import Clouds from "@/api/clouds";
 
 export default {
   name: "planAdvice",
@@ -53,7 +61,8 @@ export default {
       Advices: {},
       submitLoading: false,
       newPlanAvailable: false,
-      migrating: false
+      migrating: false,
+      allClouds: []
     };
   },
   methods: {
@@ -61,7 +70,7 @@ export default {
       this.newPlanAvailable = false;
       Plan.getNewAdvice().then(resp => {
         if (resp) {
-          if (resp.Advices.length > 0) {
+          if (resp.Advices && resp.Advices.length > 0) {
             [this.Advices] = resp.Advices;
             this.newPlanAvailable = true;
           } else {
@@ -81,10 +90,23 @@ export default {
       this.submitLoading = true;
       await Plan.abandonAdvice();
       this.submitLoading = false;
+    },
+    async getAllClouds() {
+      Clouds.getAllClouds()
+        .then(res => {
+          if (res && res.Clouds) {
+            this.allClouds = res.Clouds;
+          }
+        })
+        .catch(() => {})
+        .then(() => {
+          this.allClouds = this.allClouds || [];
+        });
     }
   },
   mounted() {
     this.getNewAdvice();
+    this.getAllClouds();
   }
 };
 </script>
@@ -116,5 +138,29 @@ export default {
 .location-viewer {
   width: 800px;
   height: 400px;
+}
+.text {
+  font-size: 14px;
+  text-align: left;
+}
+
+.item {
+  margin-bottom: 18px;
+}
+
+.clearfix:before,
+.clearfix:after {
+  display: table;
+  content: "";
+}
+.clearfix:after {
+  clear: both;
+}
+
+.box-card {
+  width: 250px;
+  height: 200px;
+  display: inline-block;
+  margin: 0 10px;
 }
 </style>

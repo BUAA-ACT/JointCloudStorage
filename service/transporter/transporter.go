@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 func main() {
@@ -82,6 +83,13 @@ func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
 		fileDatabase = model.NewInMemoryFileDatabase()
 	}
 	processor := controller.TaskProcessor{}
+	// 初始化 Dao
+	var err error
+	processor.Dao, err = model.InitDao()
+	if err != nil {
+		util.Log(logrus.FatalLevel, "init Processor", "error init mongodb connection", "Dao", "err", err.Error())
+	}
+
 	processor.SetTaskStorage(storage)
 	// 初始化存储数据库
 	processor.SetStorageDatabase(clientDatabase)
@@ -103,6 +111,9 @@ func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
 	userDB, _ := model.NewMongoUserDatabase()
 	processor.Monitor = controller.NewTrafficMonitor(userDB)
 	processor.UserDatabase = userDB
+	// 初始化 tempFile
+	tfs, _ := util.NewTempFileStorage(util.Config.DownloadFileTempPath, time.Hour*8)
+	processor.TempFileStorage = tfs
 	// 初始化路由
 	router := controller.NewRouter(processor)
 	// 启动 processor

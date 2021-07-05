@@ -9,7 +9,7 @@ import (
 func TestJcsPanScheduler(t *testing.T) {
 	cloudDatabase, _ := model.NewMongoCloudDatabase()
 	scheduler := JcsPanScheduler{
-		LocalCloudID:     "aliyun-hangzhou",
+		LocalCloudID:     "aliyun-hohhot",
 		SchedulerHostUrl: "http://192.168.105.13:8082",
 		ReloadCloudInfo:  true,
 		CloudDatabase:    cloudDatabase,

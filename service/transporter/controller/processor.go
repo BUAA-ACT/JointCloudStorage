@@ -17,13 +17,16 @@ import (
 )
 
 type TaskProcessor struct {
-	taskStorage   model.TaskStorage
-	cloudDatabase model.CloudDatabase
-	FileDatabase  model.FileDatabase
-	Lock          *Lock
-	Scheduler     Scheduler
-	Monitor       *TrafficMonitor
-	UserDatabase  model.UserDatabase
+	taskStorage       model.TaskStorage
+	CloudDatabase     model.CloudDatabase
+	FileDatabase      model.FileDatabase
+	Lock              *Lock
+	Scheduler         Scheduler
+	Monitor           *TrafficMonitor
+	UserDatabase      model.UserDatabase
+	Dao               *model.Dao
+	AccessKeyDatabase *model.AccessKeyDB
+	TempFileStorage   *util.TempFileStorage
 }
 
 func (processor *TaskProcessor) SetTaskStorage(storage model.TaskStorage) {
@@ -31,7 +34,7 @@ func (processor *TaskProcessor) SetTaskStorage(storage model.TaskStorage) {
 }
 
 func (processor *TaskProcessor) SetStorageDatabase(database model.CloudDatabase) {
-	processor.cloudDatabase = database
+	processor.CloudDatabase = database
 }
 
 // 创建任务
@@ -131,7 +134,7 @@ func (processor *TaskProcessor) DeleteFileInfo(t *model.Task) error {
 	err = processor.FileDatabase.DeleteFileInfo(fileInfo)
 	// 同步文件源信息到其他云
 	// todo 由于 fileInfo 需要同步删除，文件源信息的同步只能一并处理，但这会增加耗时
-	err = processor.Scheduler.DeleteFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo) // todo 此处错误被隐藏
+	err = processor.Scheduler.DeleteFileMetadata(t.TaskOptions.SourceStoragePlan.Clouds, t.Uid, fileInfo) // todo 此处错误被隐藏
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "Processor DeleteFileInfo", "metadata sync fail", "ok", "err", err.Error())
 	}
@@ -143,7 +146,7 @@ func (processor *TaskProcessor) DeleteStorageFile(t *model.Task) (err error) {
 	var storageClients []model.StorageClient
 	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
 	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
-		client, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, cloudName)
+		client, err := processor.CloudDatabase.GetStorageClientFromName(t.Uid, cloudName)
 		if err != nil {
 			return err
 		}
@@ -179,7 +182,7 @@ func (processor *TaskProcessor) DeleteSingleFile(t *model.Task) error {
 	var storageClients []model.StorageClient
 	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
 	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
-		client, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, cloudName)
+		client, err := processor.CloudDatabase.GetStorageClientFromName(t.Uid, cloudName)
 		if err != nil {
 			return err
 		}
@@ -243,7 +246,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 	var storageClients []model.StorageClient
 	storageModel := t.TaskOptions.SourceStoragePlan.StorageMode
 	for _, cloudName := range t.TaskOptions.SourceStoragePlan.Clouds {
-		client, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, cloudName)
+		client, err := processor.CloudDatabase.GetStorageClientFromName(t.Uid, cloudName)
 		if err != nil {
 			return "", err
 		}
@@ -296,7 +299,7 @@ func (processor *TaskProcessor) ProcessGetTmpDownloadUrl(t *model.Task) (url str
 	if err != nil {
 		return "", err
 	}
-	storageClient, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
+	storageClient, err := processor.CloudDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
 	if err != nil {
 		return "", err
 	}
@@ -332,15 +335,17 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	defer processor.Lock.UnLock(t.GetRealDestinationPath())
 	fileInfo, fileInfoErr := processor.FileDatabase.GetFileInfo(t.GetRealDestinationPath())
 	if fileInfoErr == nil { // 更新文件同步状态
+		logrus.Debugf("文件已经在数据库中创建，更新文件源信息")
 		fileInfo.SyncStatus = model.FileWorking
 		_ = processor.FileDatabase.UpdateFileInfo(fileInfo)
 	}
+	logrus.Debugf("用户 %v 开始上传文件: %v", t.Uid, t.DestinationPath)
 	// 判断上传方式
 	var storageClients []model.StorageClient
 	if t.TaskOptions != nil {
 		storageModel := t.TaskOptions.DestinationPlan.StorageMode
 		for _, cloudName := range t.TaskOptions.DestinationPlan.Clouds {
-			client, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, cloudName)
+			client, err := processor.CloudDatabase.GetStorageClientFromName(t.Uid, cloudName)
 			if err != nil {
 				return err
 			}
@@ -353,6 +358,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 				return err
 			}
 			for i, client := range storageClients {
+				logrus.Debugf("多副本模式上传，云存储: %v", i)
 				_, err = processor.Monitor.AddUploadTraffic(t.Uid, fileInfo.Size, t.TaskOptions.DestinationPlan.Clouds[i])
 				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath(), t.Uid)
 			}
@@ -374,6 +380,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 				logrus.Errorf("Encode file %s failed.", t.GetSourcePath())
 				return err
 			}
+			logrus.Debugf("纠删码模式完成分块")
 			// 开始上传
 			for i, client := range storageClients {
 				err = client.Upload(shards[i], t.GetDestinationPath()+"."+strconv.Itoa(i), t.Uid)
@@ -384,6 +391,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 				}
 				processor.Monitor.AddUploadTrafficFromFile(t.Uid, shards[i], t.TaskOptions.DestinationPlan.Clouds[i])
 			}
+			logrus.Debugf("纠删码模式完成上传")
 		default:
 			return errors.New("storage model not implement")
 		}
@@ -399,6 +407,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 		}
 		if fileInfoErr != nil { // 文件之前不存在
 			err = processor.FileDatabase.CreateFileInfo(fileInfo)
+			logrus.Debugf("文件源信息不存在，创建文件源信息： %v", fileInfo.FileID)
 		} else {
 			err = processor.FileDatabase.UpdateFileInfo(fileInfo)
 		}
@@ -421,12 +430,22 @@ func (processor *TaskProcessor) ProcessPathIndex(t *model.Task) <-chan model.Obj
 	if err != nil {
 		return nil
 	}
-	storageClient, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
+	storageClient, err := processor.CloudDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
 	if err != nil {
 		return nil
 	}
 
 	return storageClient.Index(t.GetSourcePath(), t.Uid)
+}
+
+// ProcessIndexFile 处理列取用户所有文件请求（从数据库中读取）
+func (processor *TaskProcessor) ProcessIndexFile(t *model.Task) ([]*model.File, error) {
+	// 列举所有对象
+	objects, err := processor.FileDatabase.Index(t.GetRealSourcePath())
+	if err != nil {
+		return nil, err
+	}
+	return objects, nil
 }
 
 // 处理同步任务
@@ -514,7 +533,7 @@ func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
 		var totalSize int64
 		totalSize = 0
 		for _, sourceCloudID := range t.TaskOptions.SourceStoragePlan.Clouds {
-			srcClient, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, sourceCloudID)
+			srcClient, err := processor.CloudDatabase.GetStorageClientFromName(t.Uid, sourceCloudID)
 			if err != nil {
 				return
 			}
@@ -541,8 +560,8 @@ func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
 
 	for i, sourceCloudID := range t.TaskOptions.SourceStoragePlan.Clouds {
 		destCloudID := t.TaskOptions.DestinationPlan.Clouds[i]
-		srcClient, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, sourceCloudID)
-		dstClient, err := processor.cloudDatabase.GetStorageClientFromName(t.Uid, destCloudID)
+		srcClient, err := processor.CloudDatabase.GetStorageClientFromName(t.Uid, sourceCloudID)
+		dstClient, err := processor.CloudDatabase.GetStorageClientFromName(t.Uid, destCloudID)
 		if err != nil {
 			done <- true
 			return err

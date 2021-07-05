@@ -18,4 +18,6 @@ const (
 	ErrorMsgProcessMigrateDownloadErr = "process migrate download err"
 	ErrorMsgProcessMigrateUploadErr   = "process migrate Upload err"
 	ErrorMsgEmptyFilename             = "empty file name"
+	ErrorDBConnection                 = "connect to database failed"
+	ErrorCertificate                  = "ak and sk mismatching"
 )
