@@ -523,38 +523,38 @@ func UserAddKey(con *gin.Context) {
 	accessKey = code.GenAccessKey()
 	secretKey = code.GenSecretKey()
 
-	// save it into mongodb
-	//insertKeySuccess := dao.AccessKeyDao.InsertKey(userID, accessKey, secretKey, comment)
-	//if !checkDaoSuccess(con, insertKeySuccess) {
+	//save it into mongodb 由于 scheduler 尚未实现 key 的同步， 在本地实现 ak sk 添加
+	insertKeySuccess := dao.AccessKeyDao.InsertKey(userID, accessKey, secretKey, comment)
+	if !checkDaoSuccess(con, insertKeySuccess) {
+		return
+	}
+
+	// sync it with scheduler 由于 scheduler 尚未实现 key 的同步，先禁用该同步
+	//key := model.AccessKey{
+	//	UserID:    userID,
+	//	AccessKey: accessKey,
+	//	SecretKey: secretKey,
+	//	Comment:   comment,
+	//	Available: true,
+	//}
+	//postKeyResponse, postKeySuccess := scheduler.PostKeyToScheduler(&key)
+	//if !postKeySuccess {
+	//	con.JSON(http.StatusOK, gin.H{
+	//		"code": args.CodeJsonError,
+	//		"msg":  "解析scheduler-json信息有误",
+	//		"data": gin.H{},
+	//	})
 	//	return
 	//}
-
-	// sync it with scheduler
-	key := model.AccessKey{
-		UserID:    userID,
-		AccessKey: accessKey,
-		SecretKey: secretKey,
-		Comment:   comment,
-		Available: true,
-	}
-	postKeyResponse, postKeySuccess := scheduler.PostKeyToScheduler(&key)
-	if !postKeySuccess {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeJsonError,
-			"msg":  "解析scheduler-json信息有误",
-			"data": gin.H{},
-		})
-		return
-	}
-	if postKeyResponse.Code != args.CodeOK {
-		// error in scheduler
-		con.JSON(http.StatusOK, gin.H{
-			"code": postKeyResponse.Code,
-			"msg":  postKeyResponse.Msg,
-			"data": gin.H{},
-		})
-		return
-	}
+	//if postKeyResponse.Code != args.CodeOK {
+	//	// error in scheduler
+	//	con.JSON(http.StatusOK, gin.H{
+	//		"code": postKeyResponse.Code,
+	//		"msg":  postKeyResponse.Msg,
+	//		"data": gin.H{},
+	//	})
+	//	return
+	//}
 	// success with gen keys
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
