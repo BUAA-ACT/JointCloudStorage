@@ -1,6 +1,8 @@
 db.Cloud.insertMany(
     [
         {
+            "cloud_name": "阿里云-呼和浩特",
+            "provider_name": "阿里",
             "cloud_id": "aliyun-hohhot",
             "storage_price": 0.1,
             "traffic_price": 0.6,
@@ -14,6 +16,8 @@ db.Cloud.insertMany(
             "address": "aliyun-hohhot.jointcloudstorage.cn"
         },
         {
+            "cloud_name": "阿里云-杭州",
+            "provider_name": "阿里",
             "cloud_id": "aliyun-hangzhou",
             "storage_price": 0.12,
             "traffic_price": 0.5,
@@ -27,6 +31,8 @@ db.Cloud.insertMany(
             "address": "aliyun-hangzhou.jointcloudstorage.cn",
         },
         {
+            "cloud_name": "阿里云-青岛",
+            "provider_name": "阿里",
             "cloud_id": "aliyun-qingdao",
             "storage_price": 0.15,
             "traffic_price": 0.4,
@@ -40,6 +46,8 @@ db.Cloud.insertMany(
             "address": "aliyun-qingdao.jointcloudstorage.cn",
         },
         {
+            "cloud_name": "腾讯云-成都",
+            "provider_name": "腾讯",
             "cloud_id": "txyun-chengdu",
             "storage_price": 0.099,
             "traffic_price": 0.5,
@@ -53,6 +61,8 @@ db.Cloud.insertMany(
             "address": "txyun-chengdu.jointcloudstorage.cn",
         },
         {
+            "cloud_name": "百度云-广州",
+            "provider_name": "百度",
             "cloud_id": "bdyun-guangzhou",
             "storage_price": 0.119,
             "traffic_price": 0.49,
