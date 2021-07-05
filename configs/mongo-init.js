@@ -67,3 +67,39 @@ db.Cloud.insertMany(
         }
     ]
 )
+
+db.User.insertMany(
+    [
+      {
+        "access_credentials": null,
+        "avatar": "default-avatar.png",
+        "data_stats": {
+          "volume": 0,
+          "upload_traffic": null,
+          "download_traffic": null
+        },
+        "email": "admin",
+        "nickname": "",
+        "password": "CinA5MJWDvBTvOJSvluE4g==",
+        "preference": {
+          "vendor": 0,
+          "storage_price": 0,
+          "traffic_price": 0,
+          "availability": 0,
+          "latency": null
+        },
+        "role": "ADMIN",
+        "status": "NORMAL",
+        "storage_plan": {
+          "storage_mode": "",
+          "n": 0,
+          "k": 0,
+          "clouds": null,
+          "storage_price": 0,
+          "traffic_price": 0,
+          "availability": 0
+        },
+        "user_id": "admin",
+      }
+    ]
+)

@@ -1,5 +1,6 @@
 {
   "debugMode": true,
+  "TempFilePath": "./tmp/",
   "UploadFileTempPath": "/data/transporter/Upload",
   "DownloadFileTempPath": "/data/transporter/Download",
   "Database": {
