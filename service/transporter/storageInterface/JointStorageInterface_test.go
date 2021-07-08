@@ -14,6 +14,7 @@ import (
 )
 
 var JSI *JointStorageInterface
+var AK, SK string
 
 func TestMain(m *testing.M) {
 	util.ClearAll()
@@ -47,7 +48,14 @@ func TestMain(m *testing.M) {
 	// 初始化 tempFile
 	tfs, _ := util.NewTempFileStorage(util.Config.TempFilePath, time.Hour*8)
 	processor.TempFileStorage = tfs
+	// 初始化 AccessDB
+	dao, _ := model.InitDao()
+	accessKeyDB := model.AccessKeyDB{Dao: dao}
+	processor.AccessKeyDatabase = &accessKeyDB
 
+	key, _ := processor.AccessKeyDatabase.GenerateKeys("tester")
+	AK = key.AccessKey
+	SK = key.SecretKey
 	JSI = NewInterface(&processor)
 	exitCode := m.Run()
 	os.Exit(exitCode)
@@ -55,6 +63,7 @@ func TestMain(m *testing.M) {
 
 func TestNewInterface(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
+	req, _ = JSISign(req, AK, SK)
 	recorder := httptest.NewRecorder()
 	JSI.ServeHTTP(recorder, req)
 	t.Log(string(recorder.Body.Bytes()))
@@ -68,6 +77,7 @@ func TestJointStorageInterface_PutObject(t *testing.T) {
 	}
 	io.Copy(bodyBuf, fh)
 	req, err := http.NewRequest("PUT", "/jsiTest.txt", bodyBuf)
+	req, err = JSISign(req, AK, SK)
 	recorder := httptest.NewRecorder()
 	JSI.ServeHTTP(recorder, req)
 	if recorder.Code != http.StatusOK {
@@ -77,6 +87,7 @@ func TestJointStorageInterface_PutObject(t *testing.T) {
 
 func TestJointStorageInterface_GetMethod(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/test.txt", nil)
+	req, _ = JSISign(req, AK, SK)
 	recorder := httptest.NewRecorder()
 	JSI.ServeHTTP(recorder, req)
 	if recorder.Code != http.StatusOK {
@@ -87,6 +98,7 @@ func TestJointStorageInterface_GetMethod(t *testing.T) {
 
 func TestJointStorageInterface_GetObjectList(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
+	req, _ = JSISign(req, AK, SK)
 	recorder := httptest.NewRecorder()
 	JSI.ServeHTTP(recorder, req)
 	if recorder.Code != http.StatusOK {
@@ -98,6 +110,7 @@ func TestJointStorageInterface_GetObjectList(t *testing.T) {
 func TestJointStorageInterface_DeleteObject(t *testing.T) {
 	TestJointStorageInterface_PutObject(t)
 	req, _ := http.NewRequest("DELETE", "/jsiTest.txt", nil)
+	req, _ = JSISign(req, AK, SK)
 	recorder := httptest.NewRecorder()
 	JSI.ServeHTTP(recorder, req)
 	if recorder.Code != http.StatusOK {

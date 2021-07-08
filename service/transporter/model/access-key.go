@@ -70,3 +70,14 @@ func (db *AccessKeyDB) Certificate(ak string, sk string) (userId string, err err
 	}
 	return accessKey.UserId, nil
 }
+
+func (db *AccessKeyDB) GetKey(ak string) (*AccessKey, error) {
+	col := db.Dao.GetCollection(AccessKeyCollection)
+	var accessKey AccessKey
+	err := col.FindOne(context.TODO(), bson.M{"access_key": ak}).Decode(&accessKey)
+	if err != nil {
+		return nil, err
+	} else {
+		return &accessKey, nil
+	}
+}
