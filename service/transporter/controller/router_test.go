@@ -109,19 +109,13 @@ func initRouterAndProcessor() (*Router, *TaskProcessor) {
 		ReloadCloudInfo:  true,
 		CloudDatabase:    clientDatabase,
 	}
-	//scheduler := JcsPanScheduler{
-	//	LocalCloudID:     "aliyun-hohhot",
-	//	SchedulerHostUrl: "http://192.168.105.13:8082",
-	//	ReloadCloudInfo:  true,
-	//	CloudDatabase:    clientDatabase,
-	//}
 	processor.Scheduler = &scheduler
 	// 初始化 Monitor
 	userDB, err := model.NewMongoUserDatabase()
 	processor.Monitor = NewTrafficMonitor(userDB)
 	processor.UserDatabase = userDB
 	// 初始化路由
-	router := NewTestRouter(processor)
+	router := NewRouter(processor)
 	// 启动 processor
 	processor.StartProcessTasks(context.Background())
 	logrus.SetLevel(logrus.DebugLevel)
@@ -163,16 +157,6 @@ func sendRequestAndRecord(req *http.Request) (resp *http.Response) {
 		return resp
 	}
 	return nil
-}
-
-func setCookie(req *http.Request) {
-	expire := time.Now().AddDate(0, 0, 1)
-	cookie := http.Cookie{
-		Name:    "sid",
-		Value:   "tttteeeesssstttt",
-		Expires: expire,
-	}
-	req.AddCookie(&cookie)
 }
 
 func waitProcessorAllDone() {
@@ -257,7 +241,6 @@ func TestECUploadAndDownload(t *testing.T) {
 		}
 		defer f.Close()
 		req, _ := postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", token)
-		setCookie(req)
 		sendRequestAndRecord(req)
 		waitProcessorAllDone()
 	})
@@ -352,7 +335,6 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
 		}
 		defer f.Close()
 		req, _ := postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", token)
-		setCookie(req)
 		sendRequestAndRecord(req)
 		waitProcessorAllDone()
 	})
@@ -442,7 +424,6 @@ func TestReplicaUploadAndDownload(t *testing.T) {
 		defer f.Close()
 
 		req, _ = postFile("test.txt", "../test/tmp/test.txt", "/upload/path/to/jcspantest.txt", tid)
-		setCookie(req)
 		sendRequestAndRecord(req)
 		waitProcessorAllDone()
 	})
@@ -822,7 +803,6 @@ func testReplicaUpload(t *testing.T, dstPath string, localPath string, cloud str
 		url := fmt.Sprintf("/upload/%v", dstPath)
 
 		req, _ = postFile("test.txt", localPath, url, tid)
-		setCookie(req)
 		sendRequestAndRecord(req)
 		waitProcessorAllDone()
 	})

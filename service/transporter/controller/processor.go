@@ -224,7 +224,6 @@ func (processor *TaskProcessor) WriteDownloadUrlToDB(t *model.Task, localFilePat
 	fileInfo.ReconstructStatus = model.FileDone
 	fileInfo.LastReconstructed = time.Now()
 	err = processor.FileDatabase.UpdateFileInfo(fileInfo)
-	_, err = processor.Monitor.AddDownloadTraffic(t.Uid, fileInfo.Size, cloudID)
 	if err != nil {
 		return err
 	}
@@ -273,7 +272,7 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 				shards[i] = shards[i] + ".fail"
 				continue
 			}
-			processor.Monitor.AddUploadTrafficFromFile(t.Uid, shards[i], t.TaskOptions.SourceStoragePlan.Clouds[i])
+			processor.Monitor.AddDownloadTrafficFromFile(t.Uid, shards[i], t.TaskOptions.SourceStoragePlan.Clouds[i])
 		}
 		err = Decode(rebuildPath, fileInfo.Size, shards, N, K)
 		if err != nil {
