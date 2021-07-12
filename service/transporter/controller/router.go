@@ -185,6 +185,13 @@ func (router *Router) CreateTask(c *gin.Context) {
 			taskRequestReplyErr(util.ErrorCodeWrongStorageType, util.ErrorMsgWrongStorageType, c)
 			return
 		}
+		// 获取文件信息 用于文件流量信息记录
+		fileInfo, err := router.processor.FileDatabase.GetFileInfo(task.GetRealSourcePath())
+		if err != nil {
+			logrus.Errorf("cant get file info: %v%v, err: %v", task.Uid, task.SourcePath, err)
+			return
+		}
+
 		task.TaskType = taskType
 		if task.TaskType == model.DOWNLOAD_REPLICA {
 			url, err := router.processor.ProcessGetTmpDownloadUrl(task)
@@ -197,6 +204,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 			//if err != nil {
 			//	logrus.Errorf("write download url to db fail: %v", err)
 			//}
+			_, err = router.processor.Monitor.AddDownloadTraffic(task.Uid, fileInfo.Size, task.TaskOptions.SourceStoragePlan.Clouds[0])
 			if util.Config.EnableHttps { //防止 https 下，浏览器拦截 http 请求
 				url = strings.Replace(url, "http://", "https://", 1)
 			}
@@ -338,10 +346,6 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 		http.Error(c.Writer, err.Error(), http.StatusBadGateway)
 		return
 	}
-	//if task.DestinationPath != destinationPath {
-	//	logrus.Errorf("destination path not equal")
-	//	destinationPath = task.DestinationPath
-	//}
 	destinationPath := task.DestinationPath
 	logrus.Infof("upload to :%v", destinationPath)
 	// todo: 文件较小时，不落盘，直接内存上传
@@ -404,31 +408,6 @@ func (router *Router) GetFile(c *gin.Context) {
 		fmt.Fprintln(c.Writer, "500 ERROR")
 	}
 	fmt.Fprintln(c.Writer, url)
-}
-
-func (router *Router) SimpleSync(c *gin.Context) {
-	srcPath := c.Param("srcpath")
-	dstPath := c.Param("dstpath")
-	sid := c.Request.FormValue("sid")
-	router.processor.CreateTask(model.SYNC_SIMPLE, sid, srcPath, dstPath)
-	fmt.Println("task simple sync created success")
-}
-
-func NewTestRouter(processor TaskProcessor) *Router {
-	router := NewRouter(processor)
-	router.GET("/test/setcookie", testSetCookie)
-	return router
-}
-
-func testSetCookie(c *gin.Context) {
-	expiration := time.Now().AddDate(1, 0, 0)
-	cookie := http.Cookie{
-		Name:    "sid",
-		Value:   "tttteeeesssstttt",
-		Expires: expiration,
-	}
-	http.SetCookie(c.Writer, &cookie)
-	fmt.Fprint(c.Writer, "Cookie Already Set")
 }
 
 func RequestTask2Task(reqTask *RequestTask, taskType model.TaskType, state model.TaskState) *model.Task {

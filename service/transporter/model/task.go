@@ -11,17 +11,13 @@ type TaskType string
 type TaskState string
 
 const (
-	USER_UPLOAD_SIMPLE  TaskType = "USER_UPLOAD_SIMPLE"
-	USER_UPLOAD_ERASURE TaskType = "USER_UPLOAD_ERASURE"
-	SYNC_SIMPLE         TaskType = "SYNC_SIMPLE"
-	SYNC_ERASURE        TaskType = "SYNC_ERASURE"
-	DOWNLOAD            TaskType = "DOWNLOAD"
-	DOWNLOAD_REPLICA    TaskType = "DOWNLOAD_REPLICA"
-	UPLOAD              TaskType = "Upload"
-	INDEX               TaskType = "Index"
-	SYNC                TaskType = "Sync"
-	DELETE              TaskType = "Delete"
-	MIGRATE             TaskType = "Migrate"
+	DOWNLOAD         TaskType = "DOWNLOAD"
+	DOWNLOAD_REPLICA TaskType = "DOWNLOAD_REPLICA"
+	UPLOAD           TaskType = "Upload"
+	INDEX            TaskType = "Index"
+	SYNC             TaskType = "Sync"
+	DELETE           TaskType = "Delete"
+	MIGRATE          TaskType = "Migrate"
 )
 
 const (

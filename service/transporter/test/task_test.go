@@ -28,7 +28,7 @@ func TestTask(t *testing.T) {
 			io.WriteString(f, fileName)
 		}
 		processor.CreateTask(
-			model.USER_UPLOAD_SIMPLE,
+			model.UPLOAD,
 			"1",
 			filePath,
 			fileName,
