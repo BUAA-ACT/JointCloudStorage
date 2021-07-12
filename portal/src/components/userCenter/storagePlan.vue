@@ -45,6 +45,9 @@
           </el-col>
         </el-row>
       </div>
+      <div v-else>
+        <plan-detail />
+      </div>
     </div>
     <location-viewer
       v-if="plansLoaded && storagePlanIndex !== 2"
@@ -63,10 +66,12 @@ import Plan from "@/api/plan";
 import Clouds from "@/api/clouds";
 import locationViewer from "@/components/viewer/locationViewer.vue";
 import CustomizeStoragePlan from "@/components/userCenter/customizeStoragePlan.vue";
+import PlanDetail from "@/components/userCenter/planDetail.vue";
 
 export default {
   name: "storagePlan",
   components: {
+    PlanDetail,
     CustomizeStoragePlan,
     locationViewer
   },
@@ -97,7 +102,7 @@ export default {
         }
       },
       // { name: "China", value: [104.195397, 35.86166, 550] }
-      inactiveClouds: {},
+      inactiveClouds: [],
       formattedClouds: [],
       plansLoaded: false,
       submitLoading: false,

@@ -16,7 +16,7 @@ export default new Vuex.Store({
     nickname: null,
     status: null,
     preference: { AllowDelay: false, Availability: 0, Choice: 0, StoragePrice: 0, TrafficPrice: 0, Vendor: 0 },
-    storagePlan: { StorageMode: "Replica", N: 0, K: 0 },
+    storagePlan: { StorageMode: "Replica", N: 0, K: 0, Clouds: [], StoragePrice: 0, TrafficPrice: 0, Availability: 0 },
     dataStats: {
       Volume: 0
     },
