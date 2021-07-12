@@ -3,15 +3,21 @@ package main
 import (
 	"act.buaa.edu.cn/jcspan/transporter/controller"
 	"act.buaa.edu.cn/jcspan/transporter/model"
+	"act.buaa.edu.cn/jcspan/transporter/storageInterface"
 	"act.buaa.edu.cn/jcspan/transporter/util"
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"golang.org/x/sync/errgroup"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
+)
+
+var (
+	g errgroup.Group
 )
 
 func main() {
@@ -44,20 +50,30 @@ func StartServe() {
 				logrus.Errorf("Read config file fail:%v", err)
 				return err
 			}
-			router, _ := initRouterAndProcessor()
-			logrus.Infof("Transporter Started v%v at: %v:%v", util.GetVersionStr(), util.Config.Host, util.Config.Port)
-			logrus.Info(http.ListenAndServe(":"+strconv.Itoa(util.Config.Port), router))
+			router, _, jsi := initRouterAndProcessor()
+			g.Go(func() error {
+				logrus.Infof("Transporter Started v%v at: %v:%v", util.GetVersionStr(), util.Config.Host, util.Config.Port)
+				return http.ListenAndServe(":"+strconv.Itoa(util.Config.Port), router)
+			})
+
+			g.Go(func() error {
+				logrus.Infof("JSI Started v%v at: %v:%v", util.GetVersionStr(), util.Config.Host, util.Config.JSIPort)
+				return http.ListenAndServe(":"+strconv.Itoa(util.Config.JSIPort), jsi)
+			})
+
+			if err := g.Wait(); err != nil {
+				return err
+			}
 			return nil
 		},
 	}
-
 	err := app.Run(os.Args)
 	if err != nil {
 		logrus.Fatal(err)
 	}
 }
 
-func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
+func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor, *storageInterface.JointStorageInterface) {
 	var storage model.TaskStorage
 	var clientDatabase model.CloudDatabase
 	var fileDatabase model.FileDatabase
@@ -114,10 +130,17 @@ func initRouterAndProcessor() (*controller.Router, *controller.TaskProcessor) {
 	// 初始化 tempFile
 	tfs, _ := util.NewTempFileStorage(util.Config.DownloadFileTempPath, time.Hour*8)
 	processor.TempFileStorage = tfs
+	// 初始化 AccessKeyDB
+	dao, _ := model.InitDao()
+	accessKeyDB := model.AccessKeyDB{Dao: dao}
+	processor.AccessKeyDatabase = &accessKeyDB
+
 	// 初始化路由
 	router := controller.NewRouter(processor)
+	// 初始化 JSI
+	jsi := storageInterface.NewInterface(&processor)
 	// 启动 processor
 	processor.StartProcessTasks(context.Background())
 
-	return router, &processor
+	return router, &processor, jsi
 }

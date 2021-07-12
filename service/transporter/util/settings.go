@@ -27,6 +27,7 @@ var Config = Configuration{
 	UploadFileTempPath:   "./tmp/upload/",
 	DownloadFileTempPath: "./tmp/download/",
 	DefaultStorageClient: AwsS3Client,
+	JSIPort:              8085,
 	Port:                 8083,
 	Host:                 "0.0.0.0",
 	ZookeeperHost:        "192.168.105.13",
@@ -52,6 +53,7 @@ type Configuration struct {
 	UploadFileTempPath   string
 	DownloadFileTempPath string
 	DefaultStorageClient string
+	JSIPort              int
 	Port                 int
 	Host                 string
 	ZookeeperHost        string
