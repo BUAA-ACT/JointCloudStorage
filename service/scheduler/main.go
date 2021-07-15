@@ -18,6 +18,7 @@ const (
 	CollectionUser  = "User"
 	CollectionFile  = "File"
 	MigrationAdvice = "MigrationAdvice"
+	CollectionAk	= "Accesskey"
 )
 
 var (
@@ -51,7 +52,7 @@ func Init() {
 
 	// Init DAO instance
 	var err error
-	db, err = dao.NewDao(*flagMongo, *flagEnv, CollectionCloud, CollectionUser, CollectionFile, MigrationAdvice)
+	db, err = dao.NewDao(*flagMongo, *flagEnv, CollectionCloud, CollectionUser, CollectionFile, MigrationAdvice,CollectionAk)
 	if err != nil {
 		panic(err)
 	}

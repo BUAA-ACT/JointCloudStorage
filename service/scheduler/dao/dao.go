@@ -24,6 +24,7 @@ type Dao struct {
 	fileCollection  string
 	userCollection  string
 	migrationAdvice string
+	keyCollection string
 }
 
 type Cloud struct {
@@ -108,14 +109,24 @@ type MigrationAdvice struct {
 	Cost           float64     `bson:"cost"`
 }
 
+type AccessKey struct {
+	UserID     string    `json:"UserID" bson:"user_id"`
+	AccessKey  string    `json:"AccessKey" bson:"access_key"`
+	SecretKey  string    `json:"SecretKey" bson:"secret_key"`
+	Comment    string    `json:"Comment" bson:"comment"`
+	CreateTime time.Time `json:"CreateTime" bson:"create_time"`
+	Available  bool      `json:"Available" bson:"available"`
+}
+
 // NewDao constructs a data access object (Dao).
-func NewDao(mongoURI, database, cloudCollection, userCollection, fileCollection, migrationAdvice string) (*Dao, error) {
+func NewDao(mongoURI, database, cloudCollection, userCollection, fileCollection, migrationAdvice,keyCollection string) (*Dao, error) {
 	dao := &Dao{
 		database:        database,
 		cloudCollection: cloudCollection,
 		userCollection:  userCollection,
 		fileCollection:  fileCollection,
 		migrationAdvice: migrationAdvice,
+		keyCollection: keyCollection,
 	}
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(mongoURI))
@@ -437,6 +448,47 @@ func (d *Dao) DeleteUser(uid string) error {
 		return err
 	}
 
+	return nil
+}
+
+/*******************************************************
+* 用于accesskey和secretKey的存储与删除
+ ********************************************************/
+
+//更新,若不存在则将插入
+func (dao *Dao)KeyUpsert(ak AccessKey)error{
+	col:=dao.client.Database(dao.database).Collection(dao.keyCollection)
+
+	filter:=bson.M{
+		"access_key":ak.AccessKey,
+	}
+	operation:=bson.M{
+		"$setOnInsert":ak,
+	}
+
+	_,err:=col.UpdateOne(context.TODO(),filter,operation)
+	if err!=nil {
+		return err
+	}
+
+	return nil
+}
+
+//删除key
+func (dao *Dao)DeleteKey(ak AccessKey)error{
+	col:=dao.client.Database(dao.database).Collection(dao.keyCollection)
+
+	filter:=bson.M{
+		"access_key":ak.AccessKey,
+		"secret_key":ak.SecretKey,
+		"user_id":ak.UserID,
+	}
+
+	_,err:=col.DeleteOne(context.TODO(),filter)
+
+	if err!=nil{
+		return err
+	}
 	return nil
 }
 
