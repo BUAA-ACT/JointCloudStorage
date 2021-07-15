@@ -26,7 +26,7 @@
         </el-transfer>
       </el-form-item>
       <el-form-item label="请选择存储云" size="large" v-if="curStep === 2 && curPlan.StorageMode === 'EC'">
-        <el-transfer v-model="ECKClouds" :data="formattedECClouds" :titles="['作为数据分块的云', '作为校验分块的云']"> </el-transfer>
+        <el-transfer v-model="ECNKClouds" :data="formattedECClouds" :titles="['作为数据分块的云', '作为校验分块的云']"> </el-transfer>
       </el-form-item>
     </el-form>
 
@@ -50,7 +50,7 @@ export default {
       allClouds: [],
       formattedClouds: [],
       ReplicaClouds: [],
-      ECKClouds: []
+      ECNKClouds: []
     };
   },
   methods: {
@@ -80,10 +80,10 @@ export default {
           Plan.changeStoragePlan({
             ...this.curPlan,
             N: this.ReplicaClouds.length,
-            K: this.ECKClouds.length,
-            Clouds: this.ReplicaClouds.filter(value => !this.ECKClouds.includes(value))
+            K: this.ReplicaClouds.length - this.ECNKClouds.length,
+            Clouds: this.ReplicaClouds.filter(value => !this.ECNKClouds.includes(value))
               .map(val => this.allClouds[val])
-              .concat(this.ECKClouds.map(value => this.allClouds[value]))
+              .concat(this.ECNKClouds.map(value => this.allClouds[value]))
           })
             .then(resp => {
               if (resp) {
@@ -106,7 +106,7 @@ export default {
             this.ReplicaClouds = [];
             break;
           case 2:
-            this.ECKClouds = [];
+            this.ECNKClouds = [];
             break;
           default:
             break;
@@ -188,7 +188,7 @@ export default {
             return true;
           }
           if (this.curPlan.StorageMode === "EC") {
-            return this.ECKClouds.length > 0 && this.ECKClouds.length <= this.ReplicaClouds.length / 2;
+            return this.ECNKClouds.length > 0 && this.ECNKClouds.length <= this.ReplicaClouds.length / 2;
           }
           return false;
         default:
@@ -203,7 +203,7 @@ export default {
     curStep(newVal) {
       if (newVal === 0) {
         this.ReplicaClouds = [];
-        this.ECKClouds = [];
+        this.ECNKClouds = [];
       }
     }
   }
