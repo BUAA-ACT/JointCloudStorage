@@ -8,10 +8,12 @@
       <el-form-item label="存储价格" class="summary">{{ storagePrice }}元/GB/月</el-form-item>
       <el-form-item label="流量价格" class="summary">{{ trafficPrice }}元/GB</el-form-item>
       <el-form-item label="可用性" class="summary">{{ availability * 100 }}%</el-form-item>
-      <el-divider />
+      <!--      <el-divider direction="vertical" />-->
       <div class="detail">
         <el-form-item v-if="replicaClouds" label="正在使用以下云节点存储多副本">
-          <el-card v-for="cloud in replicaClouds" :key="cloud.CloudID" class="inner-card" shadow="hover">{{ cloud.CloudName }}</el-card>
+          <td v-for="cloud in replicaClouds" :key="cloud.CloudID">
+            <el-card class="inner-card" shadow="hover">{{ cloud.CloudName }}</el-card>
+          </td>
         </el-form-item>
         <el-form-item v-if="ECKClouds" label="纠删码正在使用以下云节点存储数据分块" class="detail-item">
           <td v-for="cloud in ECKClouds" :key="cloud.CloudID">
@@ -84,11 +86,13 @@ export default {
 
 <style scoped lang="scss">
 .out-card {
-  width: 800px;
+  width: 1200px;
+  margin-bottom: 10px;
   .summary {
     width: 150px;
   }
   .detail {
+    display: inline-block;
     .splitter {
       padding-bottom: 100%; //内边距为父div高度，导致子div高度向下延伸
       margin-bottom: -100%; //外边距为父div高度，导致下方div向上挤压子div，但是由于父div的存在挡住了挤压，子div得以填充父div
@@ -99,6 +103,9 @@ export default {
     .inner-card {
       width: fit-content;
       display: flex;
+      /deep/ .el-card__body {
+        padding: 10px;
+      }
     }
   }
 }
