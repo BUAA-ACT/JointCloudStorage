@@ -25,11 +25,6 @@ var (
 	localCid string
 )
 
-func InitKeySyn(dao *dao.Dao,cid string){
-	keyDao=dao
-	localCid=cid
-}
-
 func PostKeyUpsert(c *gin.Context){
 	requestId:=uuid.New().String()
 
@@ -91,9 +86,9 @@ func keySyn(ak dao.AccessKey,caller string,synType string)error{
 				var req *http.Request
 				switch synType {
 				case SynTypeUpsert:
-					req,err=http.NewRequest("POST","http://"+cloud.Address+"key_upsert",body)
+					req,err=http.NewRequest("POST","http://"+cloud.Address+"/key_upsert",body)
 				case SynTypeDelete:
-					req,err=http.NewRequest("POST","http://"+cloud.Address+"key_delete",body)
+					req,err=http.NewRequest("POST","http://"+cloud.Address+"/key_delete",body)
 				}
 
 				if err!=nil{

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"shaoliyin.me/jcspan/keySyn"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -18,7 +19,7 @@ const (
 	CollectionUser  = "User"
 	CollectionFile  = "File"
 	MigrationAdvice = "MigrationAdvice"
-	CollectionAk	= "Accesskey"
+	CollectionAk	= "AccessKey"
 )
 
 var (
@@ -92,6 +93,7 @@ func main() {
 	r := gin.Default()
 	NewRouter(r)
 	newcloud.Router(r,*flagMongo,*flagEnv,*flagCloudID,"production")
+	keySyn.KeySynInit(*flagCloudID,db,r)
 	go reSchedule(*flagRescheduleInterval)
 	go heartbeat(*flagHeartbeatInterval)
 

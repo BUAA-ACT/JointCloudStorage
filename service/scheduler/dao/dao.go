@@ -110,12 +110,12 @@ type MigrationAdvice struct {
 }
 
 type AccessKey struct {
-	UserID     string    `json:"UserID" bson:"user_id"`
-	AccessKey  string    `json:"AccessKey" bson:"access_key"`
-	SecretKey  string    `json:"SecretKey" bson:"secret_key"`
-	Comment    string    `json:"Comment" bson:"comment"`
-	CreateTime time.Time `json:"CreateTime" bson:"create_time"`
-	Available  bool      `json:"Available" bson:"available"`
+	UserID     string    `json:"user_id,omitempty" bson:"user_id"`
+	AccessKey  string    `json:"access_key,omitempty" bson:"access_key"`
+	SecretKey  string    `json:"secret_key,omitempty" bson:"secret_key"`
+	Comment    string    `json:"comment,omitempty" bson:"comment"`
+	CreateTime time.Time `json:"create_time,omitempty" bson:"create_time"`
+	Available  bool      `json:"available,omitempty" bson:"available"`
 }
 
 // NewDao constructs a data access object (Dao).
@@ -462,11 +462,22 @@ func (dao *Dao)KeyUpsert(ak AccessKey)error{
 	filter:=bson.M{
 		"access_key":ak.AccessKey,
 	}
+	//operation:=bson.M{
+	//	"$setOnInsert":bson.M{
+	//		"user_id":ak.UserID,
+	//		"access_key":ak.AccessKey,
+	//		"secret_key":ak.SecretKey,
+	//		"available":ak.Available,
+	//		"create_time":ak.CreateTime,
+	//	},
+	//}
 	operation:=bson.M{
 		"$setOnInsert":ak,
 	}
-
-	_,err:=col.UpdateOne(context.TODO(),filter,operation)
+	option:=options.UpdateOptions{
+		Upsert: bool2pointer(true),
+	}
+	_,err:=col.UpdateOne(context.TODO(),filter,operation,&option)
 	if err!=nil {
 		return err
 	}
