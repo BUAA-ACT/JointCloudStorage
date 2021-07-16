@@ -18,6 +18,7 @@ const (
 	CollectionUser  = "User"
 	CollectionFile  = "File"
 	MigrationAdvice = "MigrationAdvice"
+	CollectionAk	= "Accesskey"
 )
 
 var (
@@ -26,8 +27,8 @@ var (
 	flagEnv                = flag.String("env", "test", "dev|test|prod")
 	flagCloudID            = flag.String("cid", "aliyun-beijing", "cloud id")
 	flagAESKey             = flag.String("aes", "1234567890123456", "aes key")
-	flagRescheduleInterval = flag.Duration("reschedule", time.Hour*24*30, "reschedule interval")
-	flagHeartbeatInterval  = flag.Duration("heartbeat", time.Second*10, "heartbeat interval")
+	flagRescheduleInterval = flag.Duration("reschedule", time.Minute*1, "reschedule interval")
+	flagHeartbeatInterval  = flag.Duration("heartbeat", time.Second*30, "heartbeat interval")
 
 	db      *dao.Dao
 	addrMap = make(map[string]string)
@@ -51,7 +52,7 @@ func Init() {
 
 	// Init DAO instance
 	var err error
-	db, err = dao.NewDao(*flagMongo, *flagEnv, CollectionCloud, CollectionUser, CollectionFile, MigrationAdvice)
+	db, err = dao.NewDao(*flagMongo, *flagEnv, CollectionCloud, CollectionUser, CollectionFile, MigrationAdvice,CollectionAk)
 	if err != nil {
 		panic(err)
 	}
