@@ -51,7 +51,10 @@ func PostKeyUpsert(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, nil)
+	c.JSON(http.StatusOK, gin.H{
+		"Code":      http.StatusOK,
+		"RequestID": requestId,
+	})
 }
 
 func keySyn(ak dao.AccessKey, caller string, synType string) error {
@@ -139,5 +142,8 @@ func PostKeyDelete(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, nil)
+	c.JSON(http.StatusOK, gin.H{
+		"Code":      http.StatusOK,
+		"RequestID": requestId,
+	})
 }

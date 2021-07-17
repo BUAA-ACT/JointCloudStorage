@@ -242,10 +242,10 @@ func PostStoragePlan(c *gin.Context) {
 
 	if param.CloudID == *flagCloudID {
 		// 来自本云httpserver的请求
-		plan := param.StoragePlan
-		plan.StoragePrice = calStoragePrice(plan)
-		plan.Availability = calStoragePrice(plan)
-		plan.TrafficPrice = calTrafficPrice(plan)
+		plan := &param.StoragePlan
+		plan.StoragePrice = calStoragePrice(*plan)
+		plan.Availability = calStoragePrice(*plan)
+		plan.TrafficPrice = calTrafficPrice(*plan)
 		var users []dao.AccessCredential
 		ch := make(chan *dao.AccessCredential)
 
@@ -288,6 +288,19 @@ func PostStoragePlan(c *gin.Context) {
 				"Code":      codeInternalError,
 				"Msg":       errorMsg[codeInternalError],
 			})
+		}
+
+		// 更正成本计算
+		var user dao.User
+		user, err = db.GetUser(param.UserID)
+		if err != nil {
+			logError(err, requestID, "更新存储方案时获取用户信息失败")
+		} else {
+			user.StoragePlan = param.StoragePlan
+			err = db.InsertUser(user)
+			if err != nil {
+				logError(err, requestID, "更新用户存储方案失败")
+			}
 		}
 
 		c.JSON(http.StatusOK, gin.H{

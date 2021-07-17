@@ -536,6 +536,7 @@ func UserAddKey(con *gin.Context) {
 		SecretKey: secretKey,
 		Comment:   comment,
 		Available: true,
+		CreateTime: time.Now(),
 	}
 	postKeyResponse, postKeySuccess := scheduler.PostKeyToScheduler(&key)
 	if !postKeySuccess {
