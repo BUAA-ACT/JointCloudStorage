@@ -82,6 +82,16 @@ func sendPostMetadata(param PostMetadataParam, cloud string) error {
 }
 
 func genAddress(cloudID, path string) string {
+	if _, ok := addrMap[cloudID]; !ok { // 内存 map 中没有该云节点
+		// Init address map
+		clouds, err := db.GetAllClouds()
+		if err != nil {
+			panic(err)
+		}
+		for _, c := range clouds {
+			addrMap[c.CloudID] = c.Address
+		}
+	}
 	addr := addrMap[cloudID]
 	if !strings.Contains(addr, ":") {
 		addr = addr + ":8082"

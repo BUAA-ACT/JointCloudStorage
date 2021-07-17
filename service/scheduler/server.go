@@ -623,9 +623,9 @@ func PostUpdateClouds(c *gin.Context) {
 	}
 
 	//向其他云同步
-	if c.GetHeader("Caller")=="http-server"{
-		clouds,err:=db.GetAllClouds()
-		if err!=nil{
+	if c.GetHeader("Caller") == "http-server" {
+		clouds, err := db.GetAllClouds()
+		if err != nil {
 			logError(err, requestID, "can't get other clouds")
 			c.JSON(http.StatusBadRequest, gin.H{
 				"RequestID": requestID,
@@ -635,8 +635,8 @@ func PostUpdateClouds(c *gin.Context) {
 			return
 		}
 
-		b,err:=json.Marshal(cloud)
-		if err!=nil{
+		b, err := json.Marshal(cloud)
+		if err != nil {
 			logError(err, requestID, "can't Marshal the cloud")
 			c.JSON(http.StatusBadRequest, gin.H{
 				"RequestID": requestID,
@@ -646,12 +646,13 @@ func PostUpdateClouds(c *gin.Context) {
 			return
 		}
 
-		for _,otherCLoud:= range clouds{
-			if otherCLoud.CloudID!=*flagCloudID{
-				body:=bytes.NewBuffer(b)
-				resp,err:=http.Post("http://"+otherCLoud.Address+"/update_clouds","application/json",body)
-				if err!=nil||resp.StatusCode!=200{
-					logError(err, requestID, "can't syn to other clouds")
+		for _, otherCLoud := range clouds {
+			if otherCLoud.CloudID != *flagCloudID {
+				body := bytes.NewBuffer(b)
+				addr := genAddress(otherCLoud.CloudID, "/update_clouds")
+				resp, err := http.Post(addr, "application/json", body)
+				if err != nil || resp.StatusCode != 200 {
+					logError(err, requestID, "can't syn to cloud: ", otherCLoud.CloudID)
 					c.JSON(http.StatusBadRequest, gin.H{
 						"RequestID": requestID,
 						"Code":      codeInternalError,
