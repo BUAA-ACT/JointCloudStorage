@@ -5,10 +5,10 @@ import (
 	"shaoliyin.me/jcspan/dao"
 )
 
-func KeySynInit(cid string,dao *dao.Dao,r *gin.Engine){
-	keyDao=dao
-	localCid=cid
+func KeySynInit(cid string, r *gin.Engine) {
+	keyDao = dao.GetDatabaseInstance()
+	localCid = cid
 
-	r.POST("/key_upsert",PostKeyUpsert)
-	r.POST("/key_delete",PostKeyDelete)
+	r.POST("/key_upsert", PostKeyUpsert)
+	r.POST("/key_delete", PostKeyDelete)
 }

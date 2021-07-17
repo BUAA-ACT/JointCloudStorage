@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"shaoliyin.me/jcspan/config"
 	"shaoliyin.me/jcspan/keySyn"
 	"time"
 
@@ -14,12 +15,6 @@ import (
 
 const (
 	Version = "v0.2"
-
-	CollectionCloud = "Cloud"
-	CollectionUser  = "User"
-	CollectionFile  = "File"
-	MigrationAdvice = "MigrationAdvice"
-	CollectionAk	= "AccessKey"
 )
 
 var (
@@ -31,14 +26,14 @@ var (
 	flagRescheduleInterval = flag.Duration("reschedule", time.Minute*1, "reschedule interval")
 	flagHeartbeatInterval  = flag.Duration("heartbeat", time.Second*30, "heartbeat interval")
 
-	db      *dao.Dao
+	db      dao.Database
 	addrMap = make(map[string]string)
 )
 
-func FlagPrase(env string) {
+func FlagParse(env string) {
 	if env == "debug" {
-		flagMongo=flag.String("mongo", "mongodb://192.168.105.8:20100", "mongodb address")
-		flagEnv=flag.String("env","dev","Database name used for Clouds storage.")
+		flagMongo = flag.String("mongo", "mongodb://192.168.105.8:20100", "mongodb address")
+		flagEnv = flag.String("env", "dev", "Database name used for Clouds storage.")
 	}
 	flag.Parse()
 }
@@ -51,9 +46,12 @@ func Init() {
 		TimestampFormat: time.RFC3339,
 	})
 
+	// 初始化全局设置
+	config.SetGlobalConfig(*flagMongo, *flagAddress, *flagEnv, *flagCloudID, *flagAESKey, *flagRescheduleInterval, *flagHeartbeatInterval)
+
 	// Init DAO instance
 	var err error
-	db, err = dao.NewDao(*flagMongo, *flagEnv, CollectionCloud, CollectionUser, CollectionFile, MigrationAdvice,CollectionAk)
+	db = dao.GetDatabaseInstance()
 	if err != nil {
 		panic(err)
 	}
@@ -86,14 +84,14 @@ func NewRouter(r *gin.Engine) {
 
 func main() {
 	fmt.Println("this is main func")
-	FlagPrase("")
+	FlagParse("")
 	Init()
 	log.Infoln("Starting scheduler", Version)
 
 	r := gin.Default()
 	NewRouter(r)
-	newcloud.Router(r,*flagMongo,*flagEnv,*flagCloudID,"production")
-	keySyn.KeySynInit(*flagCloudID,db,r)
+	newcloud.Router(r, *flagMongo, *flagEnv, *flagCloudID, "production")
+	keySyn.KeySynInit(*flagCloudID, r)
 	go reSchedule(*flagRescheduleInterval)
 	go heartbeat(*flagHeartbeatInterval)
 

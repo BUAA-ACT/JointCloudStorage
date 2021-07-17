@@ -6,6 +6,7 @@ import (
 	"errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"shaoliyin.me/jcspan/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -23,7 +24,6 @@ const (
 	codeBadRequest      = 400
 	codeUnauthorized    = 401
 	codeInternalError   = 500
-
 )
 
 var (
@@ -38,10 +38,9 @@ var (
 	localMongoTempCloud   *dao.Dao
 	localMongoVoteRequest *dao.Dao
 
-	env string
+	env          string
 	tempNotFound error
 )
-
 
 /*
  * NewCloud 的初始化函数，用于初始化mongodb的链接和本地cid
@@ -51,23 +50,23 @@ var (
  */
 func NewCloudInit(mongo, databasename, cid, envMod string) error {
 	var err error
-	localMongo, err = dao.NewDao(mongo, databasename, CollectionCloud, CollectionUser, CollectionFile, MigrationAdvice,"")
+	localMongo, err = dao.NewDao(mongo, databasename, CollectionCloud, CollectionUser, CollectionFile, MigrationAdvice, "")
 	if err != nil {
 		return err
 	}
 
-	localMongoTempCloud, err = dao.NewDao(mongo, databasename, CollectionTempCloud, CollectionUser, CollectionFile, MigrationAdvice,"")
+	localMongoTempCloud, err = dao.NewDao(mongo, databasename, CollectionTempCloud, CollectionUser, CollectionFile, MigrationAdvice, "")
 	if err != nil {
 		return err
 	}
 
-	localMongoVoteRequest, err = dao.NewDao(mongo, databasename, CollectionVoteCloud, CollectionUser, CollectionFile, MigrationAdvice,"")
+	localMongoVoteRequest, err = dao.NewDao(mongo, databasename, CollectionVoteCloud, CollectionUser, CollectionFile, MigrationAdvice, "")
 	if err != nil {
 		return err
 	}
 
 	localid = cid
-	tempNotFound=errors.New("TempCloud not Found.")
+	tempNotFound = errors.New("TempCloud not Found.")
 	return nil
 }
 
@@ -153,7 +152,8 @@ func PostNewCloud(c *gin.Context) {
 		for _, cloud := range clouds {
 			if cloud.CloudID != localid {
 				body := bytes.NewBuffer(b)
-				resp, err := http.Post("http://"+cloud.Address+"/new_cloud_vote", "application/json", body)
+				addr := utils.GenAddress(cloud.CloudID, "/new_cloud_vote")
+				resp, err := http.Post(addr, "application/json", body)
 				if err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{
 						"RequestID": requestID,
@@ -294,15 +294,15 @@ func PostCloudVote(c *gin.Context) {
 	}
 	if count > 0 {
 		//若是主节点，则直接加一,并检查是否查过半数
-		err=voteCheck(id,1)
-		if err==tempNotFound{
-			c.JSON(510,nil)
-		}else if err!=nil{
+		err = voteCheck(id, 1)
+		if err == tempNotFound {
+			c.JSON(510, nil)
+		} else if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"RequestID": requestID,
 				"Code":      codeInternalError,
 				"Msg":       errorMsg[codeInternalError],
-				"Test":		"voteCheck fail:"+err.Error(),
+				"Test":      "voteCheck fail:" + err.Error(),
 			})
 			return
 		}
@@ -337,7 +337,8 @@ func PostCloudVote(c *gin.Context) {
 		//发出投票请求
 		body := bytes.NewBuffer(b)
 		if env != "localDebug" {
-			resp, err := http.Post("http://"+voteCloud.Address+"/master_cloud_vote", "application/json", body)
+			addr := utils.GenAddress(voteCloud.Id, "/master_cloud_vote")
+			resp, err := http.Post(addr, "application/json", body)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"RequestID": requestID,
@@ -348,9 +349,9 @@ func PostCloudVote(c *gin.Context) {
 				return
 			}
 			//处理返回结果
-			if resp.StatusCode==510{
-				c.JSON(510,nil)
-			}else if resp.StatusCode != 200 {
+			if resp.StatusCode == 510 {
+				c.JSON(510, nil)
+			} else if resp.StatusCode != 200 {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"RequestID": requestID,
 					"Code":      codeBadRequest,
@@ -360,7 +361,6 @@ func PostCloudVote(c *gin.Context) {
 				return
 			}
 		}
-
 
 	}
 	//删除voteCloud
@@ -419,15 +419,15 @@ func PostMasterCloudVote(c *gin.Context) {
 	vote = int(req["vote"].(float64))
 
 	//处理投票
-	err=voteCheck(id,vote)
-	if err==tempNotFound{
-		c.JSON(510,nil)
-	}else if err!=nil{
+	err = voteCheck(id, vote)
+	if err == tempNotFound {
+		c.JSON(510, nil)
+	} else if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
 			"Code":      codeBadRequest,
 			"Msg":       errorMsg[codeBadRequest],
-			"Test":      "voteCheck fail:"+err.Error(),
+			"Test":      "voteCheck fail:" + err.Error(),
 		})
 		return
 	}
@@ -440,7 +440,7 @@ func PostMasterCloudVote(c *gin.Context) {
 }
 
 //获取投票新云的id和投票数，对新云进行投票并检查是否超过半数
-func voteCheck(id string,vote int)error{
+func voteCheck(id string, vote int) error {
 	modifyNum, err := localMongoTempCloud.AddVoteNum(vote, id)
 	if err != nil {
 		log.Error("投票记录入库失败， package:NewCloud, func:voteCheck, message:", err)
@@ -494,7 +494,8 @@ func voteCheck(id string,vote int)error{
 		for _, cloud := range clouds {
 			if cloud.CloudID != localid && env != "localDebug" {
 				body = bytes.NewBuffer(b)
-				_, err := http.Post("http://"+cloud.Address+"/cloud_syn", "application/json", body)
+				addr := utils.GenAddress(cloud.CloudID, "/cloud_syn")
+				_, err := http.Post(addr, "application/json", body)
 				if err != nil {
 					log.Error("发送新云信息到其他节点失败，package:NewCloud, func:voteCheck, message:", err)
 					return err
@@ -511,9 +512,10 @@ func voteCheck(id string,vote int)error{
 		}
 
 		body = bytes.NewBuffer(b)
-		_, err = http.Post("http://"+voteCloud.Cloud.Address+"/cloud_syn", "application/json", body)
+		addr := utils.GenAddress(voteCloud.Cloud.CloudID, "/cloud_syn")
+		_, err = http.Post(addr, "application/json", body)
 		if err != nil {
-			log.Error("向新云同步所有云节点信息失败，package:NewCloud, func:PostMasterCloudVote, message:", err, " Send to new cloud error! ","voteNum:", voteCloud, "totalNum:", totalNum)
+			log.Error("向新云同步所有云节点信息失败，package:NewCloud, func:PostMasterCloudVote, message:", err, " Send to new cloud error! ", "voteNum:", voteCloud, "totalNum:", totalNum)
 			return err
 		}
 

@@ -14,10 +14,7 @@ const (
 func TestDao_InsertMigrationAdvice(t *testing.T) {
 	// Init DAO instance
 	var err error
-	db, err := NewDao("mongodb://192.168.105.13:27017", "hohhot", CollectionCloud, CollectionUser, CollectionFile, MigrationAdvice2)
-	if err != nil {
-		panic(err)
-	}
+	db := GetDatabaseInstance()
 	m := MigrationAdvice{
 		UserId: "zhangjh",
 		StoragePlanOld: StoragePlan{
