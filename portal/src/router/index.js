@@ -13,6 +13,11 @@ const router = [
     component: Index
   },
   {
+    path: "/401",
+    name: "Page401",
+    component: () => import("../views/error-page/401.vue")
+  },
+  {
     path: "/404",
     name: "Page404",
     // route level code-splitting
@@ -394,9 +399,16 @@ vueRouter.beforeEach((to, from, next) => {
 
 vueRouter.beforeEach(async (to, from, next) => {
   const hasToken = store.getters.token;
+  const { isAdmin } = store.getters;
   if (hasToken) {
     if (to.path === "/login") {
       next({ path: to.query.redirect || "/" });
+    } else if (to.path.includes("admin")) {
+      if (isAdmin) {
+        next();
+      } else {
+        next({ path: "/401" });
+      }
     } else {
       next();
     }
