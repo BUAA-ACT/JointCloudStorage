@@ -462,17 +462,9 @@ func (dao *Dao) KeyUpsert(ak AccessKey) error {
 	filter := bson.M{
 		"access_key": ak.AccessKey,
 	}
-	//operation:=bson.M{
-	//	"$setOnInsert":bson.M{
-	//		"user_id":ak.UserID,
-	//		"access_key":ak.AccessKey,
-	//		"secret_key":ak.SecretKey,
-	//		"available":ak.Available,
-	//		"create_time":ak.CreateTime,
-	//	},
-	//}
+
 	operation := bson.M{
-		"$setOnInsert": ak,
+		"$set": ak,
 	}
 	option := options.UpdateOptions{
 		Upsert: bool2pointer(true),
@@ -491,8 +483,6 @@ func (dao *Dao) DeleteKey(ak AccessKey) error {
 
 	filter := bson.M{
 		"access_key": ak.AccessKey,
-		"secret_key": ak.SecretKey,
-		"user_id":    ak.UserID,
 	}
 
 	_, err := col.DeleteOne(context.TODO(), filter)

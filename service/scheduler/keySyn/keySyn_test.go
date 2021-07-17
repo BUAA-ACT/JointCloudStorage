@@ -35,8 +35,8 @@ func TestPostKeyUpsert(t *testing.T) {
 		t.Error("Init test failed! ", err.Error())
 	}
 
-	req1, _ := http.NewRequest("POST", "/key_upsert", strings.NewReader(data1))
-	req2, _ := http.NewRequest("POST", "/key_upsert", strings.NewReader(data2))
+	req1, _ := http.NewRequest("POST", "/add_key", strings.NewReader(data1))
+	req2, _ := http.NewRequest("POST", "/add_key", strings.NewReader(data2))
 	req1.Header.Set(CallerHeaderName, CallerHttpServer)
 	req2.Header.Set(CallerHeaderName, CallerHttpServer)
 
@@ -61,8 +61,8 @@ func TestPostKeyDelete(t *testing.T) {
 		t.Error("Init test failed! ", err.Error())
 	}
 
-	req1, _ := http.NewRequest("POST", "/key_delete", strings.NewReader(data1))
-	req2, _ := http.NewRequest("POST", "/key_delete", strings.NewReader(data2))
+	req1, _ := http.NewRequest("POST", "/delete_key", strings.NewReader(data1))
+	req2, _ := http.NewRequest("POST", "/delete_key", strings.NewReader(data2))
 	req1.Header.Set(CallerHeaderName, CallerHttpServer)
 	req2.Header.Set(CallerHeaderName, CallerHttpServer)
 
