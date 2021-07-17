@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="newPlanAvailable" class="migration-operations">
+    <div v-if="newPlanAvailable && !migrating" class="migration-operations">
       <el-button type="primary" @click="accept" :loading="submitLoading">迁移</el-button><br />
       <!--      <el-button type="primary" @click="cancel" :loading="cancelLoading" :disabled="!plansLoaded">我再想想</el-button><br />-->
       <el-button type="info" @click="cancel" :loading="submitLoading">取消</el-button><br />
@@ -81,8 +81,21 @@ export default {
     },
     async accept() {
       this.submitLoading = true;
-      this.migrating = true;
-      await Plan.acceptAdvice();
+      await Plan.acceptAdvice().then(resp => {
+        if (resp) {
+          this.migrating = true;
+          this.$notify.success({
+            title: "数据迁移已开始！",
+            message: (
+              <span>
+                请耐心等待迁移完成……
+                <br />
+                在此期间，您的数据将暂时不可用。
+              </span>
+            )
+          });
+        }
+      });
       // TODO: 轮询
       this.submitLoading = false;
     },

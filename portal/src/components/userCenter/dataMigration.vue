@@ -4,6 +4,7 @@
     <div class="no-new-plan" v-else>
       <i class="el-icon-info tip-icon"></i><br />
       数据迁移中……
+      <!-- TODO: 迁移进度     -->
     </div>
   </div>
 </template>
@@ -14,9 +15,27 @@ import PlanAdvice from "@/components/userCenter/planAdvice.vue";
 export default {
   name: "dataMigration",
   components: { PlanAdvice },
+  data() {
+    return {
+      intervalId: null
+    };
+  },
   computed: {
     migrating() {
       return this.$store.getters.status === "FORBIDDEN";
+    }
+  },
+  methods: {
+    checkCurStatus() {
+      this.$store.dispatch("getInfo");
+    }
+  },
+  mounted() {
+    this.intervalId = setInterval(this.checkCurStatus, 2000);
+  },
+  beforeDestroy() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
     }
   }
 };
