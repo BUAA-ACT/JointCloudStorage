@@ -51,7 +51,10 @@ func PostKeyUpsert(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, nil)
+	c.JSON(http.StatusOK, gin.H{
+		"Code":      http.StatusOK,
+		"RequestID": requestId,
+	})
 }
 
 func keySyn(ak dao.AccessKey, caller string, synType string) error {
@@ -87,10 +90,10 @@ func keySyn(ak dao.AccessKey, caller string, synType string) error {
 				var req *http.Request
 				switch synType {
 				case SynTypeUpsert:
-					addr := utils.GenAddress(cloud.CloudID, "/key_upsert")
+					addr := utils.GenAddress(cloud.CloudID, "/add_key")
 					req, err = http.NewRequest("POST", addr, body)
 				case SynTypeDelete:
-					addr := utils.GenAddress(cloud.CloudID, "/key_delete")
+					addr := utils.GenAddress(cloud.CloudID, "/delete_key")
 					req, err = http.NewRequest("POST", addr, body)
 				}
 
@@ -139,5 +142,8 @@ func PostKeyDelete(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, nil)
+	c.JSON(http.StatusOK, gin.H{
+		"Code":      http.StatusOK,
+		"RequestID": requestId,
+	})
 }

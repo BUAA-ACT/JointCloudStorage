@@ -24,7 +24,7 @@ type Dao struct {
 	fileCollection  string
 	userCollection  string
 	migrationAdvice string
-	keyCollection string
+	keyCollection   string
 }
 
 type Cloud struct {
@@ -110,23 +110,23 @@ type MigrationAdvice struct {
 }
 
 type AccessKey struct {
-	UserID     string    `json:"user_id,omitempty" bson:"user_id"`
-	AccessKey  string    `json:"access_key,omitempty" bson:"access_key"`
-	SecretKey  string    `json:"secret_key,omitempty" bson:"secret_key"`
-	Comment    string    `json:"comment,omitempty" bson:"comment"`
-	CreateTime time.Time `json:"create_time,omitempty" bson:"create_time"`
-	Available  bool      `json:"available,omitempty" bson:"available"`
+	UserID     string    `json:"UserID,omitempty" bson:"user_id"`
+	AccessKey  string    `json:"AccessKey,omitempty" bson:"access_key"`
+	SecretKey  string    `json:"SecretKey,omitempty" bson:"secret_key"`
+	Comment    string    `json:"Comment,omitempty" bson:"comment"`
+	CreateTime time.Time `json:"CreateTime,omitempty" bson:"create_time"`
+	Available  bool      `json:"Available,omitempty" bson:"available"`
 }
 
 // NewDao constructs a data access object (Dao).
-func NewDao(mongoURI, database, cloudCollection, userCollection, fileCollection, migrationAdvice,keyCollection string) (*Dao, error) {
+func NewDao(mongoURI, database, cloudCollection, userCollection, fileCollection, migrationAdvice, keyCollection string) (*Dao, error) {
 	dao := &Dao{
 		database:        database,
 		cloudCollection: cloudCollection,
 		userCollection:  userCollection,
 		fileCollection:  fileCollection,
 		migrationAdvice: migrationAdvice,
-		keyCollection: keyCollection,
+		keyCollection:   keyCollection,
 	}
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(mongoURI))
@@ -456,29 +456,21 @@ func (d *Dao) DeleteUser(uid string) error {
  ********************************************************/
 
 //更新,若不存在则将插入
-func (dao *Dao)KeyUpsert(ak AccessKey)error{
-	col:=dao.client.Database(dao.database).Collection(dao.keyCollection)
+func (dao *Dao) KeyUpsert(ak AccessKey) error {
+	col := dao.client.Database(dao.database).Collection(dao.keyCollection)
 
-	filter:=bson.M{
-		"access_key":ak.AccessKey,
+	filter := bson.M{
+		"access_key": ak.AccessKey,
 	}
-	//operation:=bson.M{
-	//	"$setOnInsert":bson.M{
-	//		"user_id":ak.UserID,
-	//		"access_key":ak.AccessKey,
-	//		"secret_key":ak.SecretKey,
-	//		"available":ak.Available,
-	//		"create_time":ak.CreateTime,
-	//	},
-	//}
-	operation:=bson.M{
-		"$setOnInsert":ak,
+
+	operation := bson.M{
+		"$set": ak,
 	}
-	option:=options.UpdateOptions{
+	option := options.UpdateOptions{
 		Upsert: bool2pointer(true),
 	}
-	_,err:=col.UpdateOne(context.TODO(),filter,operation,&option)
-	if err!=nil {
+	_, err := col.UpdateOne(context.TODO(), filter, operation, &option)
+	if err != nil {
 		return err
 	}
 
@@ -486,18 +478,16 @@ func (dao *Dao)KeyUpsert(ak AccessKey)error{
 }
 
 //删除key
-func (dao *Dao)DeleteKey(ak AccessKey)error{
-	col:=dao.client.Database(dao.database).Collection(dao.keyCollection)
+func (dao *Dao) DeleteKey(ak AccessKey) error {
+	col := dao.client.Database(dao.database).Collection(dao.keyCollection)
 
-	filter:=bson.M{
-		"access_key":ak.AccessKey,
-		"secret_key":ak.SecretKey,
-		"user_id":ak.UserID,
+	filter := bson.M{
+		"access_key": ak.AccessKey,
 	}
 
-	_,err:=col.DeleteOne(context.TODO(),filter)
+	_, err := col.DeleteOne(context.TODO(), filter)
 
-	if err!=nil{
+	if err != nil {
 		return err
 	}
 	return nil

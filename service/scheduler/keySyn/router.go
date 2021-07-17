@@ -9,6 +9,6 @@ func KeySynInit(cid string, r *gin.Engine) {
 	keyDao = dao.GetDatabaseInstance()
 	localCid = cid
 
-	r.POST("/key_upsert", PostKeyUpsert)
-	r.POST("/key_delete", PostKeyDelete)
+	r.POST("/add_key", PostKeyUpsert)
+	r.POST("/delete_key", PostKeyDelete)
 }
