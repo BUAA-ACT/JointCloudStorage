@@ -73,7 +73,7 @@ db.Cloud.insertMany(
             "secret_key": "<sk-bdyun>",
             "location": "113.260506,23.132943",
             "bucket": "jcspan-guangzhou",
-            "address": "182.61.24.215",
+            "address": "bdyun-guangzhou.jointcloudstorage.cn",
         }
     ]
 )
