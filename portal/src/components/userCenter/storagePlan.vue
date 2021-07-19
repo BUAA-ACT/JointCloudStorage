@@ -56,7 +56,7 @@
       class="location-viewer"
     />
     <el-dialog :visible.sync="customizing">
-      <customize-storage-plan @success="customizing = false" @failed="customizing = false" />
+      <customize-storage-plan @success="customSuccess" @failed="customizing = false" />
     </el-dialog>
   </div>
 </template>
@@ -75,7 +75,7 @@ export default {
     CustomizeStoragePlan,
     locationViewer
   },
-  inject: ["formatPrice"],
+  inject: ["formatPrice", "reload"],
   data() {
     return {
       storagePlanIndex: 0,
@@ -185,9 +185,11 @@ export default {
     async submit() {
       this.submitLoading = true;
       Plan.changeStoragePlan(this.candidates[this.storagePlanIndex])
-        .then(resp => {
+        .then(async resp => {
           if (resp) this.$message.success("更新存储方案成功！");
           this.submitLoading = false;
+          await this.$store.dispatch("updateInfo", "StoragePlan");
+          this.reload();
         })
         .catch(() => {
           this.submitLoading = false;
@@ -195,6 +197,10 @@ export default {
     },
     startCustomize() {
       this.customizing = true;
+    },
+    customSuccess() {
+      this.customizing = false;
+      this.reload();
     }
   },
   watch: {
