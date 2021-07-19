@@ -13,8 +13,8 @@
           </div>
           <div class="text item">
             存储模式： {{ Advices.StoragePlanOld.StorageMode }}<br />
-            存储价格： {{ Advices.StoragePlanOld.StoragePrice }}<br />
-            流量价格： {{ Advices.StoragePlanOld.TrafficPrice }}<br />
+            存储价格： {{ formatPrice(Advices.StoragePlanOld.StoragePrice) }}<br />
+            流量价格： {{ formatPrice(Advices.StoragePlanOld.TrafficPrice) }}<br />
             可用性：{{ Advices.StoragePlanOld.Availability }}
           </div>
         </el-card>
@@ -24,8 +24,8 @@
           </div>
           <div class="text item">
             存储模式： {{ Advices.StoragePlanNew.StorageMode }}<br />
-            存储价格： {{ Advices.StoragePlanNew.StoragePrice }}<br />
-            流量价格： {{ Advices.StoragePlanNew.TrafficPrice }}<br />
+            存储价格： {{ formatPrice(Advices.StoragePlanNew.StoragePrice) }}<br />
+            流量价格： {{ formatPrice(Advices.StoragePlanNew.TrafficPrice) }}<br />
             可用性：{{ Advices.StoragePlanNew.Availability }}
           </div>
         </el-card>
@@ -56,6 +56,7 @@ export default {
   components: {
     locationViewer
   },
+  inject: ["formatPrice"],
   data() {
     return {
       Advices: {},

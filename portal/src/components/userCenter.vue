@@ -30,8 +30,15 @@
 </template>
 
 <script>
+import Other from "@/utils/other";
+
 export default {
   components: {},
+  provide() {
+    return {
+      formatPrice: Other.formatPrice
+    };
+  },
   data() {
     return {
       navList: {
