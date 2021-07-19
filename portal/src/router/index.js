@@ -419,7 +419,6 @@ vueRouter.beforeEach(async (to, from, next) => {
 });
 
 vueRouter.afterEach(() => {
-  console.log("fuck");
   loading.close();
 });
 export default vueRouter;
