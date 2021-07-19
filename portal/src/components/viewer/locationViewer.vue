@@ -195,10 +195,8 @@ export default {
         });
         this.$once("hook:beforeDestroy", () => {
           echarts.dispose(this.chart);
-          this.chart = null;
         });
       }
-      // 把配置和数据放这里
       this.chart.setOption({
         series: [
           {
