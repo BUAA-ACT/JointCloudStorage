@@ -1,5 +1,6 @@
 import VueRouter from "vue-router";
 import ElementUI from "element-ui";
+import Other from "@/utils/other";
 import Index from "../views/index.vue";
 import store from "../store";
 
@@ -398,6 +399,10 @@ vueRouter.beforeEach((to, from, next) => {
 });
 
 vueRouter.beforeEach(async (to, from, next) => {
+  while (!store.getters.ready) {
+    // eslint-disable-next-line no-await-in-loop
+    await Other.sleep(50);
+  }
   const hasToken = store.getters.token;
   const { isAdmin } = store.getters;
   if (hasToken) {
