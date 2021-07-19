@@ -63,7 +63,7 @@ export default {
           Plan.changeStoragePlan({
             ...this.curPlan,
             N: this.ReplicaClouds.length,
-            K: this.ReplicaClouds.length,
+            K: 1,
             Clouds: this.ReplicaClouds.map(val => this.allClouds[val])
           })
             .then(resp => {
