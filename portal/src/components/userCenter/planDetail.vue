@@ -39,6 +39,7 @@ const modeMap = {
 
 export default {
   name: "planDetail",
+  inject: ["formatPrice"],
   data() {
     return {
       storagePlan: {}
@@ -60,10 +61,10 @@ export default {
   },
   computed: {
     storagePrice() {
-      return this.storagePlan.StoragePrice;
+      return this.formatPrice(this.storagePlan.StoragePrice);
     },
     trafficPrice() {
-      return this.storagePlan.TrafficPrice;
+      return this.formatPrice(this.storagePlan.TrafficPrice);
     },
     availability() {
       return this.storagePlan.Availability.toFixed(8);

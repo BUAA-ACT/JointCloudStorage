@@ -30,5 +30,8 @@ export default {
       return data.map(item => this.underline(item));
     }
     return undefined;
+  },
+  formatPrice(number, fixed = 4) {
+    return number.toFixed(fixed);
   }
 };

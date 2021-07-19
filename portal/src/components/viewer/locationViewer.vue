@@ -20,6 +20,7 @@
  */
 import echarts from "echarts";
 import "echarts/map/js/china";
+import Other from "@/utils/other";
 
 export default {
   name: "locationViewer",
@@ -48,9 +49,9 @@ export default {
             value: value.Location.split(",") // longitude ,latitude
               .concat([
                 //
-                `存储价格：${value.StoragePrice}元/GB/月<br/>
-          流量价格：${value.TrafficPrice}元/GB<br/>
-          可用性：${value.Availability * 100}%<br />`
+                `存储价格：${Other.formatPrice(value.StoragePrice)}元/GB/月<br/>
+          流量价格：${Other.formatPrice(value.TrafficPrice)}元/GB<br/>
+          可用性：${value.Availability.toFixed(8) * 100}%<br />`
               ])
           };
         });
@@ -69,9 +70,9 @@ export default {
             name: value.CloudID,
             value: value.Location.split(",") // longitude ,latitude
               .concat([
-                `存储价格：${value.StoragePrice}元/GB/月<br/>
-          流量价格：${value.TrafficPrice}元/GB<br/>
-          可用性：${value.Availability * 100}%<br />`
+                `存储价格：${Other.formatPrice(value.StoragePrice)}元/GB/月<br/>
+          流量价格：${Other.formatPrice(value.TrafficPrice)}元/GB<br/>
+          可用性：${value.Availability.toFixed(8) * 100}%<br />`
               ])
           };
         });

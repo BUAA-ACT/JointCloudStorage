@@ -14,8 +14,8 @@
               </div>
               <div class="text item">
                 存储模式： {{ modifyStorageMode(storagePlans.StoragePriceFirst) }}<br />
-                存储价格： {{ storagePlans.StoragePriceFirst.StoragePrice }}<br />
-                流量价格： {{ storagePlans.StoragePriceFirst.TrafficPrice }}<br />
+                存储价格： {{ formatPrice(storagePlans.StoragePriceFirst.StoragePrice) }}<br />
+                流量价格： {{ formatPrice(storagePlans.StoragePriceFirst.TrafficPrice) }}<br />
                 可用性：{{ storagePlans.StoragePriceFirst.Availability }}
               </div>
             </el-card>
@@ -27,8 +27,8 @@
               </div>
               <div class="text item">
                 存储模式： {{ modifyStorageMode(storagePlans.TrafficPriceFirst) }}<br />
-                存储价格： {{ storagePlans.TrafficPriceFirst.StoragePrice }}<br />
-                流量价格： {{ storagePlans.TrafficPriceFirst.TrafficPrice }}<br />
+                存储价格： {{ formatPrice(storagePlans.TrafficPriceFirst.StoragePrice) }}<br />
+                流量价格： {{ formatPrice(storagePlans.TrafficPriceFirst.TrafficPrice) }}<br />
                 可用性：{{ storagePlans.TrafficPriceFirst.Availability }}
               </div>
             </el-card>
@@ -75,6 +75,7 @@ export default {
     CustomizeStoragePlan,
     locationViewer
   },
+  inject: ["formatPrice"],
   data() {
     return {
       storagePlanIndex: 0,
@@ -174,9 +175,9 @@ export default {
         return {
           name: value.CloudID,
           value: value.Location.split(",").concat([
-            `存储价格：${value.StoragePrice}元/GB/月<br/>
-          流量价格：${value.TrafficPrice}元/GB<br/>
-          可用性：${value.Availability * 100}%<br />`
+            `存储价格：${this.formatPrice(value.StoragePrice)}元/GB/月<br/>
+          流量价格：${this.formatPrice(value.TrafficPrice)}元/GB<br/>
+          可用性：${value.Availability.toFixed(8) * 100}%<br />`
           ])
         };
       });
