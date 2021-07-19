@@ -120,6 +120,11 @@ export default {
         await this.$store.dispatch("updateInfo", "StoragePlan");
         this.candidates = [this.$store.getters.storagePlan];
       } else {
+        if (this.$store.getters.vendor === 0) {
+          await this.$alert("您还没有设置存储偏好，是否前往设置？", "提示", { type: "info" }).then(() => {
+            this.$router.push("/cloudStorage/userPreference");
+          });
+        }
         await Plan.getStoragePlans().then(resp => {
           this.storagePlans = resp;
           // Object.keys(this.storagePlans).forEach(index => {
