@@ -15,6 +15,7 @@
             <el-card class="inner-card" shadow="hover">{{ cloud.CloudName }}</el-card>
           </td>
         </el-form-item>
+        <el-divider v-if="ECKClouds" />
         <el-form-item v-if="ECKClouds" label="纠删码正在使用以下云节点存储数据分块" class="detail-item">
           <td v-for="cloud in ECKClouds" :key="cloud.CloudID">
             <el-card class="inner-card" shadow="hover">{{ cloud.CloudName }}</el-card>

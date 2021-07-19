@@ -86,7 +86,7 @@ export default new Vuex.Store({
       state.status = status;
     },
     RESET_ALL: state => {
-      state.ready = false;
+      state.ready = true;
       state.token = null;
       removeToken();
       state.name = null;

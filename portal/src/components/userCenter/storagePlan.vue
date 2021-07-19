@@ -16,7 +16,7 @@
                 存储模式： {{ modifyStorageMode(storagePlans.StoragePriceFirst) }}<br />
                 存储价格： {{ formatPrice(storagePlans.StoragePriceFirst.StoragePrice) }}<br />
                 流量价格： {{ formatPrice(storagePlans.StoragePriceFirst.TrafficPrice) }}<br />
-                可用性：{{ storagePlans.StoragePriceFirst.Availability }}
+                可用性：{{ storagePlans.StoragePriceFirst.Availability.toFixed(8) * 100 }}%
               </div>
             </el-card>
           </el-col>
@@ -29,7 +29,7 @@
                 存储模式： {{ modifyStorageMode(storagePlans.TrafficPriceFirst) }}<br />
                 存储价格： {{ formatPrice(storagePlans.TrafficPriceFirst.StoragePrice) }}<br />
                 流量价格： {{ formatPrice(storagePlans.TrafficPriceFirst.TrafficPrice) }}<br />
-                可用性：{{ storagePlans.TrafficPriceFirst.Availability }}
+                可用性：{{ storagePlans.TrafficPriceFirst.Availability.toFixed(8) * 100 }}%
               </div>
             </el-card>
           </el-col>
@@ -56,7 +56,7 @@
       class="location-viewer"
     />
     <el-dialog :visible.sync="customizing">
-      <customize-storage-plan @success="customizing = false" @failed="customizing = false" />
+      <customize-storage-plan @success="customSuccess" @failed="customizing = false" />
     </el-dialog>
   </div>
 </template>
@@ -75,7 +75,7 @@ export default {
     CustomizeStoragePlan,
     locationViewer
   },
-  inject: ["formatPrice"],
+  inject: ["formatPrice", "reload"],
   data() {
     return {
       storagePlanIndex: 0,
@@ -120,6 +120,11 @@ export default {
         await this.$store.dispatch("updateInfo", "StoragePlan");
         this.candidates = [this.$store.getters.storagePlan];
       } else {
+        if (this.$store.getters.vendor === 0) {
+          await this.$alert("您还没有设置存储偏好，是否前往设置？", "提示", { type: "info" }).then(() => {
+            this.$router.push("/cloudStorage/userPreference");
+          });
+        }
         await Plan.getStoragePlans().then(resp => {
           this.storagePlans = resp;
           // Object.keys(this.storagePlans).forEach(index => {
@@ -185,9 +190,11 @@ export default {
     async submit() {
       this.submitLoading = true;
       Plan.changeStoragePlan(this.candidates[this.storagePlanIndex])
-        .then(resp => {
+        .then(async resp => {
           if (resp) this.$message.success("更新存储方案成功！");
           this.submitLoading = false;
+          await this.$store.dispatch("updateInfo", "StoragePlan");
+          this.reload();
         })
         .catch(() => {
           this.submitLoading = false;
@@ -195,6 +202,10 @@ export default {
     },
     startCustomize() {
       this.customizing = true;
+    },
+    customSuccess() {
+      this.customizing = false;
+      this.reload();
     }
   },
   watch: {
