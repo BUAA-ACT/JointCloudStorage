@@ -392,7 +392,7 @@ const vueRouter = createRouter();
 let loading;
 
 vueRouter.beforeEach(async (to, from, next) => {
-  loading = ElementUI.Loading.service();
+  loading = ElementUI.Loading.service({});
   while (!store.getters.ready) {
     // eslint-disable-next-line no-await-in-loop
     await Other.sleep(50);
@@ -419,6 +419,7 @@ vueRouter.beforeEach(async (to, from, next) => {
 });
 
 vueRouter.afterEach(() => {
+  console.log("fuck");
   loading.close();
 });
 export default vueRouter;

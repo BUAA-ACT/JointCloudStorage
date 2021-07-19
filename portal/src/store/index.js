@@ -22,7 +22,7 @@ export default new Vuex.Store({
       Volume: 0
     },
     role: [],
-    ready: false
+    ready: true
   },
   getters: {
     token: state => {
@@ -129,24 +129,29 @@ export default new Vuex.Store({
       if (token === null) {
         return;
       }
-      await Common.checkToken(token).then(async resp => {
-        if (!resp) {
-          commit("RESET_ALL");
-          return;
-        }
-        commit("SET_TOKEN", token);
-        await Common.getUserInfo(token).then(data => {
-          const { Email, Nickname, Preference, StoragePlan, DataStats, Status, Role } = data.UserInfo;
-          commit("SET_NAME", Email);
-          commit("SET_NICKNAME", Nickname);
-          commit("SET_PREFERENCE", Preference);
-          commit("SET_STORAGE_PLAN", StoragePlan);
-          commit("SET_DATA_STATS", DataStats);
-          commit("SET_STATUS", Status);
+      commit("SET_READY", false);
+      await Common.checkToken(token)
+        .then(async resp => {
+          if (!resp) {
+            commit("RESET_ALL");
+            return;
+          }
+          commit("SET_TOKEN", token);
+          await Common.getUserInfo(token).then(data => {
+            const { Email, Nickname, Preference, StoragePlan, DataStats, Status, Role } = data.UserInfo;
+            commit("SET_NAME", Email);
+            commit("SET_NICKNAME", Nickname);
+            commit("SET_PREFERENCE", Preference);
+            commit("SET_STORAGE_PLAN", StoragePlan);
+            commit("SET_DATA_STATS", DataStats);
+            commit("SET_STATUS", Status);
+            commit("SET_ROLE", Role);
+          });
+        })
+        .catch()
+        .then(() => {
           commit("SET_READY", true);
-          commit("SET_ROLE", Role);
         });
-      });
     },
     async logout({ state, commit }) {
       Common.logout(state.token).then(() => {
