@@ -83,115 +83,135 @@ export default {
       default: false
     }
   },
+  data() {
+    return { firstTime: true, chart: null };
+  },
   methods: {
     initCharts() {
-      const chart = echarts.init(this.$refs.previewMap);
-      // 把配置和数据放这里
-      chart.setOption({
-        backgroundColor: "#ffffff",
-        title: {
-          // text: '设备分布',
-          left: "40%",
-          top: "0px",
-          textStyle: {
-            color: "#fff",
-            opacity: 0.7
-          }
-        },
-        tooltip: {
-          trigger: "item"
-        },
-        geo: {
-          map: "china",
-          label: {
-            emphasis: {
-              show: false
+      if (this.firstTime) {
+        this.chart = echarts.init(this.$refs.previewMap);
+        this.chart.setOption({
+          backgroundColor: "#ffffff",
+          title: {
+            // text: '设备分布',
+            left: "40%",
+            top: "0px",
+            textStyle: {
+              color: "#fff",
+              opacity: 0.7
             }
           },
-          roam: false,
-          silent: true,
-          zoom: 1.2,
-          itemStyle: {
-            normal: {
-              areaColor: "#dddddd",
-              borderColor: "#dddddd"
+          tooltip: {
+            trigger: "item"
+          },
+          geo: {
+            map: "china",
+            label: {
+              emphasis: {
+                show: false
+              }
             },
-            emphasis: {
-              borderColor: "#fff",
-              areaColor: "#5b9bd5",
-              borderWidth: 1
+            roam: false,
+            silent: true,
+            zoom: 1.2,
+            itemStyle: {
+              normal: {
+                areaColor: "#dddddd",
+                borderColor: "#dddddd"
+              },
+              emphasis: {
+                borderColor: "#fff",
+                areaColor: "#5b9bd5",
+                borderWidth: 1
+              }
             }
-          }
-        },
+          },
+          series: [
+            {
+              name: "未激活服务器",
+              type: "effectScatter", // https://echarts.apache.org/zh/option.html#series-effectScatter
+              coordinateSystem: "geo",
+              data: [...this.formattedInactiveClouds],
+              symbolSize: 20,
+              encode: {
+                value: 2
+              },
+              showEffectOn: "render",
+              rippleEffect: {
+                brushType: "stroke"
+              },
+              hoverAnimation: true,
+              label: {
+                formatter: "{b}",
+                position: "right",
+                show: true
+              },
+              itemStyle: {
+                color: "#888888",
+                shadowBlur: 10,
+                shadowColor: "#fff"
+              },
+              zlevel: 20,
+              tooltip: {
+                formatter(params) {
+                  return params.data.value[2];
+                }
+              }
+            },
+            {
+              name: "当前服务器",
+              type: "effectScatter", // https://echarts.apache.org/zh/option.html#series-effectScatter
+              coordinateSystem: "geo",
+              data: [...this.formattedClouds],
+              symbolSize: 30,
+              encode: {
+                value: 2
+              },
+              showEffectOn: "render",
+              rippleEffect: {
+                brushType: "stroke"
+              },
+              hoverAnimation: true,
+              label: {
+                formatter: "{b}",
+                position: "right",
+                show: true
+              },
+              itemStyle: {
+                color: "#5b9bd5",
+                shadowBlur: 10,
+                shadowColor: "#fff"
+              },
+              zlevel: 100,
+              tooltip: {
+                formatter(params) {
+                  return params.data.value[2];
+                }
+              }
+            },
+
+            ...this.cloudMigration
+          ]
+        });
+        this.$once("hook:beforeDestroy", () => {
+          echarts.dispose(this.chart);
+          this.chart = null;
+        });
+      }
+      // 把配置和数据放这里
+      this.chart.setOption({
         series: [
           {
-            name: "未激活服务器",
-            type: "effectScatter", // https://echarts.apache.org/zh/option.html#series-effectScatter
-            coordinateSystem: "geo",
-            data: [...this.formattedInactiveClouds],
-            symbolSize: 20,
-            encode: {
-              value: 2
-            },
-            showEffectOn: "render",
-            rippleEffect: {
-              brushType: "stroke"
-            },
-            hoverAnimation: true,
-            label: {
-              formatter: "{b}",
-              position: "right",
-              show: true
-            },
-            itemStyle: {
-              color: "#888888",
-              shadowBlur: 10,
-              shadowColor: "#fff"
-            },
-            zlevel: 20,
-            tooltip: {
-              formatter(params) {
-                return params.data.value[2];
-              }
-            }
+            data: [...this.formattedInactiveClouds]
           },
           {
-            name: "当前服务器",
-            type: "effectScatter", // https://echarts.apache.org/zh/option.html#series-effectScatter
-            coordinateSystem: "geo",
-            data: [...this.formattedClouds],
-            symbolSize: 30,
-            encode: {
-              value: 2
-            },
-            showEffectOn: "render",
-            rippleEffect: {
-              brushType: "stroke"
-            },
-            hoverAnimation: true,
-            label: {
-              formatter: "{b}",
-              position: "right",
-              show: true
-            },
-            itemStyle: {
-              color: "#5b9bd5",
-              shadowBlur: 10,
-              shadowColor: "#fff"
-            },
-            zlevel: 100,
-            tooltip: {
-              formatter(params) {
-                return params.data.value[2];
-              }
-            }
+            data: [...this.formattedClouds]
           },
-
           ...this.cloudMigration
         ]
       });
       window.onresize = () => {
-        chart.resize();
+        this.chart.resize();
       };
     }
   },
