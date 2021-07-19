@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"math"
 	"net/http"
 	"time"
 
@@ -297,6 +298,10 @@ func PostStoragePlan(c *gin.Context) {
 			logError(err, requestID, "更新存储方案时获取用户信息失败")
 		} else {
 			user.StoragePlan = param.StoragePlan
+			user.Preference.Vendor = param.StoragePlan.N // 存储偏好，副本数
+			user.Preference.StoragePrice = math.Max(user.Preference.StoragePrice, user.StoragePlan.StoragePrice)
+			user.Preference.TrafficPrice = math.Max(user.Preference.TrafficPrice, user.StoragePlan.TrafficPrice)
+			user.Preference.Availability = math.Min(user.Preference.Availability, user.StoragePlan.Availability)
 			err = db.InsertUser(user)
 			if err != nil {
 				logError(err, requestID, "更新用户存储方案失败")

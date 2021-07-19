@@ -14,7 +14,8 @@ func storagePlan(param GetStoragePlanParam, clouds []dao.Cloud) GetStoragePlanDa
 	// 初始化参数
 	N := len(clouds)     // 可用云服务数量
 	nMin := param.Vendor // 存储方案所包含云服务的数量下界
-	nMax := minInt(N, 5) // 存储方案所包含云服务的数量上界
+	//nMax := minInt(N, 5) // 存储方案所包含云服务的数量上界
+	nMax := nMin
 
 	sMin := 999.9 // 当前最小存储成本
 	tMin := 999.9 // 当前最小流量成本
@@ -229,7 +230,7 @@ func reSchedule(interval time.Duration) {
 			}
 			logInfo("Created new migration advice", requestID, adv)
 		}
-		logInfo("Finsish reschedule storage plans", requestID)
+		logInfo("Finish reschedule storage plans", requestID)
 	}
 }
 
