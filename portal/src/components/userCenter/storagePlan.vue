@@ -116,7 +116,7 @@ export default {
     async getStoragePlans() {
       this.plansLoaded = false;
       if (this.havePlan) {
-        await this.$store.dispatch("getInfo");
+        await this.$store.dispatch("updateInfo", "StoragePlan");
         this.candidates = [this.$store.getters.storagePlan];
       } else {
         await Plan.getStoragePlans().then(resp => {
@@ -142,8 +142,8 @@ export default {
     },
     /**
      * 获取所有云
-     *
-     */ async getAllCloud() {
+     */
+    async getAllCloud() {
       // this.inactiveClouds = Clouds.getAllCloud().clouds;
       Clouds.getAllClouds()
         .then(resp => {

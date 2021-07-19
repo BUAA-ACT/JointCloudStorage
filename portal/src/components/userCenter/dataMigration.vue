@@ -27,7 +27,7 @@ export default {
   },
   methods: {
     checkCurStatus() {
-      this.$store.dispatch("getInfo");
+      this.$store.dispatch("updateInfo", "Status");
     }
   },
   mounted() {
