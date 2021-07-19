@@ -16,7 +16,7 @@
                 存储模式： {{ modifyStorageMode(storagePlans.StoragePriceFirst) }}<br />
                 存储价格： {{ formatPrice(storagePlans.StoragePriceFirst.StoragePrice) }}<br />
                 流量价格： {{ formatPrice(storagePlans.StoragePriceFirst.TrafficPrice) }}<br />
-                可用性：{{ storagePlans.StoragePriceFirst.Availability }}
+                可用性：{{ storagePlans.StoragePriceFirst.Availability.toFixed(8) * 100 }}%
               </div>
             </el-card>
           </el-col>
@@ -29,7 +29,7 @@
                 存储模式： {{ modifyStorageMode(storagePlans.TrafficPriceFirst) }}<br />
                 存储价格： {{ formatPrice(storagePlans.TrafficPriceFirst.StoragePrice) }}<br />
                 流量价格： {{ formatPrice(storagePlans.TrafficPriceFirst.TrafficPrice) }}<br />
-                可用性：{{ storagePlans.TrafficPriceFirst.Availability }}
+                可用性：{{ storagePlans.TrafficPriceFirst.Availability.toFixed(8) * 100 }}%
               </div>
             </el-card>
           </el-col>
