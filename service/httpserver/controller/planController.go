@@ -190,11 +190,11 @@ func UserChooseStoragePlan(con *gin.Context) {
 	if !checkDaoSuccess(con, credentialSuccess) {
 		return
 	}
-	// save new plan
-	storagePlanSuccess := dao.UserDao.SetUserStoragePlan(userID, storagePlan)
-	if !checkDaoSuccess(con, storagePlanSuccess) {
-		return
-	}
+	// save new plan 不需要再次保存新的存储方案，存储方案交给 scheduler 同步
+	//storagePlanSuccess := dao.UserDao.SetUserStoragePlan(userID, storagePlan)
+	//if !checkDaoSuccess(con, storagePlanSuccess) {
+	//	return
+	//}
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
 		"msg":  "设置存储方案成功",

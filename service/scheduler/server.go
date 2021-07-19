@@ -244,7 +244,7 @@ func PostStoragePlan(c *gin.Context) {
 		// 来自本云httpserver的请求
 		plan := &param.StoragePlan
 		plan.StoragePrice = calStoragePrice(*plan)
-		plan.Availability = calStoragePrice(*plan)
+		plan.Availability = calAvailability(*plan)
 		plan.TrafficPrice = calTrafficPrice(*plan)
 		var users []dao.AccessCredential
 		ch := make(chan *dao.AccessCredential)
