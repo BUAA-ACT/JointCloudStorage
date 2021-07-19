@@ -3,6 +3,7 @@ import Vuex from "vuex";
 import Common from "@/api/common";
 import { getToken, setToken, removeToken } from "@/utils/auth";
 import user from "@/utils/user";
+import Other from "@/utils/other";
 
 Vue.use(Vuex);
 
@@ -112,6 +113,14 @@ export default new Vuex.Store({
         await dispatch("getInfo", resp.AccessToken);
       });
     },
+    /**
+     * 获取用户所有信息
+     * `ready` 字段表示当前状态
+     * @param getters
+     * @param commit
+     * @param pToken
+     * @returns {Promise<void>}
+     */
     async getInfo({ getters, commit }, pToken) {
       let token = pToken || null;
       if (pToken === undefined) {
@@ -149,6 +158,27 @@ export default new Vuex.Store({
       if (getters.vendor === 0) {
         user.firstLoginNotification();
       }
+    },
+    /**
+     * 更新用户信息某字段
+     * 与 `getInfo` 不同的是，本方法不会影响 `ready` 字段
+     * @param getters
+     * @param commit
+     * @param {"Preference" | "StoragePlan" | "DataStats" | "Status" | "Role"} field
+     * @returns {Promise<void>}
+     */
+    async updateInfo({ getters, commit }, field) {
+      let value;
+      if (typeof field === "string") {
+        await Common.getUserInfo(getters.token).then(data => {
+          value = data.UserInfo[field];
+          commit(`SET${Other.underlineUpperCase(field)}`, value);
+        });
+      }
+      if (!value) {
+        return Promise.reject(new Error("Invalid field name"));
+      }
+      return Promise.resolve();
     }
   },
   modules: {}
