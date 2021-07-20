@@ -169,5 +169,14 @@ export default {
         VoteResult
       }
     });
+  },
+  getCurCloudName() {
+    return request({
+      url: `/cloud/thisName`,
+      method: "post",
+      data: {
+        AccessToken: store.getters.token
+      }
+    });
   }
 };
