@@ -29,6 +29,19 @@ func (d *Dao) GetAllClouds() (*[]model.Cloud, bool) {
 	return &clouds, true
 }
 
+func (d *Dao) GetCloud(cloudID string) (*model.Cloud, bool) {
+	col := d.client.Database(d.database).Collection(d.collection)
+	filter := bson.M{
+		"cloud_id": cloudID,
+	}
+	var cloud model.Cloud
+	findCloudError := col.FindOne(context.TODO(), filter).Decode(cloud)
+	if tools.PrintError(findCloudError) {
+		return nil, false
+	}
+	return &cloud, true
+}
+
 func (d *Dao) CheckSameCloudID(cloudID string) bool {
 	filter := bson.M{
 		"cloud_id": cloudID,

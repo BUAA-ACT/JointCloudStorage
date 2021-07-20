@@ -44,6 +44,9 @@ func setupRouter(r *gin.Engine) {
 	r.POST("/user/remakeKey", controller.UserRemakeKey)
 	//r.POST("/user/uploadAvatar",controller.UserUploadAvatar)
 
+	/* cloud function */
+	r.POST("/cloud/thisName", controller.GetThisCloudName)
+
 	/* plan function */
 	//r.POST("/plan/changeUserStoragePlan", controller.UserSetStoragePlan)
 	r.POST("/plan/chooseStoragePlan", controller.UserChooseStoragePlan)
