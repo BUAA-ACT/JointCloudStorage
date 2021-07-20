@@ -35,7 +35,7 @@ func (d *Dao) GetCloud(cloudID string) (*model.Cloud, bool) {
 		"cloud_id": cloudID,
 	}
 	var cloud model.Cloud
-	findCloudError := col.FindOne(context.TODO(), filter).Decode(cloud)
+	findCloudError := col.FindOne(context.TODO(), filter).Decode(&cloud)
 	if tools.PrintError(findCloudError) {
 		return nil, false
 	}
