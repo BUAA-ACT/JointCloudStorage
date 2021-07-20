@@ -331,6 +331,11 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	if t.GetState() == model.FINISH {
 		return errors.New("task already finish")
 	}
+	err = processor.Lock.Lock(t.GetRealDestinationPath())
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "Processor ProcessUpload", "文件获取锁失败", "", "", err.Error())
+		return err
+	}
 	defer processor.Lock.UnLock(t.GetRealDestinationPath())
 	fileInfo, fileInfoErr := processor.FileDatabase.GetFileInfo(t.GetRealDestinationPath())
 	if fileInfoErr == nil { // 更新文件同步状态
@@ -499,10 +504,6 @@ func (processor *TaskProcessor) ProcessSyncSingleFile(t *model.Task) (err error)
 	subTask.SourcePath = filePath
 	subTask.TaskOptions.SourceStoragePlan = nil
 	subTask.TaskType = model.UPLOAD
-	err = processor.Lock.Lock(subTask.GetRealDestinationPath()) // todo 在这里加锁是否是有必要的
-	if err != nil {
-		logrus.Errorf("get file Lock fail: %v", err)
-	}
 	err = processor.ProcessUpload(&subTask)
 	if err != nil {
 		return err

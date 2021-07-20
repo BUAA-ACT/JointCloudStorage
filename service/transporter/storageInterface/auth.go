@@ -1,9 +1,11 @@
 package storageInterface
 
 import (
+	"act.buaa.edu.cn/jcspan/transporter/util"
 	"encoding/base64"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 	"strings"
@@ -53,6 +55,14 @@ func (jsi *JointStorageInterface) JSIAuthMiddleware() func(c *gin.Context) {
 		}
 		// 将当前请求的username信息保存到请求的上下文c上
 		c.Set("uid", uid)
+		userInfo, err := jsi.processor.UserDatabase.GetUserFromID(uid)
+		if err != nil {
+			util.Log(logrus.ErrorLevel, "JSI GetObjectList", "get Userinfo fail",
+				"", "err", err.Error())
+			c.String(http.StatusInternalServerError, "")
+			c.Abort()
+		}
+		c.Set("userInfo", userInfo)
 		c.Next() // 后续的处理函数可以用过c.Get("filePath")来获取当前请求的用户信息
 	}
 }

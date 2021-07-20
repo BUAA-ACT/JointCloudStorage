@@ -24,9 +24,18 @@ func NewInterface(processor *controller.TaskProcessor) *JointStorageInterface {
 	engine := gin.Default()
 	engine.Use(util.CORSMiddleware())
 	jsi = JointStorageInterface{engine, processor}
-	jsi.PUT("/*key", jsi.JSIAuthMiddleware(), jsi.checkKey, jsi.PutObject)
-	jsi.DELETE("/*key", jsi.JSIAuthMiddleware(), jsi.checkKey, jsi.DeleteObject)
-	jsi.GET("/*key", jsi.JSIAuthMiddleware(), jsi.GetMethod)
+	object := jsi.Group("/object")
+	{
+		object.PUT("/*key", jsi.JSIAuthMiddleware(), jsi.checkKey, jsi.PutObject)
+		object.DELETE("/*key", jsi.JSIAuthMiddleware(), jsi.checkKey, jsi.DeleteObject)
+		object.GET("/*key", jsi.JSIAuthMiddleware(), jsi.GetMethod)
+	}
+	state := jsi.Group("/state")
+	{
+		state.GET("/storage", jsi.JSIAuthMiddleware(), jsi.GetStorageInfo)
+		state.GET("/plan", jsi.JSIAuthMiddleware(), jsi.GetStoragePlan)
+	}
+
 	return &jsi
 }
 
@@ -155,6 +164,16 @@ func (jsi *JointStorageInterface) GetObjectList(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, files)
+}
+
+func (jsi *JointStorageInterface) GetStorageInfo(c *gin.Context) {
+	userInfo := c.MustGet("userInfo").(*model.User)
+	c.JSON(http.StatusOK, userInfo.DataStats)
+}
+
+func (jsi *JointStorageInterface) GetStoragePlan(c *gin.Context) {
+	userInfo := c.MustGet("userInfo").(*model.User)
+	c.JSON(http.StatusOK, userInfo.StoragePlan)
 }
 
 func createTask(uid string, taskType model.TaskType, srcPath string, dstPath string, srcStoragePlan *model.UserStoragePlan,

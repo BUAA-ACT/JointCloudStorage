@@ -151,15 +151,9 @@ func (router *Router) CreateTask(c *gin.Context) {
 			taskRequestReplyErr(util.ErrorCodeWrongRequestFormat, util.ErrorMsgWrongRequestFormat+": task not pass check", c)
 			return
 		}
-		err := router.processor.Lock.Lock(task.GetRealDestinationPath())
-		if err != nil {
-			taskRequestReplyErr(util.ErrorCodeGetFileLockErr, util.ErrorMsgGetFileLockErr+": "+err.Error(), c)
-			return
-		}
 		tid, err := router.processor.taskStorage.AddTask(task)
 		if err != nil {
 			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
-			router.processor.Lock.UnLock(task.GetRealDestinationPath())
 			return
 		}
 		token, _ := util.GenerateTaskAccessToken(tid.Hex(), task.Uid, time.Hour*24)
