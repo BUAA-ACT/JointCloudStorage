@@ -10,6 +10,11 @@ export default {
 
     return `${parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`;
   },
+  /**
+   * Sleep Implemented by Promise
+   * @param {number} time
+   * @returns {Promise<void>}
+   */
   sleep(time) {
     return new Promise(resolve => setTimeout(resolve, time));
   },
