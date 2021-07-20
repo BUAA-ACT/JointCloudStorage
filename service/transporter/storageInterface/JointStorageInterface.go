@@ -4,6 +4,7 @@ import (
 	"act.buaa.edu.cn/jcspan/transporter/controller"
 	"act.buaa.edu.cn/jcspan/transporter/model"
 	"act.buaa.edu.cn/jcspan/transporter/util"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -34,6 +35,7 @@ func NewInterface(processor *controller.TaskProcessor) *JointStorageInterface {
 	{
 		state.GET("/storage", jsi.JSIAuthMiddleware(), jsi.GetStorageInfo)
 		state.GET("/plan", jsi.JSIAuthMiddleware(), jsi.GetStoragePlan)
+		state.POST("/plan", jsi.JSIAuthMiddleware())
 	}
 
 	return &jsi
@@ -174,6 +176,54 @@ func (jsi *JointStorageInterface) GetStorageInfo(c *gin.Context) {
 func (jsi *JointStorageInterface) GetStoragePlan(c *gin.Context) {
 	userInfo := c.MustGet("userInfo").(*model.User)
 	c.JSON(http.StatusOK, userInfo.StoragePlan)
+}
+
+func (jsi *JointStorageInterface) PostStoragePlan(c *gin.Context) {
+	userInfo := c.MustGet("userInfo").(*model.User)
+	var plan model.StoragePlan
+	if err := c.ShouldBindJSON(&plan); err != nil {
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("invalid storage plan"))
+		return
+	}
+	userPlan, err := jsi.convertToUserStoragePlan(plan)
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "JSI Post StoragePlan", "convert StoragePlan fail",
+			"", "err", err.Error())
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("invalid storage plan"))
+		return
+	}
+	err = jsi.processor.Scheduler.SetUserStoragePlan(userInfo, userPlan)
+	if err != nil {
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("set storage plan fail"))
+		return
+	}
+	task := createTask(userInfo.UserId, model.SYNC, "", "", &userInfo.StoragePlan, userPlan)
+	tid, err := jsi.processor.AddTask(task)
+	if err != nil {
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("internal error"))
+		return
+	}
+	c.String(http.StatusOK, tid.String())
+}
+
+func (jsi *JointStorageInterface) convertToUserStoragePlan(plan model.StoragePlan) (*model.UserStoragePlan, error) {
+	var clouds []model.Cloud
+	for _, c := range plan.Clouds {
+		cloud, err := jsi.processor.CloudDatabase.GetCloudInfoFromCloudID(c)
+		if err != nil {
+			return nil, errors.New("get cloud info from cloud id fail")
+		}
+		clouds = append(clouds, *cloud)
+	}
+	return &model.UserStoragePlan{
+		N:            plan.N,
+		K:            plan.K,
+		StorageMode:  string(plan.StorageMode),
+		Clouds:       clouds,
+		StoragePrice: 0,
+		TrafficPrice: 0,
+		Availability: 0,
+	}, nil
 }
 
 func createTask(uid string, taskType model.TaskType, srcPath string, dstPath string, srcStoragePlan *model.UserStoragePlan,

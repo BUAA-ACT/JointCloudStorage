@@ -46,6 +46,14 @@ func (processor *TaskProcessor) CreateTask(taskType model.TaskType, sid string, 
 	}
 }
 
+func (processor *TaskProcessor) AddTask(task *model.Task) (tid primitive.ObjectID, err error) {
+	tid, err = processor.taskStorage.AddTask(task)
+	if err != nil {
+		return tid, err
+	}
+	return tid, nil
+}
+
 func (processor *TaskProcessor) StartProcessTasks(ctx context.Context) {
 	go func() {
 		for true {

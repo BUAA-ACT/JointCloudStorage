@@ -53,7 +53,7 @@ func TestMain(m *testing.M) {
 	accessKeyDB := model.AccessKeyDB{Dao: dao}
 	processor.AccessKeyDatabase = &accessKeyDB
 
-	key, _ := processor.AccessKeyDatabase.GenerateKeys("tester")
+	key, _ := processor.AccessKeyDatabase.GenerateKeys("jsitest")
 	AK = key.AccessKey
 	SK = key.SecretKey
 	JSI = NewInterface(&processor)
@@ -127,4 +127,9 @@ func TestJointStorageInterface_GetStorageInfo(t *testing.T) {
 		t.Fatalf("http code incorrect")
 	}
 	t.Logf("StorageInfo: %s", recorder.Body.String())
+}
+
+func TestJointStorageInterface_PostStoragePlan(t *testing.T) {
+	req, _ := http.NewRequest("POST", "/state/storage", nil)
+	print(req)
 }

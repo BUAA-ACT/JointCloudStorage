@@ -212,13 +212,13 @@ func TestECUploadAndDownload(t *testing.T) {
       "StorageMode": "EC",
       "Clouds": [
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          },
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          },
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          }
       ],
       "N": 3,
@@ -255,13 +255,13 @@ func TestECUploadAndDownload(t *testing.T) {
         "StorageMode": "EC",
         "Clouds": [
            {
-              "CloudID": "aliyun-beijing"
+              "CloudID": "aliyun-hohhot"
            },
            {
-              "CloudID": "aliyun-beijing"
+              "CloudID": "aliyun-hohhot"
            },
            {
-              "CloudID": "aliyun-beijing"
+              "CloudID": "aliyun-hohhot"
            }
         ],
         "N": 3,
@@ -309,13 +309,13 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
       "StorageMode": "EC",
       "Clouds": [
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          },
          {
-            "CloudID": "txyun-chengdu"
+            "CloudID": "aliyun-qingdao"
          },
          {
-            "CloudID": "ksyun-beijing"
+            "CloudID": "aliyun-hangzhou"
          }
       ],
       "N": 3,
@@ -349,13 +349,13 @@ func TestECUploadAndDownloadMultiCloud(t *testing.T) {
         "StorageMode": "EC",
         "Clouds": [
 			 {
-				"CloudID": "aliyun-beijing"
+				"CloudID": "aliyun-hohhot"
 			 },
 			 {
-				"CloudID": "txyun-chengdu"
+				"CloudID": "aliyun-qingdao"
 			 },
 			 {
-				"CloudID": "ksyun-beijing"
+				"CloudID": "aliyun-hangzhou"
 			 }
         ],
         "N": 3,
@@ -401,10 +401,10 @@ func TestReplicaUploadAndDownload(t *testing.T) {
       "StorageMode": "Replica",
       "Clouds": [
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          },
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          }
       ]
    }
@@ -437,13 +437,13 @@ func TestReplicaUploadAndDownload(t *testing.T) {
         "StorageMode": "Replica",
         "Clouds": [
            {
-              "CloudID": "aliyun-beijing"
+              "CloudID": "aliyun-hohhot"
            },
            {
-              "CloudID": "aliyun-beijing"
+              "CloudID": "aliyun-hohhot"
            },
            {
-              "CloudID": "aliyun-beijing"
+              "CloudID": "aliyun-hohhot"
            }
         ]
      }
@@ -461,9 +461,9 @@ func TestReplicaUploadAndDownload(t *testing.T) {
 
 func TestEC2ReplicaSync(t *testing.T) {
 	dstPath := "tmp/test/sync/test.jpeg"
-	testECUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
+	testECUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-hohhot")
 	dstPath = "tmp/test/sync/test.txt"
-	testECUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	testECUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-hohhot")
 	jsonStr := []byte(`
 {
   "TaskType": "Sync",
@@ -474,13 +474,13 @@ func TestEC2ReplicaSync(t *testing.T) {
       "StorageMode": "EC",
       "Clouds": [
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          },
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          },
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          }
       ],
       "N": 3,
@@ -490,10 +490,10 @@ func TestEC2ReplicaSync(t *testing.T) {
       "StorageMode": "Replica",
       "Clouds": [
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          },
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          }
       ]
    }
@@ -510,9 +510,9 @@ func TestEC2ReplicaSync(t *testing.T) {
 
 func TestReplicaMigrate(t *testing.T) {
 	dstPath := "tmp/test/Migrate/test.jpeg"
-	testECUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
+	testECUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-hohhot")
 	dstPath = "tmp/test/migrate/test.txt"
-	testECUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	testECUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-hohhot")
 	jsonStr := []byte(`
 {
   "TaskType": "Migrate",
@@ -523,7 +523,7 @@ func TestReplicaMigrate(t *testing.T) {
       "StorageMode": "Migrate",
       "Clouds": [
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          }
       ]
    },
@@ -531,7 +531,7 @@ func TestReplicaMigrate(t *testing.T) {
       "StorageMode": "Migrate",
       "Clouds": [
          {
-            "CloudID": "ksyun-beijing"
+            "CloudID": "aliyun-hangzhou"
          }
       ]
    }
@@ -548,9 +548,9 @@ func TestReplicaMigrate(t *testing.T) {
 
 func TestReplica2ECSync(t *testing.T) {
 	dstPath := "tmp/test/sync/test.jpeg"
-	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-hohhot")
 	dstPath = "tmp/test/sync/test.txt"
-	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-hohhot")
 	jsonStr := []byte(`
 {
   "TaskType": "Sync",
@@ -561,10 +561,10 @@ func TestReplica2ECSync(t *testing.T) {
       "StorageMode": "Replica",
      "Clouds": [
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          },
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          }
       ] 
    },
@@ -572,13 +572,13 @@ func TestReplica2ECSync(t *testing.T) {
       "StorageMode": "EC",
       "Clouds": [
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          },
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          },
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          }
       ],
       "N": 3,
@@ -597,9 +597,9 @@ func TestReplica2ECSync(t *testing.T) {
 
 func TestReplicaUploadAndDelete(t *testing.T) {
 	dstPath := "tmp/test/sync/fail_if_not_delete.jpeg"
-	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-hohhot")
 	dstPath = "tmp/test/sync/test.txt"
-	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-hohhot")
 	jsonStr := []byte(`
 {
   "TaskType": "Delete",
@@ -609,10 +609,10 @@ func TestReplicaUploadAndDelete(t *testing.T) {
       "StorageMode": "Replica",
       "Clouds": [
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          },
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          }
       ]
    }
@@ -629,9 +629,9 @@ func TestReplicaUploadAndDelete(t *testing.T) {
 
 func TestECUploadAndDelete(t *testing.T) {
 	dstPath := "tmp/test/del/test.jpeg"
-	testECUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
+	testECUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-hohhot")
 	dstPath = "tmp/test/del/test.txt"
-	testECUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	testECUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-hohhot")
 	jsonStr := []byte(`
 {
   "TaskType": "Delete",
@@ -641,13 +641,13 @@ func TestECUploadAndDelete(t *testing.T) {
       "StorageMode": "EC",
       "Clouds": [
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          },
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          },
          {
-            "CloudID": "aliyun-beijing"
+            "CloudID": "aliyun-hohhot"
          }
       ],
       "N": 3,
@@ -666,9 +666,9 @@ func TestECUploadAndDelete(t *testing.T) {
 
 func TestMultiUpload(t *testing.T) {
 	dstPath := "tmp/test/upload/test.jpeg"
-	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-hohhot")
 	dstPath = "tmp/test/upload/test.txt"
-	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-hohhot")
 }
 
 func postFile(filename string, filepath string, target_url string, token string) (*http.Request, error) {
@@ -810,9 +810,9 @@ func testReplicaUpload(t *testing.T, dstPath string, localPath string, cloud str
 
 func TestRouter_GetUserTask(t *testing.T) {
 	dstPath := "tmp/test/upload/test.jpeg"
-	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/test.jpeg", "aliyun-hohhot")
 	dstPath = "tmp/test/upload/test.txt"
-	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-beijing")
+	testReplicaUpload(t, dstPath, "../test/tmp/test.txt", "aliyun-hohhot")
 	req, _ := http.NewRequest("GET", "/task/tester", nil)
 	resp := sendRequestAndRecord(req)
 	var reply RequestGetUserTaskReply

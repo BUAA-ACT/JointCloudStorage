@@ -330,18 +330,31 @@ func PostStoragePlan(c *gin.Context) {
 
 		// 新建用户
 		passwd := param.Password
-		// 密码为空时生成随机密码
+		// 密码为空时从数据库获取已有 User
+		var user dao.User
 		if passwd == "" {
-			passwd = genPassword()
-		}
-		user := dao.User{
-			UserId:       param.UserID,
-			Email:        param.UserID,
-			Nickname:     param.UserID,
-			Password:     AesEncrypt(passwd, *flagAESKey),
-			Role:         dao.RoleGuest,
-			LastModified: time.Now(),
-			StoragePlan:  param.StoragePlan,
+			user, err = db.GetUser(param.UserID)
+			if err != nil {
+				logError(err, requestID, "Get user failed", user)
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"RequestID": requestID,
+					"Code":      codeInternalError,
+					"Msg":       errorMsg[codeInternalError],
+				})
+				return
+			}
+			user.StoragePlan = param.StoragePlan
+			user.LastModified = time.Now()
+		} else {
+			user = dao.User{
+				UserId:       param.UserID,
+				Email:        param.UserID,
+				Nickname:     param.UserID,
+				Password:     AesEncrypt(passwd, *flagAESKey),
+				Role:         dao.RoleGuest,
+				LastModified: time.Now(),
+				StoragePlan:  param.StoragePlan,
+			}
 		}
 		err = db.InsertUser(user)
 		if err != nil {
