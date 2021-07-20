@@ -65,20 +65,7 @@ func GetAllClouds(con *gin.Context) {
 }
 
 func GetThisCloudName(con *gin.Context) {
-	fieldRequired := map[string]bool{
-		args.FieldWordAccessToken: true,
-	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
-	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
-		return
-	}
-	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
-	// check token
-	_, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
-	if !valid {
-		return
-	}
-	// get clouds with dao
+	// get this cloud with dao
 	cloud, getCloudSuccess := dao.CloudDao.GetCloud(*args.CloudID)
 	if !getCloudSuccess {
 		con.JSON(http.StatusOK, gin.H{

@@ -36,3 +36,7 @@ func (d *Dao) GetTask(taskId string, userID string, isSingle bool) (*[]model.Tas
 	}
 	return &tasks, true
 }
+
+func (d *Dao) GetUserMigrate(userID string) {
+
+}

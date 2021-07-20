@@ -39,3 +39,7 @@ func UserGetTask(con *gin.Context) {
 		},
 	})
 }
+
+func UserGetMigrationTask(con *gin.Context) {
+
+}

@@ -13,6 +13,17 @@ import (
 	"strings"
 )
 
+func putValueIntoMap(value interface{}, ok bool, field string, valueMap *map[string]interface{}, existMap *map[string]bool) {
+	if value == nil {
+		(*valueMap)[field] = ""
+		(*existMap)[field] = false
+	} else {
+		(*valueMap)[field] = value
+		(*existMap)[field] = ok
+	}
+	return
+}
+
 func getValueAndExist(con *gin.Context, fields *map[string]bool) (*map[string]interface{}, *map[string]bool) {
 	valueMap := make(map[string]interface{})
 	existMap := make(map[string]bool)
@@ -20,7 +31,7 @@ func getValueAndExist(con *gin.Context, fields *map[string]bool) (*map[string]in
 		for field := range *fields {
 			getValue, ok := con.GetQuery(field)
 			valueMap[field] = getValue
-			existMap[field] = ok
+			existMap[field] = ok && getValue != ""
 		}
 	} else if con.Request.Method == args.HttpMethodPost {
 		httpType := con.GetHeader("Content-Type")
@@ -38,13 +49,13 @@ func getValueAndExist(con *gin.Context, fields *map[string]bool) (*map[string]in
 					data = value
 				}
 				valueMap[field] = data
-				existMap[field] = ok
+				existMap[field] = ok && data != nil
 			}
 		} else if strings.Contains(httpType, args.HttpContentTypeUrlEncoded) {
 			for field := range *fields {
 				encodeValue, ok := con.GetPostForm(field)
 				valueMap[field] = encodeValue
-				existMap[field] = ok
+				existMap[field] = ok && encodeValue != ""
 			}
 		} else if strings.Contains(httpType, args.HttpContentTypeRaw) {
 			for field := range *fields {
@@ -68,7 +79,7 @@ func getValueAndExist(con *gin.Context, fields *map[string]bool) (*map[string]in
 			for field := range *fields {
 				jsonValue, ok := result[field]
 				valueMap[field] = jsonValue
-				existMap[field] = ok
+				existMap[field] = ok && jsonValue != nil
 			}
 		} else if strings.Contains(httpType, args.HttpContentTypeJavascript) {
 			for field := range *fields {
@@ -102,7 +113,7 @@ func getValueAndExist(con *gin.Context, fields *map[string]bool) (*map[string]in
 		if !existMap[field] {
 			cookieValue, err := con.Cookie(field)
 			valueMap[field] = cookieValue
-			existMap[field] = err == nil
+			existMap[field] = (err == nil) && (cookieValue != "")
 		}
 	}
 	// get field from headers
@@ -116,8 +127,9 @@ func getValueAndExist(con *gin.Context, fields *map[string]bool) (*map[string]in
 			newField := textproto.CanonicalMIMEHeaderKey(field)
 			header := con.Request.Header
 			if header[newField] != nil && len(header[newField]) != 0 {
-				valueMap[field] = header[newField][0]
-				existMap[field] = true
+				headerValue := header[newField][0]
+				valueMap[field] = headerValue
+				existMap[field] = headerValue != ""
 			}
 		}
 	}
