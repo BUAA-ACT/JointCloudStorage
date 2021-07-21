@@ -11,8 +11,8 @@ import (
 
 func (d *Dao) CreateNewUser(user model.User) bool {
 	col := d.client.Database(d.database).Collection(d.collection)
-	_, err := col.InsertOne(context.TODO(), user)
-	return !tools.PrintError(err)
+	_, insertErr := col.InsertOne(context.TODO(), user)
+	return !tools.PrintError(insertErr)
 }
 
 func (d *Dao) GetUserInfo(userID string) (*model.User, bool) {
@@ -21,7 +21,7 @@ func (d *Dao) GetUserInfo(userID string) (*model.User, bool) {
 	filter := bson.M{
 		"user_id": userID,
 	}
-	err := col.FindOne(context.TODO(), filter).Decode(&user)
+	findErr := col.FindOne(context.TODO(), filter).Decode(&user)
 	if user.AccessCredentials == nil {
 		user.AccessCredentials = make([]model.AccessCredential, 0)
 	}
@@ -37,7 +37,7 @@ func (d *Dao) GetUserInfo(userID string) (*model.User, bool) {
 	if user.StoragePlan.Clouds == nil {
 		user.StoragePlan.Clouds = make([]model.Cloud, 0)
 	}
-	if tools.PrintError(err) {
+	if tools.PrintError(findErr) {
 		return nil, false
 	}
 	return &user, true
@@ -62,8 +62,8 @@ func (d *Dao) SetUserStatusWithEmail(email string, status string) bool {
 			{"user_status", status},
 		},
 	}}
-	_, err := col.UpdateMany(context.TODO(), filter, update)
-	return !tools.PrintError(err)
+	_, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(changeErr)
 }
 
 func (d *Dao) SetUserStatusWithId(userID string, status string) bool {
@@ -76,8 +76,8 @@ func (d *Dao) SetUserStatusWithId(userID string, status string) bool {
 			{"user_status", status},
 		},
 	}}
-	_, err := col.UpdateMany(context.TODO(), filter, update)
-	return !tools.PrintError(err)
+	_, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(changeErr)
 }
 
 func (d *Dao) LoginWithEmail(email string, password string) (*model.User, bool) {
@@ -87,8 +87,8 @@ func (d *Dao) LoginWithEmail(email string, password string) (*model.User, bool) 
 		"password": code.AesEncrypt(password, *args.EncryptKey),
 	}
 	var user model.User
-	err := col.FindOne(context.TODO(), filter).Decode(&user)
-	return &user, err == nil
+	changeErr := col.FindOne(context.TODO(), filter).Decode(&user)
+	return &user, changeErr == nil
 }
 
 func (d *Dao) LoginWithId(userID string, password string) bool {
@@ -98,8 +98,8 @@ func (d *Dao) LoginWithId(userID string, password string) bool {
 		"password": code.AesEncrypt(password, *args.EncryptKey),
 	}
 	var user model.User
-	err := col.FindOne(context.TODO(), filter).Decode(&user)
-	return err == nil
+	findErr := col.FindOne(context.TODO(), filter).Decode(&user)
+	return findErr == nil
 }
 
 func (d *Dao) SetUserPassword(userID string, password string) bool {
@@ -112,8 +112,8 @@ func (d *Dao) SetUserPassword(userID string, password string) bool {
 			{"password", code.AesEncrypt(password, *args.EncryptKey)},
 		},
 	}}
-	_, err := col.UpdateMany(context.TODO(), filter, update)
-	return !tools.PrintError(err)
+	_, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(changeErr)
 }
 
 func (d *Dao) SetUserEmail(userID string, newEmail string) bool {
@@ -126,8 +126,8 @@ func (d *Dao) SetUserEmail(userID string, newEmail string) bool {
 			{"email", newEmail},
 		},
 	}}
-	_, err := col.UpdateMany(context.TODO(), filter, update)
-	return !tools.PrintError(err)
+	_, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(changeErr)
 }
 
 func (d *Dao) SetUserNickname(userID string, newNickname string) bool {
@@ -140,8 +140,8 @@ func (d *Dao) SetUserNickname(userID string, newNickname string) bool {
 			{"nickname", newNickname},
 		},
 	}}
-	_, err := col.UpdateMany(context.TODO(), filter, update)
-	return !tools.PrintError(err)
+	_, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(changeErr)
 }
 
 func (d *Dao) SetUserPreference(userID string, preference *model.Preference) bool {
@@ -154,8 +154,8 @@ func (d *Dao) SetUserPreference(userID string, preference *model.Preference) boo
 			{"preference", *preference},
 		},
 	}}
-	_, err := col.UpdateMany(context.TODO(), filter, update)
-	return !tools.PrintError(err)
+	_, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(changeErr)
 }
 
 func (d *Dao) SetUserStoragePlan(userID string, plan *model.StoragePlan) bool {
@@ -168,8 +168,8 @@ func (d *Dao) SetUserStoragePlan(userID string, plan *model.StoragePlan) bool {
 			{"storage_plan", *plan},
 		},
 	}}
-	_, err := col.UpdateMany(context.TODO(), filter, update)
-	return !tools.PrintError(err)
+	_, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(changeErr)
 }
 
 func (d *Dao) SetUserAccessCredential(userID string, credentials *[]model.AccessCredential) bool {
@@ -182,6 +182,6 @@ func (d *Dao) SetUserAccessCredential(userID string, credentials *[]model.Access
 			{"access_credentials", *credentials},
 		},
 	}}
-	_, err := col.UpdateMany(context.TODO(), filter, update)
-	return !tools.PrintError(err)
+	_, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(changeErr)
 }

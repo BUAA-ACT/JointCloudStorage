@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"net/http"
+	"log"
+	"time"
 )
 
 type HHH struct {
@@ -18,14 +19,14 @@ func UserTestPost(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		"header": true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
 	accessToken := (*valueMap)["header"].(string)
 	fmt.Println(accessToken)
 	return
-	//getQueryAndReturn(con,"EEE")
+	//getQueryAndReturnWithHttp(con,"EEE")
 	//requestID, _ := uuid.New()
 	//var param map[string]interface{}
 	//con.BindJSON(&param)
@@ -46,7 +47,7 @@ func UserTestGet(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		"header": true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -58,7 +59,7 @@ func HeaderTestPost(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		"header": true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -70,7 +71,7 @@ func CookieTestGet(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		"gin_cookie1": true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -190,59 +191,54 @@ var Manager = ClientManager{
 //	}
 //}
 
-var upGrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
 func WebSocketTestGet(con *gin.Context) {
-	ws, err := upGrader.Upgrade(con.Writer, con.Request, nil)
-	if err != nil {
+	ws, weErr := upGrader.Upgrade(con.Writer, con.Request, nil)
+	if tools.PrintError(weErr) {
 		return
 	}
-	defer func(ws *websocket.Conn) {
-		err := ws.Close()
-		if err != nil {
+	//if err != nil {
+	//	return
+	//}
+	//defer func(ws *websocket.Conn) {
+	//	err := ws.Close()
+	//	if err != nil {
+	//		tools.PrintError(err)
+	//	}
+	//}(ws)
+	//fieldRequired := map[string]bool{
+	//	args.FieldWordAccessToken: true,
+	//}
+	//valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
+	//if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
+	//	return
+	//}
+	//accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
+	////check token
+	//_, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	//if !valid {
+	//	return
+	//}
 
-		}
-	}(ws)
-
-	//// websocket connect
-	//client := &Client{Id: uuid.NewV4().String(), Socket: con, Send: make(chan []byte)}
-	//
-	//Manager.Register <- client
-	//
-	//go client.Read()
-	//go client.Write()
-
-	for {
-		// 读取ws中的数据
-		mt, message, err := ws.ReadMessage()
-		if err != nil {
-			// 客户端关闭连接时也会进入
-			fmt.Println(err)
-			break
-		}
-		// msg := &data{}
-		// json.Unmarshal(message, msg)
-		// fmt.Println(msg)
-		fmt.Println(mt)
-		fmt.Println(message)
-		fmt.Println(string(message))
-
-		// 如果客户端发送ping就返回pong,否则数据原封不动返还给客户端
-		if string(message) == "ping" {
-			message = []byte("pong")
-		}
-		// 写入ws数据 二进制返回
-		err = ws.WriteMessage(mt, message)
-		// 返回JSON字符串，借助gin的gin.H实现
-		// v := gin.H{"message": msg}
-		// err = ws.WriteJSON(v)
-		if err != nil {
-			break
-		}
+	type MessageStruct struct {
+		AccessToken string `json:"AccessToken"`
 	}
+	var a MessageStruct
+	// read data from ws
+	jsonErr := ws.ReadJSON(&a)
+	if jsonErr != nil {
+		log.Println("fucking json problem: " + jsonErr.Error())
+		return
+	}
+	go func() {
+		for {
+			v := gin.H{"message": "fuck you!"}
+			writeErr := ws.WriteJSON(v)
+			if writeErr != nil {
+				log.Println("fucking write json problem: " + jsonErr.Error())
+			}
+			fmt.Println("hahaha!")
+			time.Sleep(1000000000)
+		}
+	}()
 
 }

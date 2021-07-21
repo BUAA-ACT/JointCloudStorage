@@ -85,6 +85,9 @@ func IsDir(path string) bool {
 
 // RequiredFieldNotExist Field of the http request
 func RequiredFieldNotExist(requiredMap *map[string]bool, existMap *map[string]bool) bool {
+	if requiredMap == nil || existMap == nil {
+		return true
+	}
 	for field, required := range *requiredMap {
 		if required && !(*existMap)[field] {
 			return true

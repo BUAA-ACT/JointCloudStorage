@@ -14,14 +14,14 @@ func (d *Dao) GetAllClouds() (*[]model.Cloud, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{}
 	var clouds = make([]model.Cloud, 0)
-	result, err := col.Find(context.TODO(), filter)
-	if tools.PrintError(err) {
+	result, findErr := col.Find(context.TODO(), filter)
+	if tools.PrintError(findErr) {
 		return nil, false
 	}
 	for result.Next(context.TODO()) {
 		var cloud model.Cloud
-		err := result.Decode(&cloud)
-		if tools.PrintError(err) {
+		decodeErr := result.Decode(&cloud)
+		if tools.PrintError(decodeErr) {
 			return nil, false
 		}
 		clouds = append(clouds, cloud)
@@ -55,14 +55,14 @@ func (d *Dao) GetAllVoteCloud() (*[]model.CloudController, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{}
 	var cloudControllers = make([]model.CloudController, 0)
-	result, err := col.Find(context.TODO(), filter)
-	if tools.PrintError(err) {
+	result, findErr := col.Find(context.TODO(), filter)
+	if tools.PrintError(findErr) {
 		return nil, false
 	}
 	for result.Next(context.TODO()) {
 		var cloudController model.CloudController
-		err := result.Decode(&cloudController)
-		if tools.PrintError(err) {
+		decodeErr := result.Decode(&cloudController)
+		if tools.PrintError(decodeErr) {
 			return nil, false
 		}
 		cloudControllers = append(cloudControllers, cloudController)
@@ -74,14 +74,14 @@ func (d *Dao) GetAllAddedCloud() (*[]model.CloudController, bool) {
 	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{}
 	var addedClouds = make([]model.CloudController, 0)
-	result, err := col.Find(context.TODO(), filter)
-	if tools.PrintError(err) {
+	result, findErr := col.Find(context.TODO(), filter)
+	if tools.PrintError(findErr) {
 		return nil, false
 	}
 	for result.Next(context.TODO()) {
 		var addedCloud model.CloudController
-		err := result.Decode(&addedCloud)
-		if tools.PrintError(err) {
+		decodeErr := result.Decode(&addedCloud)
+		if tools.PrintError(decodeErr) {
 			return nil, false
 		}
 		addedClouds = append(addedClouds, addedCloud)

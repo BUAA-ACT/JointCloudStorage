@@ -113,21 +113,27 @@ const (
 	UserVerifyStatus       = "VERIFYING"
 	UserForbiddenStatus    = "FORBIDDEN"
 	UserNormalStatus       = "NORMAL"
-	UserTransportingStatus = "Transporting"
+	UserTransportingStatus = "TRANSPORTING"
 )
 
 /* task const*/
 const (
-	TaskTypeUpload   = "Upload"
-	TaskTypeDownload = "Download"
-	TaskTypeSync     = "Migrate"
-	TaskTypeDelete   = "Delete"
+	/* task type */
+	TaskTypeUpload          = "UPLOAD"
+	TaskTypeDownload        = "DOWNLOAD"
+	TaskTypeDownloadReplica = "DOWNLOAD_REPLICA"
+	TaskTypeIndex           = "INDEX"
+	TaskTypeSync            = "SYNC"
+	TaskTypeDelete          = "DELETE"
+	TaskTypeMigrate         = "MIGRATE"
 
-	TaskStateCreated   = "Created"
-	TaskStatePending   = "Pending"
-	TaskStateExecuting = "Executing"
-	TaskStateFailed    = "Failed"
-	TaskStateDone      = "Done"
+	/* task state */
+	TaskStateCreating   = "CREATING"
+	TaskStateWaiting    = "WAITING"
+	TaskStateProcessing = "PROCESSING"
+	TaskStateFinished   = "FINISH"
+	TaskStateFailed     = "FAIL"
+	TaskStateBlocked    = "BLOCKED"
 )
 
 /* file const */
