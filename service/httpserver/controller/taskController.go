@@ -74,7 +74,8 @@ func UserGetMigrationTask(con *gin.Context) {
 				}
 				writeErr := ws.WriteJSON(returnMap)
 				if writeErr != nil {
-					log.Println("fucking writing json problem: " + writeErr.Error())
+					log.Println("fucking writing json problem while database error: " + writeErr.Error())
+					break
 				}
 				break
 			}
@@ -87,11 +88,14 @@ func UserGetMigrationTask(con *gin.Context) {
 				}
 				writeErr := ws.WriteJSON(returnMap)
 				if writeErr != nil {
-					log.Println("fucking writing json problem: " + writeErr.Error())
+					log.Println("fucking writing json problem while finished: " + writeErr.Error())
+					break
 				}
 				break
 			}
-			if task.Progress >= progressNow && task.TaskState != args.TaskStateCreating && task.TaskState != args.TaskStateWaiting {
+			if task.Progress > progressNow && task.TaskState != args.TaskStateCreating && task.TaskState != args.TaskStateWaiting {
+				// set progress
+				progressNow = task.Progress
 				// return the progress of the task
 				returnMap = gin.H{
 					"code": args.CodeOK,
@@ -99,12 +103,18 @@ func UserGetMigrationTask(con *gin.Context) {
 					"data": task,
 				}
 				writeErr := ws.WriteJSON(returnMap)
+
 				if writeErr != nil {
-					log.Println("fucking writing json problem: " + writeErr.Error())
+					log.Println("fucking writing json problem while return progress: " + writeErr.Error())
+					break
 				}
 			}
-			// sleep in 0.1s
-			time.Sleep(100000000)
+			// sleep in 0.2s
+			time.Sleep(200000000)
+		}
+		closeErr := ws.Close()
+		if closeErr != nil {
+			log.Println(closeErr)
 		}
 	}()
 }
