@@ -226,12 +226,11 @@ func LoadProperties(configFilePath string) {
 	if err != nil {
 		*TestMode = false
 	}
-	if *TestMode {
+	if *TestMode || (*MongoUsername == "" && *MongoPassword == "") {
 		*MongoURL = *MongoTitle + *MongoAddr + ":" + strconv.FormatUint(*MongoPort, 10)
 	} else {
 		*MongoURL = *MongoTitle + *MongoUsername + ":" + *MongoPassword + "@" + *MongoAddr + ":" + strconv.FormatUint(*MongoPort, 10)
 	}
-
 	*SchedulerAddr = properties["SchedulerAddr"]
 	*SchedulerPort = properties["SchedulerPort"]
 	*SchedulerUrl = "http://" + *SchedulerAddr + ":" + *SchedulerPort
