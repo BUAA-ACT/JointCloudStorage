@@ -284,7 +284,6 @@ httpserver_docker_build:
 transporter_deploy_job:
   stage: deploy
   image: kroniak/ssh-client:latest
-  needs: ["transporter_docker_build"]
   only:
     refs:
       - master
