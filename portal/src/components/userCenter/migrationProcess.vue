@@ -1,42 +1,19 @@
 <template>
-  <div>
-    <plan-advice v-if="!migrating" />
-    <div class="no-new-plan" v-else>
-      <i class="el-icon-info tip-icon"></i><br />
-      数据迁移中……
-      <!-- TODO: 迁移进度     -->
-      <div>
-        <span>当前进度：</span>
-        <el-progress :percentage="curPercent" :stroke-width="20" text-inside :status="status"></el-progress>
-      </div>
-    </div>
-  </div>
+  <el-progress :percentage="curPercent" :stroke-width="20" text-inside></el-progress>
 </template>
 
 <script>
-import PlanAdvice from "@/components/userCenter/planAdvice.vue";
 import MyWS from "@/api/WebSocket";
 
 export default {
-  name: "dataMigration",
-  components: { PlanAdvice },
+  name: "migrationProcess",
   data() {
     return {
-      intervalId: null,
       ws: null,
-      curPercent: 0,
-      status: null
+      curPercent: 0
     };
   },
-  computed: {
-    migrating() {
-      return this.$store.getters.status === "FORBIDDEN";
-    }
-  },
   methods: {
-    checkCurStatus() {
-      this.$store.dispatch("updateInfo", "Status");
-    },
     initialMsg() {
       this.ws.send({ AccessToken: this.$store.getters.token });
     },
@@ -58,10 +35,9 @@ export default {
       this.ws = null;
     },
     retryConnection() {
-      this.$log("CONNECTION CLOSED due to ERROR");
       this.removeActions();
       this.ws.close();
-      this.$log("Trying to establish new WebSocket Connection...");
+      this.$log("CONNECTION CLOSED");
       this.ws = new MyWS("/task/getMigration");
     },
     addActions() {
@@ -77,8 +53,7 @@ export default {
       this.ws.removeAction(this.retryConnection, "error");
     }
   },
-  mounted() {
-    // this.intervalId = setInterval(this.checkCurStatus, 2000);
+  beforeMount() {
     this.ws = new MyWS("/task/getMigration");
     this.ws.addAction(this.initialMsg, "open");
     this.ws.addAction(this.updateProgress, "message");
@@ -86,9 +61,6 @@ export default {
     this.ws.addAction(this.retryConnection, "error");
   },
   beforeDestroy() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-    }
     if (this.ws) {
       this.removeActions();
       this.ws.close();
@@ -98,9 +70,4 @@ export default {
 };
 </script>
 
-<style scoped lang="scss">
-.tip-icon {
-  font-size: 100px;
-  color: #909399;
-}
-</style>
+<style scoped></style>
