@@ -25,14 +25,14 @@ func (d *Dao) ListFiles(userID string, path string, isDir bool) (*[]model.File, 
 	} else {
 		filter = filterFile
 	}
-	result, err := col.Find(context.TODO(), filter)
-	if tools.PrintError(err) {
+	result, findErr := col.Find(context.TODO(), filter)
+	if tools.PrintError(findErr) {
 		return nil, false
 	}
 	for result.Next(context.TODO()) {
 		var file model.File
-		err := result.Decode(&file)
-		if tools.PrintError(err) {
+		decodeErr := result.Decode(&file)
+		if tools.PrintError(decodeErr) {
 			return nil, false
 		}
 		files = append(files, file)
@@ -46,14 +46,14 @@ func (d *Dao) CheckFileStatus(userID string, path string) (*[]model.File, bool) 
 		"file_id": userID + path,
 	}
 	files := make([]model.File, 0)
-	result, err := col.Find(context.TODO(), filter)
-	if tools.PrintError(err) {
+	result, findErr := col.Find(context.TODO(), filter)
+	if tools.PrintError(findErr) {
 		return nil, false
 	}
 	for result.Next(context.TODO()) {
 		var file model.File
-		err := result.Decode(&file)
-		if tools.PrintError(err) {
+		decodeErr := result.Decode(&file)
+		if tools.PrintError(decodeErr) {
 			return nil, false
 		}
 		files = append(files, file)

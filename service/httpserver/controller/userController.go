@@ -18,7 +18,7 @@ func UserRegister(con *gin.Context) {
 		args.FieldWordPassword: true,
 		args.FieldWordNickname: false,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -78,7 +78,7 @@ func UserCheckVerifyCode(con *gin.Context) {
 		args.FieldWordEmail:      true,
 		args.FieldWordVerifyCode: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -122,7 +122,7 @@ func UserLogin(con *gin.Context) {
 		args.FieldWordEmail:    true,
 		args.FieldWordPassword: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -173,7 +173,7 @@ func UserLogout(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -208,7 +208,7 @@ func UserCheckValidity(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -234,7 +234,7 @@ func UserChangePassword(con *gin.Context) {
 		args.FieldWordOriginPassword: true,
 		args.FieldWordNewPassword:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -309,7 +309,7 @@ func UserChangeEmail(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordNewEmail:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -371,7 +371,7 @@ func UserChangeNickname(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordNewNickname: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -397,7 +397,7 @@ func UserGetInfo(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -429,7 +429,7 @@ func UserSetPreference(con *gin.Context) {
 		args.FieldWordAvailability: true,
 		args.FieldWordLatency:      false,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -472,7 +472,7 @@ func UserGetKeys(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -502,7 +502,7 @@ func UserAddKey(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordComment:     false,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -531,11 +531,11 @@ func UserAddKey(con *gin.Context) {
 
 	//sync it with scheduler 由于 scheduler 尚未实现 key 的同步，先禁用该同步
 	key := model.AccessKey{
-		UserID:    userID,
-		AccessKey: accessKey,
-		SecretKey: secretKey,
-		Comment:   comment,
-		Available: true,
+		UserID:     userID,
+		AccessKey:  accessKey,
+		SecretKey:  secretKey,
+		Comment:    comment,
+		Available:  true,
 		CreateTime: time.Now(),
 	}
 	postKeyResponse, postKeySuccess := scheduler.PostKeyToScheduler(&key)
@@ -572,7 +572,7 @@ func UserDeleteKey(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordAccessKey:   true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -632,7 +632,7 @@ func UserChangeKeyStatus(con *gin.Context) {
 		args.FieldWordAccessKey:   true,
 		args.FieldWordStatus:      true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -700,7 +700,7 @@ func UserChangeKeyComment(con *gin.Context) {
 		args.FieldWordAccessKey:   true,
 		args.FieldWordComment:     false,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -772,7 +772,7 @@ func UserRemakeKey(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordAccessKey:   true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}

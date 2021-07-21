@@ -15,14 +15,14 @@ func (d *Dao) GetAllKeys(userID string) (*[]model.AccessKey, bool) {
 		"user_id": userID,
 	}
 	var keys = make([]model.AccessKey, 0)
-	result, err := col.Find(context.TODO(), filter)
-	if tools.PrintError(err) {
+	result, findErr := col.Find(context.TODO(), filter)
+	if tools.PrintError(findErr) {
 		return nil, false
 	}
 	for result.Next(context.TODO()) {
 		var key model.AccessKey
-		err := result.Decode(&key)
-		if tools.PrintError(err) {
+		decodeErr := result.Decode(&key)
+		if tools.PrintError(decodeErr) {
 			return nil, false
 		}
 		keys = append(keys, key)
@@ -37,8 +37,8 @@ func (d *Dao) GetWithAccessKey(userID string, accessKey string) (*model.AccessKe
 		"access_key": accessKey,
 	}
 	var key model.AccessKey
-	err := col.FindOne(context.TODO(), filter).Decode(&key)
-	if tools.PrintError(err) {
+	findErr := col.FindOne(context.TODO(), filter).Decode(&key)
+	if tools.PrintError(findErr) {
 		return nil, false
 	}
 	return &key, true
@@ -55,8 +55,8 @@ func (d *Dao) InsertKey(userID string, accessKey string, secretKey string, comme
 		CreateTime: timeNow,
 		Available:  true,
 	}
-	_, err := col.InsertOne(context.TODO(), key)
-	return !tools.PrintError(err)
+	_, insertErr := col.InsertOne(context.TODO(), key)
+	return !tools.PrintError(insertErr)
 }
 
 func (d *Dao) DeleteKey(userID string, accessKey string) (*mongo.DeleteResult, bool) {
@@ -65,8 +65,8 @@ func (d *Dao) DeleteKey(userID string, accessKey string) (*mongo.DeleteResult, b
 		"user_id":    userID,
 		"access_key": accessKey,
 	}
-	result, err := col.DeleteMany(context.TODO(), filter)
-	return result, !tools.PrintError(err)
+	result, deleteErr := col.DeleteMany(context.TODO(), filter)
+	return result, !tools.PrintError(deleteErr)
 }
 
 func (d *Dao) ChangeKeyStatus(userID string, accessKey string, status bool) (*mongo.UpdateResult, bool) {
@@ -80,8 +80,8 @@ func (d *Dao) ChangeKeyStatus(userID string, accessKey string, status bool) (*mo
 			{"available", status},
 		},
 	}}
-	result, err := col.UpdateMany(context.TODO(), filter, update)
-	return result, !tools.PrintError(err)
+	result, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	return result, !tools.PrintError(changeErr)
 }
 
 func (d *Dao) RemakeKey(userID string, accessKey string, secretKey string) (*mongo.UpdateResult, bool) {
@@ -95,8 +95,8 @@ func (d *Dao) RemakeKey(userID string, accessKey string, secretKey string) (*mon
 			{"secret_key", secretKey},
 		},
 	}}
-	result, err := col.UpdateMany(context.TODO(), filter, update)
-	return result, !tools.PrintError(err)
+	result, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	return result, !tools.PrintError(changeErr)
 }
 
 func (d *Dao) ChangeKeyComment(userID string, accessKey string, newComment string) (*mongo.UpdateResult, bool) {
@@ -110,6 +110,6 @@ func (d *Dao) ChangeKeyComment(userID string, accessKey string, newComment strin
 			{"comment", newComment},
 		},
 	}}
-	result, err := col.UpdateMany(context.TODO(), filter, update)
-	return result, !tools.PrintError(err)
+	result, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	return result, !tools.PrintError(changeErr)
 }

@@ -18,7 +18,7 @@ func UserGetAllStoragePlan(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -76,7 +76,7 @@ func UserGetAdvice(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -106,7 +106,7 @@ func UserAbandonAdvice(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -141,7 +141,7 @@ func UserChooseStoragePlan(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordStoragePlan: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -206,7 +206,7 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -335,7 +335,7 @@ func UserSetStoragePlan(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordStoragePlan: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, fieldRequired)
 	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
 		return
 	}
