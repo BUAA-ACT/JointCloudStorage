@@ -268,8 +268,8 @@ func createTask(uid string, taskType model.TaskType, srcPath string, dstPath str
 		SourcePath:      srcPath,
 		DestinationPath: dstPath,
 		TaskOptions: &model.TaskOptions{
-			SourceStoragePlan: sourceStoragePlan,
-			DestinationPlan:   destinationPlan,
+			SourceStoragePlan:      sourceStoragePlan,
+			DestinationStoragePlan: destinationPlan,
 		},
 		Progress: 0,
 	}

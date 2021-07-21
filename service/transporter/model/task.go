@@ -7,43 +7,43 @@ import (
 	"time"
 )
 
-type TaskType string
+type TaskType = string
 type TaskState string
 
 const (
 	DOWNLOAD         TaskType = "DOWNLOAD"
 	DOWNLOAD_REPLICA TaskType = "DOWNLOAD_REPLICA"
-	UPLOAD           TaskType = "Upload"
-	INDEX            TaskType = "Index"
-	SYNC             TaskType = "Sync"
-	DELETE           TaskType = "Delete"
-	MIGRATE          TaskType = "Migrate"
+	UPLOAD           TaskType = "UPLOAD"
+	INDEX            TaskType = "INDEX"
+	SYNC             TaskType = "SYNC"
+	DELETE           TaskType = "DELETE"
+	MIGRATE          TaskType = "MIGRATE"
 )
 
 const (
-	CREATING   TaskState = "CREATING"
-	WAITING    TaskState = "WAITING"
-	PROCESSING TaskState = "PROCESSING"
-	FINISH     TaskState = "FINISH"
-	FAIL       TaskState = "FAIL"
-	BLOCKED    TaskState = "BLOCKED"
+	CREATING   TaskState = "CREATING"   // transporter 内部状态，还不能处理
+	WAITING    TaskState = "WAITING"    // 任务就绪，加入处理队列，随时可以处理
+	PROCESSING TaskState = "PROCESSING" // 正在处理
+	FINISH     TaskState = "FINISH"     // 成功结束
+	FAIL       TaskState = "FAIL"       // 失败
+	BLOCKED    TaskState = "BLOCKED"    // 阻塞，等待用户进一步的数据
 )
 
 type Task struct {
 	Tid             primitive.ObjectID `bson:"_id,omitempty"`
-	TaskType        TaskType
-	State           TaskState
-	StartTime       time.Time
-	Uid             string
-	SourcePath      string
-	DestinationPath string
-	TaskOptions     *TaskOptions
-	Progress        float64
+	TaskType        TaskType           `bson:"task_type"`
+	State           TaskState          `bson:"task_state"`
+	StartTime       time.Time          `bson:"start_time"`
+	Uid             string             `bson:"user_id"`
+	SourcePath      string             `bson:"source_path"`
+	DestinationPath string             `bson:"destination_path"`
+	TaskOptions     *TaskOptions       `bson:"task_options"`
+	Progress        float64            `bson:"progress"`
 }
 
 type TaskOptions struct {
-	SourceStoragePlan *StoragePlan
-	DestinationPlan   *StoragePlan
+	SourceStoragePlan      *StoragePlan `bson:"source_storage_plan"`
+	DestinationStoragePlan *StoragePlan `bson:"destination_storage_plan"`
 }
 
 type StorageModel string
@@ -121,14 +121,14 @@ func (t *Task) Check() bool {
 		if t.DestinationPath == "" {
 			return false
 		}
-		switch t.TaskOptions.DestinationPlan.StorageMode {
+		switch t.TaskOptions.DestinationStoragePlan.StorageMode {
 		case StorageModelReplica:
 		case StorageModelEC:
 		default:
 			util.Log(logrus.ErrorLevel, "task check", "wrong task type", "", string(t.TaskType), "")
 			return false
 		}
-		if len(t.TaskOptions.DestinationPlan.Clouds) == 0 {
+		if len(t.TaskOptions.DestinationStoragePlan.Clouds) == 0 {
 			util.Log(logrus.ErrorLevel, "task check", "no destination cloud", "", "", "")
 			return false
 		}

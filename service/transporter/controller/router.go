@@ -24,7 +24,7 @@ type Router struct {
 }
 
 type RequestTask struct {
-	TaskType               string                `json:"TaskType"`
+	TaskType               model.TaskType        `json:"TaskType"`
 	Uid                    string                `json:"UserID"`
 	DestinationPath        string                `json:"DestinationPath"`
 	SourcePath             string                `json:"SourcePath"`
@@ -143,9 +143,10 @@ func (router *Router) CreateTask(c *gin.Context) {
 		c.JSON(util.ErrorCodeWrongRequestFormat, reply)
 		return
 	}
+	reqTask.TaskType = strings.ToUpper(reqTask.TaskType)
 
 	switch reqTask.TaskType {
-	case "Upload":
+	case model.UPLOAD:
 		task := RequestTask2Task(&reqTask, model.UPLOAD, model.BLOCKED)
 		if !task.Check() {
 			taskRequestReplyErr(util.ErrorCodeWrongRequestFormat, util.ErrorMsgWrongRequestFormat+": task not pass check", c)
@@ -166,7 +167,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 			},
 		}
 		c.JSON(http.StatusOK, requestTaskReply)
-	case "Download":
+	case model.DOWNLOAD:
 		// req Task 转换为 model Task
 		task := RequestTask2Task(&reqTask, model.DOWNLOAD, model.CREATING)
 		var taskType model.TaskType
@@ -227,7 +228,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 			}
 			c.JSON(http.StatusOK, requestTaskReply)
 		}
-	case "Sync":
+	case model.SYNC:
 		task := RequestTask2Task(&reqTask, model.SYNC, model.CREATING)
 		tid, err := router.processor.taskStorage.AddTask(task)
 		if err != nil {
@@ -243,7 +244,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 			},
 		}
 		c.JSON(http.StatusOK, requestTaskReply)
-	case "Delete":
+	case model.DELETE:
 		task := RequestTask2Task(&reqTask, model.DELETE, model.CREATING)
 		// 删除任务使用同步处理
 		err = router.processor.DeleteFileInfo(task)
@@ -265,7 +266,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 			},
 		}
 		c.JSON(http.StatusOK, requestTaskReply)
-	case "Migrate":
+	case model.MIGRATE:
 		task := RequestTask2Task(&reqTask, model.MIGRATE, model.CREATING)
 		tid, err := router.processor.taskStorage.AddTask(task)
 		if err != nil {
@@ -433,7 +434,7 @@ func RequestTask2Task(reqTask *RequestTask, taskType model.TaskType, state model
 				N:           realSourceN,
 				K:           realSourceK,
 			},
-			DestinationPlan: &model.StoragePlan{
+			DestinationStoragePlan: &model.StoragePlan{
 				StorageMode: model.StorageModel(reqTask.DestinationStoragePlan.StorageMode),
 				Clouds:      dstCloudsID,
 				N:           realDestN,

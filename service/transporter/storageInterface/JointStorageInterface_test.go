@@ -86,7 +86,7 @@ func TestJointStorageInterface_PutObject(t *testing.T) {
 }
 
 func TestJointStorageInterface_GetMethod(t *testing.T) {
-	req, _ := http.NewRequest("GET", "/object/test.txt", nil)
+	req, _ := http.NewRequest("GET", "/object/jsiTest.txt", nil)
 	req, _ = JSISign(req, AK, SK)
 	recorder := httptest.NewRecorder()
 	JSI.ServeHTTP(recorder, req)
