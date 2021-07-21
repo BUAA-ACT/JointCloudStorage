@@ -169,7 +169,7 @@ func getVerifyAndReturnWithWebSocket(ws *websocket.Conn, fields *map[string]bool
 	var jsonMap map[string]interface{}
 	jsonErr := ws.ReadJSON(&jsonMap)
 	if jsonErr != nil {
-		log.Println("fucking reading json problem: " + jsonErr.Error())
+		log.Println("fucking reading json problem while json error in head: " + jsonErr.Error())
 		returnMap := gin.H{
 			"code": args.CodeJsonError,
 			"msg":  "json解析有误",

@@ -51,3 +51,18 @@ func (d *Dao) GetUserMigrate(userID string) (*model.Task, bool) {
 	}
 	return &migrationTask, true
 }
+
+func (d *Dao) SetUserTask(userID string, progress float64) bool {
+	col := d.client.Database(d.database).Collection(d.collection)
+	filter := bson.M{
+		"user_id":   userID,
+		"task_type": args.TaskTypeMigrate,
+	}
+	update := bson.D{{"$set",
+		bson.D{
+			{"progress", progress},
+		},
+	}}
+	_, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	return !tools.PrintError(changeErr)
+}
