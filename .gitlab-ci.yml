@@ -292,6 +292,7 @@ transporter_deploy_job:
       - dev
     changes:
       - service/transporter/**/*
+      - .gitlab-ci.yml
       
   before_script:
     - mkdir -p ~/.ssh
