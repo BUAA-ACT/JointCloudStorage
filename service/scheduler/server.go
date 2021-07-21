@@ -246,7 +246,7 @@ func PostStoragePlan(c *gin.Context) {
 		plan := &param.StoragePlan
 		plan.StoragePrice = calStoragePrice(*plan)
 		plan.Availability = calAvailability(*plan)
-		plan.TrafficPrice = calTrafficPrice(*plan)
+		plan.TrafficPrice = calTrafficPrice(*plan, false)
 		var users []dao.AccessCredential
 		ch := make(chan *dao.AccessCredential)
 

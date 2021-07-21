@@ -58,7 +58,7 @@ func storagePlan(param GetStoragePlanParam, clouds []dao.Cloud) GetStoragePlanDa
 				}
 
 				// 计算并验证流量成本
-				t := calTrafficPrice(plan)
+				t := calTrafficPrice(plan, true)
 				if t > param.TrafficPrice {
 					continue
 				}
@@ -105,17 +105,19 @@ func calStoragePrice(plan dao.StoragePlan) float64 {
 	return price
 }
 
-func calTrafficPrice(plan dao.StoragePlan) float64 {
+func calTrafficPrice(plan dao.StoragePlan, resort bool) float64 {
 	clouds := plan.Clouds
-	sort.Slice(clouds, func(i, j int) bool {
-		if clouds[i].TrafficPrice != clouds[j].TrafficPrice {
-			return clouds[i].TrafficPrice < clouds[j].TrafficPrice
-		} else if clouds[i].StoragePrice != clouds[j].StoragePrice {
-			return clouds[i].StoragePrice < clouds[j].StoragePrice
-		} else {
-			return clouds[i].Availability > clouds[j].Availability
-		}
-	})
+	if resort {
+		sort.Slice(clouds, func(i, j int) bool {
+			if clouds[i].TrafficPrice != clouds[j].TrafficPrice {
+				return clouds[i].TrafficPrice < clouds[j].TrafficPrice
+			} else if clouds[i].StoragePrice != clouds[j].StoragePrice {
+				return clouds[i].StoragePrice < clouds[j].StoragePrice
+			} else {
+				return clouds[i].Availability > clouds[j].Availability
+			}
+		})
+	}
 
 	if plan.K == 1 {
 		return clouds[0].TrafficPrice

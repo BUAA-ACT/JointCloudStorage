@@ -32,8 +32,9 @@ var Config = Configuration{
 	Host:                 "0.0.0.0",
 	ZookeeperHost:        "192.168.105.13",
 	SchedulerHost:        "http://192.168.105.13:8282",
-	LocalCloudID:         "aliyun-qingdao",
-	EnableHttps:          true,
+	//SchedulerHost:        "http://127.0.0.1:8082",
+	LocalCloudID: "aliyun-qingdao",
+	EnableHttps:  true,
 }
 
 type DBConfiguration struct {

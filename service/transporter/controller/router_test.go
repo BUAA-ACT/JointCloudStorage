@@ -163,7 +163,7 @@ func waitProcessorAllDone() {
 	for true {
 		time.Sleep(time.Millisecond * 500)
 		if *testEnv == "local" {
-			if globalTaskProcessor.taskStorage.IsAllDone() {
+			if globalTaskProcessor.TaskStorage.IsAllDone() {
 				return
 			}
 		} else if *testEnv == "cloud" {
@@ -717,7 +717,7 @@ func postFile(filename string, filepath string, target_url string, token string)
 func waitUntilAllDone(processor *TaskProcessor) {
 	for true {
 		time.Sleep(time.Millisecond * 500)
-		if processor.taskStorage.IsAllDone() {
+		if processor.TaskStorage.IsAllDone() {
 			return
 		}
 	}

@@ -5,7 +5,12 @@ import (
 	"act.buaa.edu.cn/jcspan/transporter/model"
 	"act.buaa.edu.cn/jcspan/transporter/util"
 	"bytes"
+	"context"
+	"image"
+	"image/color"
+	"image/jpeg"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -52,6 +57,7 @@ func TestMain(m *testing.M) {
 	dao, _ := model.InitDao()
 	accessKeyDB := model.AccessKeyDB{Dao: dao}
 	processor.AccessKeyDatabase = &accessKeyDB
+	processor.StartProcessTasks(context.Background())
 
 	key, _ := processor.AccessKeyDatabase.GenerateKeys("jsitest")
 	AK = key.AccessKey
@@ -59,6 +65,24 @@ func TestMain(m *testing.M) {
 	JSI = NewInterface(&processor)
 	exitCode := m.Run()
 	os.Exit(exitCode)
+}
+
+func genTestFile() {
+	os.MkdirAll("../test/tmp/", os.ModePerm)
+	buf := new(bytes.Buffer)
+	alpha := image.NewAlpha(image.Rect(0, 0, 1000, 1000))
+	for x := 0; x < 1000; x++ {
+		for y := 0; y < 1000; y++ {
+			alpha.Set(x, y, color.Alpha{uint8(x % 256)}) //设定alpha图片的透明度
+		}
+	}
+	jpeg.Encode(buf, alpha, nil)
+	err := ioutil.WriteFile("../test/tmp/test.jpeg", buf.Bytes(), 0644)
+	content := []byte("jcsPan transporter Test SincereXIA @ " + time.Now().String())
+	err = ioutil.WriteFile("../test/tmp/test.txt", content, 0644)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestNewInterface(t *testing.T) {
@@ -71,7 +95,7 @@ func TestNewInterface(t *testing.T) {
 
 func TestJointStorageInterface_PutObject(t *testing.T) {
 	bodyBuf := new(bytes.Buffer)
-	fh, err := os.Open("../test/test.txt")
+	fh, err := os.Open("../test/tmp/test.txt")
 	if err != nil {
 		t.Errorf("error opening file")
 	}
@@ -130,6 +154,49 @@ func TestJointStorageInterface_GetStorageInfo(t *testing.T) {
 }
 
 func TestJointStorageInterface_PostStoragePlan(t *testing.T) {
-	req, _ := http.NewRequest("POST", "/state/storage", nil)
-	print(req)
+	TestJointStorageInterface_PutObject(t)
+	TestJointStorageInterface_GetMethod(t)
+	waitAllDone()
+	jsonStr := []byte(`
+{
+    "StorageMode": "Replica",
+    "Clouds": [
+        "aliyun-hangzhou","aliyun-hohhot","aliyun-qingdao"
+    ],
+    "N": 3,
+    "K": 1
+}`)
+	req, _ := http.NewRequest("POST", "/state/plan", bytes.NewBuffer(jsonStr))
+	req, _ = JSISign(req, AK, SK)
+	recorder := httptest.NewRecorder()
+	JSI.ServeHTTP(recorder, req)
+	taskId := recorder.Body.String()
+	t.Logf("获取到迁移 taskID: %s", taskId)
+	JSI.processor.TaskStorage.IsAllDone()
+	waitAllDone()
+	TestJointStorageInterface_GetMethod(t)
+	jsonStr = []byte(`
+{
+    "StorageMode": "EC",
+    "Clouds": [
+        "aliyun-qingdao","aliyun-hohhot","aliyun-hangzhou"
+    ],
+    "N": 3,
+    "K": 2
+}`)
+	req, _ = http.NewRequest("POST", "/state/plan", bytes.NewBuffer(jsonStr))
+	req, _ = JSISign(req, AK, SK)
+	recorder = httptest.NewRecorder()
+	JSI.ServeHTTP(recorder, req)
+	taskId = recorder.Body.String()
+	t.Logf("获取到迁移 taskID: %v", taskId)
+	JSI.processor.TaskStorage.IsAllDone()
+	waitAllDone()
+	TestJointStorageInterface_GetMethod(t)
+}
+
+func waitAllDone() {
+	for !JSI.processor.TaskStorage.IsAllDone() {
+		time.Sleep(500 * time.Millisecond)
+	}
 }

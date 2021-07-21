@@ -35,7 +35,7 @@ func NewInterface(processor *controller.TaskProcessor) *JointStorageInterface {
 	{
 		state.GET("/storage", jsi.JSIAuthMiddleware(), jsi.GetStorageInfo)
 		state.GET("/plan", jsi.JSIAuthMiddleware(), jsi.GetStoragePlan)
-		state.POST("/plan", jsi.JSIAuthMiddleware())
+		state.POST("/plan", jsi.JSIAuthMiddleware(), jsi.PostStoragePlan)
 	}
 
 	return &jsi
@@ -197,7 +197,7 @@ func (jsi *JointStorageInterface) PostStoragePlan(c *gin.Context) {
 		_ = c.AbortWithError(http.StatusBadRequest, errors.New("set storage plan fail"))
 		return
 	}
-	task := createTask(userInfo.UserId, model.SYNC, "", "", &userInfo.StoragePlan, userPlan)
+	task := createTask(userInfo.UserId, model.SYNC, "/", "/", &userInfo.StoragePlan, userPlan)
 	tid, err := jsi.processor.AddTask(task)
 	if err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, errors.New("internal error"))

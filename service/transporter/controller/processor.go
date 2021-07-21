@@ -17,7 +17,7 @@ import (
 )
 
 type TaskProcessor struct {
-	taskStorage       model.TaskStorage
+	TaskStorage       model.TaskStorage
 	CloudDatabase     model.CloudDatabase
 	FileDatabase      model.FileDatabase
 	Lock              *Lock
@@ -30,7 +30,7 @@ type TaskProcessor struct {
 }
 
 func (processor *TaskProcessor) SetTaskStorage(storage model.TaskStorage) {
-	processor.taskStorage = storage
+	processor.TaskStorage = storage
 }
 
 func (processor *TaskProcessor) SetStorageDatabase(database model.CloudDatabase) {
@@ -40,14 +40,14 @@ func (processor *TaskProcessor) SetStorageDatabase(database model.CloudDatabase)
 // 创建任务
 func (processor *TaskProcessor) CreateTask(taskType model.TaskType, sid string, sourcePath string, destinationPath string) {
 	task := model.NewTask(taskType, time.Now(), sid, sourcePath, destinationPath)
-	_, err := processor.taskStorage.AddTask(task)
+	_, err := processor.TaskStorage.AddTask(task)
 	if err != nil {
 		log.Panicf("Create Task ERROR: %v", err)
 	}
 }
 
 func (processor *TaskProcessor) AddTask(task *model.Task) (tid primitive.ObjectID, err error) {
-	tid, err = processor.taskStorage.AddTask(task)
+	tid, err = processor.TaskStorage.AddTask(task)
 	if err != nil {
 		return tid, err
 	}
@@ -72,20 +72,20 @@ func (processor *TaskProcessor) StartProcessTasks(ctx context.Context) {
 func (processor *TaskProcessor) SetProcessResult(t *model.Task, err error) {
 	if err != nil {
 		logrus.Errorf("Process Task Fail: %v", err)
-		processor.taskStorage.SetTaskState(t.Tid, model.FAIL)
+		processor.TaskStorage.SetTaskState(t.Tid, model.FAIL)
 	} else {
 		logrus.Infof("Process %v Task Sucess, tid :%v", t.TaskType, t.Tid.Hex())
-		processor.taskStorage.SetTaskState(t.Tid, model.FINISH)
+		processor.TaskStorage.SetTaskState(t.Tid, model.FINISH)
 	}
 }
 
 // 处理任务
 func (processor *TaskProcessor) ProcessTasks() {
-	tasks := processor.taskStorage.GetTaskList(0)
+	tasks := processor.TaskStorage.GetTaskList(0)
 	finish := make(chan primitive.ObjectID)
 	for _, task := range tasks {
 		task.State = model.PROCESSING
-		processor.taskStorage.SetTaskState(task.Tid, model.PROCESSING)
+		processor.TaskStorage.SetTaskState(task.Tid, model.PROCESSING)
 		switch task.GetTaskType() {
 		case model.UPLOAD:
 			go func(t *model.Task) {
@@ -180,7 +180,7 @@ func (processor *TaskProcessor) DeleteStorageFile(t *model.Task) (err error) {
 	return
 }
 
-// 弃用
+// DeleteSingleFile 删除单个文件，连同文件元信息一同删除
 func (processor *TaskProcessor) DeleteSingleFile(t *model.Task) error {
 	fileInfo, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
 	if err != nil {
@@ -519,7 +519,7 @@ func (processor *TaskProcessor) ProcessSyncSingleFile(t *model.Task) (err error)
 	err = copier.Copy(&subTask, t)
 	subTask.TaskType = model.DELETE
 	subTask.TaskOptions.DestinationStoragePlan = nil
-	err = processor.DeleteSingleFile(&subTask)
+	err = processor.DeleteStorageFile(&subTask)
 	if err != nil {
 		return err
 	}
@@ -560,7 +560,7 @@ func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
 				alreadyMigrate += size
 				progress = float64(alreadyMigrate) / float64(totalSize) * 100
 				t.Progress = progress
-				_ = processor.taskStorage.SetTask(t.Tid, t)
+				_ = processor.TaskStorage.SetTask(t.Tid, t)
 				logrus.Debugf("Task %v Process: %v", t.Tid, t.Progress)
 			}
 		}
@@ -594,7 +594,7 @@ func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
 	}
 	done <- true
 	t.Progress = 100.0
-	_ = processor.taskStorage.SetTask(t.Tid, t)
+	_ = processor.TaskStorage.SetTask(t.Tid, t)
 	logrus.Debugf("Task %v Process: %v", t.Tid, t.Progress)
 	return nil //todo
 }

@@ -104,7 +104,7 @@ func (router *Router) GetState(c *gin.Context) {
 	key := c.Param("key")
 	switch key {
 	case "process_state":
-		if router.processor.taskStorage.IsAllDone() {
+		if router.processor.TaskStorage.IsAllDone() {
 			c.String(http.StatusOK, "done")
 		} else {
 			c.String(http.StatusOK, "working")
@@ -152,7 +152,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 			taskRequestReplyErr(util.ErrorCodeWrongRequestFormat, util.ErrorMsgWrongRequestFormat+": task not pass check", c)
 			return
 		}
-		tid, err := router.processor.taskStorage.AddTask(task)
+		tid, err := router.processor.TaskStorage.AddTask(task)
 		if err != nil {
 			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 			return
@@ -213,7 +213,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 			}
 			c.JSON(http.StatusOK, requestTaskReply)
 		} else {
-			tid, err := router.processor.taskStorage.AddTask(task)
+			tid, err := router.processor.TaskStorage.AddTask(task)
 			if err != nil {
 				taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 				return
@@ -230,7 +230,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 		}
 	case model.SYNC:
 		task := RequestTask2Task(&reqTask, model.SYNC, model.CREATING)
-		tid, err := router.processor.taskStorage.AddTask(task)
+		tid, err := router.processor.TaskStorage.AddTask(task)
 		if err != nil {
 			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 			return
@@ -252,7 +252,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 			return
 		}
-		tid, err := router.processor.taskStorage.AddTask(task)
+		tid, err := router.processor.TaskStorage.AddTask(task)
 		if err != nil {
 			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 			return
@@ -268,7 +268,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 		c.JSON(http.StatusOK, requestTaskReply)
 	case model.MIGRATE:
 		task := RequestTask2Task(&reqTask, model.MIGRATE, model.CREATING)
-		tid, err := router.processor.taskStorage.AddTask(task)
+		tid, err := router.processor.TaskStorage.AddTask(task)
 		if err != nil {
 			taskRequestReplyErr(util.ErrorCodeInternalErr, err.Error(), c)
 			return
@@ -294,7 +294,7 @@ func (router *Router) CreateTask(c *gin.Context) {
 
 func (router *Router) GetUserTask(c *gin.Context) {
 	uid := c.Param("uid")
-	tasks := router.processor.taskStorage.GetUserTask(uid)
+	tasks := router.processor.TaskStorage.GetUserTask(uid)
 	requestTaskReply := RequestGetUserTaskReply{
 		Code:  http.StatusOK,
 		Msg:   "get user tasks ok",
@@ -335,7 +335,7 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 	uid := c.MustGet("tokenUid").(string)
 	tid := c.MustGet("tokenTid").(string)
 	taskid, err := primitive.ObjectIDFromHex(tid)
-	task, err := router.processor.taskStorage.GetTask(taskid)
+	task, err := router.processor.TaskStorage.GetTask(taskid)
 	if err != nil {
 		log.Printf("Get task fail: %v", err)
 		http.Error(c.Writer, err.Error(), http.StatusBadGateway)
@@ -376,7 +376,7 @@ func (router *Router) AddUploadTask(c *gin.Context) {
 	task.State = model.WAITING
 	// 上传文件后同步写入数据库
 	err = router.processor.AddFileInfo(task)
-	router.processor.taskStorage.SetTask(task.Tid, task)
+	router.processor.TaskStorage.SetTask(task.Tid, task)
 	requestTaskReply := RequestTaskReply{
 		Code: http.StatusOK,
 		Msg:  "Upload File to Transporter OK",
