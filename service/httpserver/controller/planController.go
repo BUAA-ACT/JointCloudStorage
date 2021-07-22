@@ -95,8 +95,10 @@ func UserGetAdvice(con *gin.Context) {
 	}
 	// choose advice
 	empty := make([]model.MigrationAdvice, 0)
-	if (*advices)[0].Status == args.AdviceStatusChoose && user.Status != args.UserForbiddenStatus {
-		advices = &empty
+	if user.Status != args.UserForbiddenStatus {
+		if len(*advices) > 0 && (*advices)[0].Status == args.AdviceStatusChoose {
+			advices = &empty
+		}
 	}
 	// return advices
 	con.JSON(http.StatusOK, gin.H{
