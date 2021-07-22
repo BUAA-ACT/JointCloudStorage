@@ -59,7 +59,7 @@ func (d *Dao) SetUserStatusWithEmail(email string, status string) bool {
 	}
 	update := bson.D{{"$set",
 		bson.D{
-			{"user_status", status},
+			{"status", status},
 		},
 	}}
 	_, changeErr := col.UpdateMany(context.TODO(), filter, update)
@@ -73,7 +73,7 @@ func (d *Dao) SetUserStatusWithId(userID string, status string) bool {
 	}
 	update := bson.D{{"$set",
 		bson.D{
-			{"user_status", status},
+			{"status", status},
 		},
 	}}
 	_, changeErr := col.UpdateMany(context.TODO(), filter, update)
