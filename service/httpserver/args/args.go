@@ -34,8 +34,9 @@ const (
 	CodeAlreadyHaveStoragePlan = 1415
 	CodeForbiddenTransport     = 1416
 	CodeDeleteNothing          = 1417
-	CodeCloudIDNotExist        = 1418
-	CodeSameCloudID            = 1419
+	CodeChangeNothing          = 1418
+	CodeCloudIDNotExist        = 1419
+	CodeSameCloudID            = 1420
 
 	// user status code
 	CodeStatusNormal       = 1501
@@ -134,6 +135,13 @@ const (
 	TaskStateFinished   = "FINISH"
 	TaskStateFailed     = "FAIL"
 	TaskStateBlocked    = "BLOCKED"
+)
+
+/* advise status */
+const (
+	AdviceStatusPending = "PENDING"
+	AdviceStatusChoose  = "PROCESSING"
+	AdviceStatusEnd     = "END"
 )
 
 /* file const */
