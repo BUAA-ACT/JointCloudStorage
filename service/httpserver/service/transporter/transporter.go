@@ -80,7 +80,7 @@ func DeleteFile(deleteName string, user *model.User) bool {
 
 func SyncFile(path string, userID string, oldPlan *model.StoragePlan, newPlan *model.StoragePlan) (*model.TaskResponse, bool) {
 	task := model.TaskRequest{
-		TaskType:               args.TaskTypeSync,
+		TaskType:               args.TaskTypeMigrate,
 		UserID:                 userID,
 		SourcePath:             path,
 		SourceStoragePlan:      *oldPlan,
