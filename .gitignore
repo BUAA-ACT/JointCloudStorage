@@ -7,3 +7,6 @@ bin/
 configs/private/
 build/
 **/go.sum
+
+sdk/jsi-sdk-python/venv/
+sdk/jsi-sdk-python/JointCloudStorage/__pycache__/
