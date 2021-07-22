@@ -219,6 +219,7 @@ func PureIntoKey(con *gin.Context) (keys map[string]string, err error) {
 	}
 	method := con.Request.Method
 	url := con.Request.URL.String()
+	url = strings.TrimSuffix(url, "/")
 	// pure header into key
 	valueMap := map[string]string{
 		HttpHeaderMethod:  method,
@@ -229,7 +230,7 @@ func PureIntoKey(con *gin.Context) (keys map[string]string, err error) {
 }
 
 func JSISign(r *http.Request, ak string, sk string) (rs *http.Request, err error) {
-	wholeURL := r.URL.String()
+	wholeURL := strings.TrimSuffix(r.URL.String(), "/")
 	method := r.Method
 
 	//path := r.TLS

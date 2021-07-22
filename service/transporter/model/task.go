@@ -62,6 +62,9 @@ type StoragePlan struct {
 }
 
 func (t *Task) GetRealSourcePath() string {
+	if len(t.SourcePath) == 0 {
+		t.SourcePath = "/"
+	}
 	if t.SourcePath[0] == '/' {
 		return t.Uid + t.SourcePath
 	} else {
@@ -69,6 +72,9 @@ func (t *Task) GetRealSourcePath() string {
 	}
 }
 func (t *Task) GetRealDestinationPath() string {
+	if len(t.DestinationPath) == 0 {
+		t.DestinationPath = "/"
+	}
 	if t.DestinationPath[0] == '/' {
 		return t.Uid + t.DestinationPath
 	} else {

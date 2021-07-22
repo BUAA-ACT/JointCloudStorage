@@ -9,7 +9,7 @@ HttpHeaderURL = "URL"
 
 
 def url_suffix(url):
-    return list(reversed(url.split("//")))[0].split('/', 1)[1]
+    return "/" + list(reversed(url.split("//")))[0].split('/', 1)[1].rstrip('/')
 
 
 def sha3_encode(secret_key, sign):
@@ -66,7 +66,7 @@ class Auth(AuthBase):
         value_dict = {
             HttpHeaderMethod: method,
             HttpHeaderURL: url,
-            HttpHeaderKeyTime: time,
+            HttpHeaderKeyTime: unix_time_now,
         }
         # generate the origin sign
         sign = ""
