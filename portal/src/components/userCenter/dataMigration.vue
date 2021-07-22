@@ -9,6 +9,14 @@
         <span>当前进度：</span>
         <el-progress :percentage="curPercent" :stroke-width="20" text-inside :status="status"></el-progress>
       </div>
+      <location-viewer
+        :clouds="Advices.CloudsOld"
+        :new-clouds="Advices.CloudsNew"
+        :dynamic="migrating"
+        :inactive-clouds="allClouds"
+        class="location-viewer"
+        ref="viewer"
+      />
     </div>
   </div>
 </template>
@@ -16,16 +24,21 @@
 <script>
 import PlanAdvice from "@/components/userCenter/planAdvice.vue";
 import MyWS from "@/api/WebSocket";
+import Plan from "@/api/plan";
+import Clouds from "@/api/clouds";
+import locationViewer from "@/components/viewer/locationViewer.vue";
 
 export default {
   name: "dataMigration",
-  components: { PlanAdvice },
+  components: { locationViewer, PlanAdvice },
   data() {
     return {
       intervalId: null,
       ws: null,
       curPercent: 0,
-      status: null
+      status: null,
+      Advices: {},
+      allClouds: []
     };
   },
   computed: {
@@ -75,15 +88,46 @@ export default {
       this.ws.removeAction(this.updateProgress, "message");
       this.ws.removeAction(this.retryConnection, "close");
       this.ws.removeAction(this.retryConnection, "error");
+    },
+    async getNewAdvice() {
+      Plan.getNewAdvice().then(resp => {
+        if (resp) {
+          if (resp.Advices && resp.Advices.length > 0) {
+            [this.Advices] = resp.Advices;
+          } else {
+            this.Advices = {};
+          }
+        }
+      });
+    },
+    async getAllClouds() {
+      Clouds.getAllClouds()
+        .then(res => {
+          if (res && res.Clouds) {
+            this.allClouds = res.Clouds;
+          }
+        })
+        .catch(() => {})
+        .then(() => {
+          this.allClouds = this.allClouds || [];
+        });
     }
   },
   mounted() {
-    // this.intervalId = setInterval(this.checkCurStatus, 2000);
-    this.ws = new MyWS("/task/getMigration");
-    this.ws.addAction(this.initialMsg, "open");
-    this.ws.addAction(this.updateProgress, "message");
-    this.ws.addAction(this.closeConnection, "close");
-    this.ws.addAction(this.retryConnection, "error");
+    this.intervalId = setInterval(this.checkCurStatus, 2000);
+    this.getNewAdvice();
+    this.getAllClouds();
+  },
+  watch: {
+    migrating(newVal) {
+      if (newVal && !this.ws) {
+        this.ws = new MyWS("/task/getMigration");
+        this.ws.addAction(this.initialMsg, "open");
+        this.ws.addAction(this.updateProgress, "message");
+        this.ws.addAction(this.closeConnection, "close");
+        this.ws.addAction(this.retryConnection, "error");
+      }
+    }
   },
   beforeDestroy() {
     if (this.intervalId) {
