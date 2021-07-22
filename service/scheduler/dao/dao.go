@@ -16,6 +16,10 @@ const (
 	RoleGuest = "GUEST"
 )
 
+const (
+	AdviceStatusPending = "PENDING"
+)
+
 // Dao encapsulates database operations.
 type Dao struct {
 	client          *mongo.Client
@@ -107,6 +111,7 @@ type MigrationAdvice struct {
 	CloudsOld      []Cloud     `bson:"clouds_old"`
 	CloudsNew      []Cloud     `bson:"clouds_new"`
 	Cost           float64     `bson:"cost"`
+	Status         string      `bson:"status"`
 }
 
 type AccessKey struct {

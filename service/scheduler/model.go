@@ -222,6 +222,7 @@ func reSchedule(interval time.Duration) {
 				CloudsOld:      deleted,
 				CloudsNew:      added,
 				Cost:           42,
+				Status:         dao.AdviceStatusPending,
 			}
 
 			// 写入数据库
