@@ -311,7 +311,7 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	}
 
 	// use "" to tell transporter migrate all files
-	syncFromTransporterResponse, syncFromTransporterSuccess := transporter.SyncFile("", userID, sourcePlan, destinationPlan)
+	syncFromTransporterResponse, syncFromTransporterSuccess := transporter.SyncFile("/", userID, sourcePlan, destinationPlan)
 	if !syncFromTransporterSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
