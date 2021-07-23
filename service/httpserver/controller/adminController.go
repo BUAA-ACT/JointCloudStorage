@@ -16,7 +16,7 @@ func AdminAddCloud(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordCloud:       true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -71,7 +71,7 @@ func AdminChangeCloudInfo(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordCloud:       true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -127,7 +127,7 @@ func AdminVoteForCloud(con *gin.Context) {
 		args.FieldWordCloudID:     true,
 		args.FieldWordVoteResult:  true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -174,7 +174,7 @@ func AdminGetVoteRequests(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -207,7 +207,7 @@ func AdminGetAddedClouds(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}

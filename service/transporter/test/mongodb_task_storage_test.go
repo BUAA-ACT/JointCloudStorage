@@ -20,7 +20,7 @@ func TestMongoTaskStorage_AddTask(t *testing.T) {
 			StorageMode: "asdfasd",
 			Clouds:      []string{"asdfasd", "asdfasdfa"},
 		},
-		DestinationPlan: &model.StoragePlan{
+		DestinationStoragePlan: &model.StoragePlan{
 			StorageMode: "asdfasdfasdf",
 			Clouds:      nil,
 		},

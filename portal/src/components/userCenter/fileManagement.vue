@@ -72,7 +72,6 @@ export default {
         }, 300);
       });
     },
-
     handleUpload(item) {
       const self = this;
       cloudStorage.getUploadAddress(item.file.name).then(response => {
@@ -83,7 +82,6 @@ export default {
         });
       });
     },
-
     handleDownload(filename) {
       cloudStorage.getDownloadAddress(filename).then(response => {
         const type = response.Type;
@@ -104,41 +102,35 @@ export default {
         }
       });
     },
-
     handleDelete(filename) {
       const self = this;
       cloudStorage.deleteFile(filename).then(() => {
         self.fetchData();
       });
     },
-
     sizeFormatter(row, column, bytes) {
       return other.formatBytes(bytes);
     },
-
     dateFormatter(row, column, timestamp) {
       const date = new Date(timestamp);
       return date.toLocaleString("zh-CN");
     },
-
     filenameFormatter(row, column, name) {
       let newName = name;
       while (newName.charAt(0) === "/") {
         newName = newName.substring(1);
       }
       while (newName.charAt(newName.length - 1) === "/") {
-        newName = newName.substring(0, name.length - 1);
+        newName = newName.substring(0, newName.length - 1);
       }
       return newName;
     },
-
     reconstructStatusFormatter(status) {
       if (status.length === 0) {
         return "未执行";
       }
       return status;
     },
-
     reconstructDateFormatter(status, timestamp) {
       if (status.length === 0) {
         return "-";

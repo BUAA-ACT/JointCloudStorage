@@ -12,7 +12,7 @@ func GetAllClouds(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -62,4 +62,21 @@ func GetAllClouds(con *gin.Context) {
 			"Clouds": *getCloudsResult,
 		},
 	})
+}
+
+func GetThisCloudName(con *gin.Context) {
+	// get this cloud with dao
+	cloud, getCloudSuccess := dao.CloudDao.GetCloud(*args.CloudID)
+	if !checkDaoSuccess(con, getCloudSuccess) {
+		return
+	}
+	con.JSON(http.StatusOK, gin.H{
+		"code": args.CodeOK,
+		"msg":  "获取本云名称成功",
+		"data": gin.H{
+			"CloudName":    cloud.CloudName,
+			"ProviderName": cloud.ProviderName,
+		},
+	})
+	return
 }

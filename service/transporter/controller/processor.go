@@ -17,7 +17,7 @@ import (
 )
 
 type TaskProcessor struct {
-	taskStorage       model.TaskStorage
+	TaskStorage       model.TaskStorage
 	CloudDatabase     model.CloudDatabase
 	FileDatabase      model.FileDatabase
 	Lock              *Lock
@@ -30,7 +30,7 @@ type TaskProcessor struct {
 }
 
 func (processor *TaskProcessor) SetTaskStorage(storage model.TaskStorage) {
-	processor.taskStorage = storage
+	processor.TaskStorage = storage
 }
 
 func (processor *TaskProcessor) SetStorageDatabase(database model.CloudDatabase) {
@@ -40,10 +40,18 @@ func (processor *TaskProcessor) SetStorageDatabase(database model.CloudDatabase)
 // 创建任务
 func (processor *TaskProcessor) CreateTask(taskType model.TaskType, sid string, sourcePath string, destinationPath string) {
 	task := model.NewTask(taskType, time.Now(), sid, sourcePath, destinationPath)
-	_, err := processor.taskStorage.AddTask(task)
+	_, err := processor.TaskStorage.AddTask(task)
 	if err != nil {
 		log.Panicf("Create Task ERROR: %v", err)
 	}
+}
+
+func (processor *TaskProcessor) AddTask(task *model.Task) (tid primitive.ObjectID, err error) {
+	tid, err = processor.TaskStorage.AddTask(task)
+	if err != nil {
+		return tid, err
+	}
+	return tid, nil
 }
 
 func (processor *TaskProcessor) StartProcessTasks(ctx context.Context) {
@@ -64,20 +72,20 @@ func (processor *TaskProcessor) StartProcessTasks(ctx context.Context) {
 func (processor *TaskProcessor) SetProcessResult(t *model.Task, err error) {
 	if err != nil {
 		logrus.Errorf("Process Task Fail: %v", err)
-		processor.taskStorage.SetTaskState(t.Tid, model.FAIL)
+		processor.TaskStorage.SetTaskState(t.Tid, model.FAIL)
 	} else {
 		logrus.Infof("Process %v Task Sucess, tid :%v", t.TaskType, t.Tid.Hex())
-		processor.taskStorage.SetTaskState(t.Tid, model.FINISH)
+		processor.TaskStorage.SetTaskState(t.Tid, model.FINISH)
 	}
 }
 
 // 处理任务
 func (processor *TaskProcessor) ProcessTasks() {
-	tasks := processor.taskStorage.GetTaskList(0)
+	tasks := processor.TaskStorage.GetTaskList(0)
 	finish := make(chan primitive.ObjectID)
 	for _, task := range tasks {
 		task.State = model.PROCESSING
-		processor.taskStorage.SetTaskState(task.Tid, model.PROCESSING)
+		processor.TaskStorage.SetTaskState(task.Tid, model.PROCESSING)
 		switch task.GetTaskType() {
 		case model.UPLOAD:
 			go func(t *model.Task) {
@@ -172,7 +180,7 @@ func (processor *TaskProcessor) DeleteStorageFile(t *model.Task) (err error) {
 	return
 }
 
-// 弃用
+// DeleteSingleFile 删除单个文件，连同文件元信息一同删除
 func (processor *TaskProcessor) DeleteSingleFile(t *model.Task) error {
 	fileInfo, err := processor.FileDatabase.GetFileInfo(t.GetRealSourcePath())
 	if err != nil {
@@ -331,6 +339,11 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	if t.GetState() == model.FINISH {
 		return errors.New("task already finish")
 	}
+	err = processor.Lock.Lock(t.GetRealDestinationPath())
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "Processor ProcessUpload", "文件获取锁失败", "", "", err.Error())
+		return err
+	}
 	defer processor.Lock.UnLock(t.GetRealDestinationPath())
 	fileInfo, fileInfoErr := processor.FileDatabase.GetFileInfo(t.GetRealDestinationPath())
 	if fileInfoErr == nil { // 更新文件同步状态
@@ -342,8 +355,8 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 	// 判断上传方式
 	var storageClients []model.StorageClient
 	if t.TaskOptions != nil {
-		storageModel := t.TaskOptions.DestinationPlan.StorageMode
-		for _, cloudName := range t.TaskOptions.DestinationPlan.Clouds {
+		storageModel := t.TaskOptions.DestinationStoragePlan.StorageMode
+		for _, cloudName := range t.TaskOptions.DestinationStoragePlan.Clouds {
 			client, err := processor.CloudDatabase.GetStorageClientFromName(t.Uid, cloudName)
 			if err != nil {
 				return err
@@ -352,19 +365,14 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 		}
 		switch storageModel {
 		case "Replica":
-			fileInfo, err = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
-			if util.CheckErr(err, "New File Info") {
-				return err
-			}
 			for i, client := range storageClients {
 				logrus.Debugf("多副本模式上传，云存储: %v", i)
-				_, err = processor.Monitor.AddUploadTraffic(t.Uid, fileInfo.Size, t.TaskOptions.DestinationPlan.Clouds[i])
+				_, err = processor.Monitor.AddUploadTraffic(t.Uid, fileInfo.Size, t.TaskOptions.DestinationStoragePlan.Clouds[i])
 				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath(), t.Uid)
 			}
 		case "EC": // 纠删码模式
-			fileInfo, err = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
-			N := t.TaskOptions.DestinationPlan.N
-			K := t.TaskOptions.DestinationPlan.K
+			N := t.TaskOptions.DestinationStoragePlan.N
+			K := t.TaskOptions.DestinationStoragePlan.K
 			if N < 1 || K < 1 || N+K != len(storageClients) {
 				return errors.New("EC storage num wrong")
 			}
@@ -388,7 +396,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 						"client upload fail", "", "", err.Error())
 					continue
 				}
-				processor.Monitor.AddUploadTrafficFromFile(t.Uid, shards[i], t.TaskOptions.DestinationPlan.Clouds[i])
+				processor.Monitor.AddUploadTrafficFromFile(t.Uid, shards[i], t.TaskOptions.DestinationStoragePlan.Clouds[i])
 			}
 			logrus.Debugf("纠删码模式完成上传")
 		default:
@@ -398,6 +406,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 		if util.CheckErr(err, "Upload file to cloud") {
 			return err
 		}
+		fileInfo, _ = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
 		fileInfo.LastModified = time.Now()
 		if err != nil {
 			fileInfo.SyncStatus = model.FileFail
@@ -415,7 +424,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 		}
 		_, err = processor.Monitor.AddVolume(t.Uid, fileInfo.Size)
 		// 同步文件源信息到其他云
-		err := processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationPlan.Clouds, t.Uid, fileInfo) // todo 此处错误被隐藏
+		err := processor.Scheduler.UploadFileMetadata(t.TaskOptions.DestinationStoragePlan.Clouds, t.Uid, fileInfo) // todo 此处错误被隐藏
 		util.CheckErr(err, "File Metadata sync")
 	} else {
 		return errors.New("no storage plan")
@@ -499,18 +508,14 @@ func (processor *TaskProcessor) ProcessSyncSingleFile(t *model.Task) (err error)
 	subTask.SourcePath = filePath
 	subTask.TaskOptions.SourceStoragePlan = nil
 	subTask.TaskType = model.UPLOAD
-	err = processor.Lock.Lock(subTask.GetRealDestinationPath()) // todo 在这里加锁是否是有必要的
-	if err != nil {
-		logrus.Errorf("get file Lock fail: %v", err)
-	}
 	err = processor.ProcessUpload(&subTask)
 	if err != nil {
 		return err
 	}
 	err = copier.Copy(&subTask, t)
 	subTask.TaskType = model.DELETE
-	subTask.TaskOptions.DestinationPlan = nil
-	err = processor.DeleteSingleFile(&subTask)
+	subTask.TaskOptions.DestinationStoragePlan = nil
+	err = processor.DeleteStorageFile(&subTask)
 	if err != nil {
 		return err
 	}
@@ -520,7 +525,7 @@ func (processor *TaskProcessor) ProcessSyncSingleFile(t *model.Task) (err error)
 
 // 处理简单迁移任务
 func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
-	if len(t.TaskOptions.SourceStoragePlan.Clouds) != len(t.TaskOptions.DestinationPlan.Clouds) {
+	if len(t.TaskOptions.SourceStoragePlan.Clouds) != len(t.TaskOptions.DestinationStoragePlan.Clouds) {
 		return errors.New(util.ErrorMsgWrongCloudNum)
 	}
 	migrateSize := make(chan int64, 3)
@@ -551,14 +556,14 @@ func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
 				alreadyMigrate += size
 				progress = float64(alreadyMigrate) / float64(totalSize) * 100
 				t.Progress = progress
-				_ = processor.taskStorage.SetTask(t.Tid, t)
+				_ = processor.TaskStorage.SetTask(t.Tid, t)
 				logrus.Debugf("Task %v Process: %v", t.Tid, t.Progress)
 			}
 		}
 	}()
 
 	for i, sourceCloudID := range t.TaskOptions.SourceStoragePlan.Clouds {
-		destCloudID := t.TaskOptions.DestinationPlan.Clouds[i]
+		destCloudID := t.TaskOptions.DestinationStoragePlan.Clouds[i]
 		srcClient, err := processor.CloudDatabase.GetStorageClientFromName(t.Uid, sourceCloudID)
 		dstClient, err := processor.CloudDatabase.GetStorageClientFromName(t.Uid, destCloudID)
 		if err != nil {
@@ -585,8 +590,15 @@ func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
 	}
 	done <- true
 	t.Progress = 100.0
-	_ = processor.taskStorage.SetTask(t.Tid, t)
+	_ = processor.TaskStorage.SetTask(t.Tid, t)
 	logrus.Debugf("Task %v Process: %v", t.Tid, t.Progress)
+	user, err := processor.UserDatabase.GetUserFromID(t.Uid)
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "processor", "can't get userInfo when process migrate", t.Uid, "", err.Error())
+		return err
+	}
+	user.Status = model.NormalUser
+	err = processor.UserDatabase.UpdateUserInfo(user)
 	return nil //todo
 }
 

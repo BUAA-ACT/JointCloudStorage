@@ -9,14 +9,14 @@ import (
 func TestJcsPanScheduler(t *testing.T) {
 	cloudDatabase, _ := model.NewMongoCloudDatabase()
 	scheduler := JcsPanScheduler{
-		LocalCloudID:     "aliyun-hohhot",
-		SchedulerHostUrl: "http://192.168.105.13:8082",
+		LocalCloudID:     "aliyun-qingdao",
+		SchedulerHostUrl: "http://192.168.105.13:8282",
 		ReloadCloudInfo:  true,
 		CloudDatabase:    cloudDatabase,
 	}
 	clouds := []string{
 		"aliyun-hangzhou",
-		"ksyun-beijing",
+		"aliyun-hohhot",
 	}
 	file := &model.File{
 		FileID:            "tester/test/metaData/file.txt",

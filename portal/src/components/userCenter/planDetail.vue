@@ -1,7 +1,7 @@
 <template>
   <el-card class="out-card">
     <div slot="header">
-      <span>存储方案概览</span>
+      <slot><span>存储方案概览</span></slot>
     </div>
     <el-form inline label-position="top">
       <el-form-item label="存储模式" class="summary">{{ storageMode }}</el-form-item>
@@ -15,6 +15,7 @@
             <el-card class="inner-card" shadow="hover">{{ cloud.CloudName }}</el-card>
           </td>
         </el-form-item>
+        <el-divider v-if="ECKClouds" />
         <el-form-item v-if="ECKClouds" label="纠删码正在使用以下云节点存储数据分块" class="detail-item">
           <td v-for="cloud in ECKClouds" :key="cloud.CloudID">
             <el-card class="inner-card" shadow="hover">{{ cloud.CloudName }}</el-card>
@@ -39,13 +40,24 @@ const modeMap = {
 
 export default {
   name: "planDetail",
+  inject: ["formatPrice"],
   data() {
     return {
       storagePlan: {}
     };
   },
+  props: {
+    plan: {
+      type: Object,
+      required: false
+    }
+  },
   methods: {
     getStoragePlan() {
+      if (this.plan) {
+        this.storagePlan = this.plan;
+        return;
+      }
       if (!this.$store.getters.ready) {
         setTimeout(() => {
           this.getStoragePlan();
@@ -55,15 +67,15 @@ export default {
       this.storagePlan = this.$store.getters.storagePlan;
     }
   },
-  beforeMount() {
+  mounted() {
     this.getStoragePlan();
   },
   computed: {
     storagePrice() {
-      return this.storagePlan.StoragePrice;
+      return this.formatPrice(this.storagePlan.StoragePrice);
     },
     trafficPrice() {
-      return this.storagePlan.TrafficPrice;
+      return this.formatPrice(this.storagePlan.TrafficPrice);
     },
     availability() {
       return this.storagePlan.Availability.toFixed(8);

@@ -41,6 +41,7 @@ import Plan from "@/api/plan";
 
 export default {
   name: "customizeStoragePlan",
+  inject: ["formatPrice"],
   data() {
     return {
       curStep: 0,
@@ -69,9 +70,10 @@ export default {
             .then(resp => {
               if (resp) {
                 this.$message.success("自定义存储方案成功！");
+                this.curStep = 0;
+                this.$store.dispatch("updateInfo", "StoragePlan");
+                this.$emit("success");
               }
-              this.curStep = 0;
-              this.$emit("success");
             })
             .catch(() => {
               this.$emit("failed");
@@ -88,9 +90,10 @@ export default {
             .then(resp => {
               if (resp) {
                 this.$message.success("自定义存储方案成功！");
+                this.curStep = 0;
+                this.$store.dispatch("updateInfo", "StoragePlan");
+                this.$emit("success");
               }
-              this.curStep = 0;
-              this.$emit("success");
             })
             .catch(() => {
               this.$emit("failed");
@@ -136,9 +139,9 @@ export default {
       return (
         <el-tooltip slot-scope="{ option }">
           <div slot="content">
-            存储价格：{this.allClouds[option.index].StoragePrice}元/GB/月
+            存储价格：{this.formatPrice(this.allClouds[option.index].StoragePrice)}元/GB/月
             <br />
-            流量价格：{this.allClouds[option.index].TrafficPrice}元/GB
+            流量价格：{this.formatPrice(this.allClouds[option.index].TrafficPrice)}元/GB
             <br />
             可用性：{this.allClouds[option.index].Availability}
             <br />

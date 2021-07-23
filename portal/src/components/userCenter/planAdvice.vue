@@ -13,8 +13,8 @@
           </div>
           <div class="text item">
             存储模式： {{ Advices.StoragePlanOld.StorageMode }}<br />
-            存储价格： {{ Advices.StoragePlanOld.StoragePrice }}<br />
-            流量价格： {{ Advices.StoragePlanOld.TrafficPrice }}<br />
+            存储价格： {{ formatPrice(Advices.StoragePlanOld.StoragePrice) }}<br />
+            流量价格： {{ formatPrice(Advices.StoragePlanOld.TrafficPrice) }}<br />
             可用性：{{ Advices.StoragePlanOld.Availability }}
           </div>
         </el-card>
@@ -24,22 +24,23 @@
           </div>
           <div class="text item">
             存储模式： {{ Advices.StoragePlanNew.StorageMode }}<br />
-            存储价格： {{ Advices.StoragePlanNew.StoragePrice }}<br />
-            流量价格： {{ Advices.StoragePlanNew.TrafficPrice }}<br />
+            存储价格： {{ formatPrice(Advices.StoragePlanNew.StoragePrice) }}<br />
+            流量价格： {{ formatPrice(Advices.StoragePlanNew.TrafficPrice) }}<br />
             可用性：{{ Advices.StoragePlanNew.Availability }}
           </div>
         </el-card>
       </div>
-      <location-viewer
-        :clouds="Advices.CloudsOld"
-        :new-clouds="Advices.CloudsNew"
-        :dynamic="migrating"
-        :inactive-clouds="allClouds"
-        class="location-viewer"
-        ref="viewer"
-      />
     </div>
-    <div class="no-new-plan" v-else>
+    <location-viewer
+      :clouds="Advices.CloudsOld"
+      :new-clouds="Advices.CloudsNew"
+      :dynamic="migrating"
+      :inactive-clouds="allClouds"
+      class="location-viewer"
+      ref="viewer"
+      v-if="migrating || newPlanAvailable"
+    />
+    <div class="no-new-plan" v-if="!newPlanAvailable && !migrating">
       <i class="el-icon-success tip-icon"></i><br />
       暂时没有为您找到更优的存储方案！
     </div>
@@ -51,11 +52,16 @@ import Plan from "@/api/plan";
 import locationViewer from "@/components/viewer/locationViewer.vue";
 import Clouds from "@/api/clouds";
 
+/**
+ * Component for new Advices
+ * @deprecated This component is now inside dataMigration.vue
+ */
 export default {
   name: "planAdvice",
   components: {
     locationViewer
   },
+  inject: ["formatPrice"],
   data() {
     return {
       Advices: {},
@@ -72,7 +78,8 @@ export default {
         if (resp) {
           if (resp.Advices && resp.Advices.length > 0) {
             [this.Advices] = resp.Advices;
-            this.newPlanAvailable = true;
+            this.newPlanAvailable = this.Advices.Status === "PENDING";
+            this.migrating = this.Advices.Status === "PROCESSING";
           } else {
             this.Advices = {};
           }
@@ -94,14 +101,15 @@ export default {
               </span>
             )
           });
+          this.$emit("accept");
         }
       });
-      // TODO: 轮询
       this.submitLoading = false;
     },
     async cancel() {
       this.submitLoading = true;
       await Plan.abandonAdvice();
+      this.$emit("cancel");
       this.submitLoading = false;
     },
     async getAllClouds() {

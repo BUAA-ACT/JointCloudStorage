@@ -19,9 +19,9 @@ var Config = Configuration{
 	DebugLevel: "Trace",
 	Database: DBConfiguration{
 		Driver:       MongoDB,
-		Host:         "192.168.105.8",
-		Port:         "20100",
-		DatabaseName: "dev",
+		Host:         "192.168.105.13",
+		Port:         "27017",
+		DatabaseName: "qingdao",
 	},
 	TempFilePath:         "./tmp/",
 	UploadFileTempPath:   "./tmp/upload/",
@@ -31,9 +31,10 @@ var Config = Configuration{
 	Port:                 8083,
 	Host:                 "0.0.0.0",
 	ZookeeperHost:        "192.168.105.13",
-	SchedulerHost:        "http://192.168.105.13:8082",
-	LocalCloudID:         "aliyun-hohhot",
-	EnableHttps:          true,
+	SchedulerHost:        "http://192.168.105.13:8282",
+	//SchedulerHost:        "http://127.0.0.1:8082",
+	LocalCloudID: "aliyun-qingdao",
+	EnableHttps:  true,
 }
 
 type DBConfiguration struct {

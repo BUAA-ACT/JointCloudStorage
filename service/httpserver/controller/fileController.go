@@ -19,7 +19,7 @@ func UserGetFiles(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordFilePath:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -78,11 +78,11 @@ func UserGetFiles(con *gin.Context) {
 	}
 	for _, file := range dirMap {
 		// add dir
-		newReturnFile := model.FileAndDir{
-			FileType: args.FileTypeFile,
+		newReturnDir := model.FileAndDir{
+			FileType: args.FileTypeDir,
 			FileInfo: file,
 		}
-		integrateFiles = append(integrateFiles, newReturnFile)
+		integrateFiles = append(integrateFiles, newReturnDir)
 	}
 	// return ok
 	con.JSON(http.StatusOK, gin.H{
@@ -108,7 +108,7 @@ func UserPreUploadFile(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordFilePath:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -180,7 +180,7 @@ func UserDownloadFile(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordFilePath:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -287,7 +287,7 @@ func UserDeleteFile(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordFilePath:    true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}

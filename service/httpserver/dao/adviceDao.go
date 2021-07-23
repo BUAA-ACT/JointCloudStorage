@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"cloud-storage-httpserver/args"
 	"cloud-storage-httpserver/model"
 	"cloud-storage-httpserver/service/tools"
 	"context"
@@ -14,14 +15,14 @@ func (d *Dao) GetNewAdvice(userID string) (*[]model.MigrationAdvice, bool) {
 		"user_id": userID,
 	}
 	var advices = make([]model.MigrationAdvice, 0)
-	result, err := col.Find(context.TODO(), filter)
-	if tools.PrintError(err) {
+	result, findErr := col.Find(context.TODO(), filter)
+	if tools.PrintError(findErr) {
 		return nil, false
 	}
 	for result.Next(context.TODO()) {
 		var advice model.MigrationAdvice
-		err := result.Decode(&advice)
-		if tools.PrintError(err) {
+		decodeErr := result.Decode(&advice)
+		if tools.PrintError(decodeErr) {
 			return nil, false
 		}
 		if advice.CloudsNew == nil {
@@ -40,6 +41,21 @@ func (d *Dao) DeleteAdvice(userID string) (*mongo.DeleteResult, bool) {
 	filter := bson.M{
 		"user_id": userID,
 	}
-	result, err := col.DeleteMany(context.TODO(), filter)
-	return result, !tools.PrintError(err)
+	result, deleteErr := col.DeleteMany(context.TODO(), filter)
+	return result, !tools.PrintError(deleteErr)
+}
+
+func (d *Dao) SetAdviceStatus(userID string, status string) (*mongo.UpdateResult, bool) {
+	col := d.client.Database(d.database).Collection(d.collection)
+	filter := bson.M{
+		"user_id": userID,
+		"status":  args.AdviceStatusPending,
+	}
+	update := bson.D{{"$set",
+		bson.D{
+			{"status", status},
+		},
+	}}
+	result, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	return result, !tools.PrintError(changeErr)
 }

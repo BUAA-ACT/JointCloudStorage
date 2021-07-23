@@ -34,8 +34,9 @@ const (
 	CodeAlreadyHaveStoragePlan = 1415
 	CodeForbiddenTransport     = 1416
 	CodeDeleteNothing          = 1417
-	CodeCloudIDNotExist        = 1418
-	CodeSameCloudID            = 1419
+	CodeChangeNothing          = 1418
+	CodeCloudIDNotExist        = 1419
+	CodeSameCloudID            = 1420
 
 	// user status code
 	CodeStatusNormal       = 1501
@@ -113,21 +114,34 @@ const (
 	UserVerifyStatus       = "VERIFYING"
 	UserForbiddenStatus    = "FORBIDDEN"
 	UserNormalStatus       = "NORMAL"
-	UserTransportingStatus = "Transporting"
+	UserTransportingStatus = "TRANSPORTING"
 )
 
 /* task const*/
 const (
-	TaskTypeUpload   = "Upload"
-	TaskTypeDownload = "Download"
-	TaskTypeSync     = "Migrate"
-	TaskTypeDelete   = "Delete"
+	/* task type */
+	TaskTypeUpload          = "UPLOAD"
+	TaskTypeDownload        = "DOWNLOAD"
+	TaskTypeDownloadReplica = "DOWNLOAD_REPLICA"
+	TaskTypeIndex           = "INDEX"
+	TaskTypeSync            = "SYNC"
+	TaskTypeDelete          = "DELETE"
+	TaskTypeMigrate         = "MIGRATE"
 
-	TaskStateCreated   = "Created"
-	TaskStatePending   = "Pending"
-	TaskStateExecuting = "Executing"
-	TaskStateFailed    = "Failed"
-	TaskStateDone      = "Done"
+	/* task state */
+	TaskStateCreating   = "CREATING"
+	TaskStateWaiting    = "WAITING"
+	TaskStateProcessing = "PROCESSING"
+	TaskStateFinished   = "FINISH"
+	TaskStateFailed     = "FAIL"
+	TaskStateBlocked    = "BLOCKED"
+)
+
+/* advise status */
+const (
+	AdviceStatusPending = "PENDING"
+	AdviceStatusChoose  = "PROCESSING"
+	AdviceStatusEnd     = "END"
 )
 
 /* file const */
@@ -220,12 +234,11 @@ func LoadProperties(configFilePath string) {
 	if err != nil {
 		*TestMode = false
 	}
-	if *TestMode {
+	if *TestMode || (*MongoUsername == "" && *MongoPassword == "") {
 		*MongoURL = *MongoTitle + *MongoAddr + ":" + strconv.FormatUint(*MongoPort, 10)
 	} else {
 		*MongoURL = *MongoTitle + *MongoUsername + ":" + *MongoPassword + "@" + *MongoAddr + ":" + strconv.FormatUint(*MongoPort, 10)
 	}
-
 	*SchedulerAddr = properties["SchedulerAddr"]
 	*SchedulerPort = properties["SchedulerPort"]
 	*SchedulerUrl = "http://" + *SchedulerAddr + ":" + *SchedulerPort

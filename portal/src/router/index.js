@@ -1,5 +1,6 @@
 import VueRouter from "vue-router";
 import ElementUI from "element-ui";
+import Other from "@/utils/other";
 import Index from "../views/index.vue";
 import store from "../store";
 
@@ -388,16 +389,14 @@ const createRouter = () =>
   });
 
 const vueRouter = createRouter();
-vueRouter.beforeEach((to, from, next) => {
-  const loading = ElementUI.Loading.service();
-
-  setTimeout(() => {
-    loading.close();
-  }, 1000);
-  next();
-});
+let loading;
 
 vueRouter.beforeEach(async (to, from, next) => {
+  loading = ElementUI.Loading.service({});
+  while (!store.getters.ready) {
+    // eslint-disable-next-line no-await-in-loop
+    await Other.sleep(50);
+  }
   const hasToken = store.getters.token;
   const { isAdmin } = store.getters;
   if (hasToken) {
@@ -419,4 +418,7 @@ vueRouter.beforeEach(async (to, from, next) => {
   }
 });
 
+vueRouter.afterEach(() => {
+  loading.close();
+});
 export default vueRouter;

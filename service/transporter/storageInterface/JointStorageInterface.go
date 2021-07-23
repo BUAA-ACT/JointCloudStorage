@@ -4,6 +4,7 @@ import (
 	"act.buaa.edu.cn/jcspan/transporter/controller"
 	"act.buaa.edu.cn/jcspan/transporter/model"
 	"act.buaa.edu.cn/jcspan/transporter/util"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -24,9 +25,19 @@ func NewInterface(processor *controller.TaskProcessor) *JointStorageInterface {
 	engine := gin.Default()
 	engine.Use(util.CORSMiddleware())
 	jsi = JointStorageInterface{engine, processor}
-	jsi.PUT("/*key", jsi.JSIAuthMiddleware(), jsi.checkKey, jsi.PutObject)
-	jsi.DELETE("/*key", jsi.JSIAuthMiddleware(), jsi.checkKey, jsi.DeleteObject)
-	jsi.GET("/*key", jsi.JSIAuthMiddleware(), jsi.GetMethod)
+	object := jsi.Group("/object")
+	{
+		object.PUT("/*key", jsi.JSIAuthMiddleware(), jsi.checkKey, jsi.PutObject)
+		object.DELETE("/*key", jsi.JSIAuthMiddleware(), jsi.checkKey, jsi.DeleteObject)
+		object.GET("/*key", jsi.JSIAuthMiddleware(), jsi.GetMethod)
+	}
+	state := jsi.Group("/state")
+	{
+		state.GET("/storage", jsi.JSIAuthMiddleware(), jsi.GetStorageInfo)
+		state.GET("/plan", jsi.JSIAuthMiddleware(), jsi.GetStoragePlan)
+		state.POST("/plan", jsi.JSIAuthMiddleware(), jsi.PostStoragePlan)
+	}
+
 	return &jsi
 }
 
@@ -84,6 +95,7 @@ func (jsi *JointStorageInterface) PutObject(c *gin.Context) {
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "JSI PutObject", "upload task process fail",
 			"", "err", err.Error())
+		c.String(http.StatusInternalServerError, err.Error())
 	}
 	// 返回用户结果
 	c.String(http.StatusOK, "")
@@ -106,6 +118,7 @@ func (jsi *JointStorageInterface) GetObject(c *gin.Context) {
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "JSI GetObject", "GetObject task process fail",
 			"", "err", err.Error())
+		c.String(http.StatusInternalServerError, err.Error())
 	}
 	c.File(path)
 }
@@ -139,6 +152,7 @@ func (jsi *JointStorageInterface) DeleteObject(c *gin.Context) {
 
 func (jsi *JointStorageInterface) GetObjectList(c *gin.Context) {
 	uid := c.MustGet("uid").(string)
+	prefix := c.Query("keyPrefix")
 	userInfo, err := jsi.processor.UserDatabase.GetUserFromID(uid)
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "JSI GetObjectList", "get Userinfo fail",
@@ -146,7 +160,7 @@ func (jsi *JointStorageInterface) GetObjectList(c *gin.Context) {
 		c.String(http.StatusInternalServerError, "")
 		return
 	}
-	task := createTask(userInfo.UserId, model.INDEX, "/", "", nil, nil)
+	task := createTask(userInfo.UserId, model.INDEX, prefix, "", nil, nil)
 	files, err := jsi.processor.ProcessIndexFile(task)
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "JSI GetObjectList", "get Userinfo fail",
@@ -155,6 +169,64 @@ func (jsi *JointStorageInterface) GetObjectList(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, files)
+}
+
+func (jsi *JointStorageInterface) GetStorageInfo(c *gin.Context) {
+	userInfo := c.MustGet("userInfo").(*model.User)
+	c.JSON(http.StatusOK, userInfo.DataStats)
+}
+
+func (jsi *JointStorageInterface) GetStoragePlan(c *gin.Context) {
+	userInfo := c.MustGet("userInfo").(*model.User)
+	c.JSON(http.StatusOK, userInfo.StoragePlan)
+}
+
+func (jsi *JointStorageInterface) PostStoragePlan(c *gin.Context) {
+	userInfo := c.MustGet("userInfo").(*model.User)
+	var plan model.StoragePlan
+	if err := c.ShouldBindJSON(&plan); err != nil {
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("invalid storage plan"))
+		return
+	}
+	userPlan, err := jsi.convertToUserStoragePlan(plan)
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "JSI Post StoragePlan", "convert StoragePlan fail",
+			"", "err", err.Error())
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("invalid storage plan"))
+		return
+	}
+	err = jsi.processor.Scheduler.SetUserStoragePlan(userInfo, userPlan)
+	if err != nil {
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("set storage plan fail"))
+		return
+	}
+	task := createTask(userInfo.UserId, model.SYNC, "/", "/", &userInfo.StoragePlan, userPlan)
+	tid, err := jsi.processor.AddTask(task)
+	if err != nil {
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("internal error"))
+		return
+	}
+	c.String(http.StatusOK, tid.String())
+}
+
+func (jsi *JointStorageInterface) convertToUserStoragePlan(plan model.StoragePlan) (*model.UserStoragePlan, error) {
+	var clouds []model.Cloud
+	for _, c := range plan.Clouds {
+		cloud, err := jsi.processor.CloudDatabase.GetCloudInfoFromCloudID(c)
+		if err != nil {
+			return nil, errors.New("get cloud info from cloud id fail")
+		}
+		clouds = append(clouds, *cloud)
+	}
+	return &model.UserStoragePlan{
+		N:            plan.N,
+		K:            plan.K,
+		StorageMode:  string(plan.StorageMode),
+		Clouds:       clouds,
+		StoragePrice: 0,
+		TrafficPrice: 0,
+		Availability: 0,
+	}, nil
 }
 
 func createTask(uid string, taskType model.TaskType, srcPath string, dstPath string, srcStoragePlan *model.UserStoragePlan,
@@ -199,8 +271,8 @@ func createTask(uid string, taskType model.TaskType, srcPath string, dstPath str
 		SourcePath:      srcPath,
 		DestinationPath: dstPath,
 		TaskOptions: &model.TaskOptions{
-			SourceStoragePlan: sourceStoragePlan,
-			DestinationPlan:   destinationPlan,
+			SourceStoragePlan:      sourceStoragePlan,
+			DestinationStoragePlan: destinationPlan,
 		},
 		Progress: 0,
 	}

@@ -7,4 +7,5 @@ type MigrationAdvice struct {
 	CloudsOld      []Cloud     `json:"CloudsOld" bson:"clouds_old"`
 	CloudsNew      []Cloud     `json:"CloudsNew" bson:"clouds_new"`
 	Cost           float64     `json:"Cost" json:"cost"`
+	Status         string      `json:"Status" bson:"status"`
 }

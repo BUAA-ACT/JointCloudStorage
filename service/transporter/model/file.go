@@ -148,7 +148,6 @@ func (mf *MongoFileDatabase) Index(prefix string) (files []*File, err error) {
 	if err != nil {
 		return nil, err
 	}
-	//delete the file
 	var result []*File
 	filter := bson.M{
 		"file_id": bson.M{
