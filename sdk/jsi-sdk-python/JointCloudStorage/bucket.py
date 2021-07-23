@@ -44,10 +44,12 @@ class Bucket(_BASE):
         return True
 
     def get_object(self, key):
-        pass
+        result = self._do("GET", Bucket.CATEGORY_OBJECT, key=key)
+        return result.content
 
     def delete_object(self, key):
-        pass
+        self._do("DELETE", Bucket.CATEGORY_OBJECT, key=key)
+        return True
 
     def get_object_list(self, prefix):
         params = {

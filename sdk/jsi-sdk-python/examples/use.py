@@ -1,3 +1,5 @@
+import os
+
 from JointCloudStorage import *
 import requests
 
@@ -14,5 +16,17 @@ if __name__ == '__main__':
 
     files = bucket.get_object_list("/python/")
     print(files)
+
+    if not os.path.exists("./tmp/"):
+        os.makedirs("./tmp/")
+
+    c = bucket.get_object("/python/r.txt")
+    with open("./tmp/t.txt", "wb+") as f:
+        f.write(c)
+
+    bucket.delete_object("/python/r.txt")
+    files = bucket.get_object_list("/python/")
+    print(files)
+
 
 
