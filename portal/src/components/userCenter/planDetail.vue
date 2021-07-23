@@ -1,7 +1,7 @@
 <template>
   <el-card class="out-card">
     <div slot="header">
-      <span>存储方案概览</span>
+      <slot><span>存储方案概览</span></slot>
     </div>
     <el-form inline label-position="top">
       <el-form-item label="存储模式" class="summary">{{ storageMode }}</el-form-item>
@@ -46,8 +46,18 @@ export default {
       storagePlan: {}
     };
   },
+  props: {
+    plan: {
+      type: Object,
+      required: false
+    }
+  },
   methods: {
     getStoragePlan() {
+      if (this.plan) {
+        this.storagePlan = this.plan;
+        return;
+      }
       if (!this.$store.getters.ready) {
         setTimeout(() => {
           this.getStoragePlan();
@@ -57,7 +67,7 @@ export default {
       this.storagePlan = this.$store.getters.storagePlan;
     }
   },
-  beforeMount() {
+  mounted() {
     this.getStoragePlan();
   },
   computed: {
