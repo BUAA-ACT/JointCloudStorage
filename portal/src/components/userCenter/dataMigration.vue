@@ -5,30 +5,26 @@
       <!--      <el-button type="primary" @click="cancel" :loading="cancelLoading" :disabled="!plansLoaded">我再想想</el-button><br />-->
       <el-button type="info" @click="cancel" :loading="submitLoading">取消</el-button><br />
     </div>
-    <div v-if="newPlanAvailable">
+    <div v-if="migrating || newPlanAvailable">
       <div class="plans-viewer-container">
-        <el-card class="box-card">
-          <div slot="header" class="clearfix">
-            旧存储方案
+        <plan-detail :plan="Advices.StoragePlanOld">
+          旧存储方案
+        </plan-detail>
+        <div class="migration-progress">
+          <div v-if="migrating" class="migration-progress-bar">
+            <el-progress
+              :percentage="curPercent"
+              :stroke-width="10"
+              :status="status"
+              type="circle"
+              :format="formatPercent"
+              :width="200"
+            ></el-progress>
           </div>
-          <div class="text item">
-            存储模式： {{ Advices.StoragePlanOld.StorageMode }}<br />
-            存储价格： {{ formatPrice(Advices.StoragePlanOld.StoragePrice) }}<br />
-            流量价格： {{ formatPrice(Advices.StoragePlanOld.TrafficPrice) }}<br />
-            可用性：{{ Advices.StoragePlanOld.Availability }}
-          </div>
-        </el-card>
-        <el-card class="box-card">
-          <div slot="header" class="clearfix">
-            新存储方案
-          </div>
-          <div class="text item">
-            存储模式： {{ Advices.StoragePlanNew.StorageMode }}<br />
-            存储价格： {{ formatPrice(Advices.StoragePlanNew.StoragePrice) }}<br />
-            流量价格： {{ formatPrice(Advices.StoragePlanNew.TrafficPrice) }}<br />
-            可用性：{{ Advices.StoragePlanNew.Availability }}
-          </div>
-        </el-card>
+        </div>
+        <plan-detail :plan="Advices.StoragePlanNew">
+          新存储方案
+        </plan-detail>
       </div>
     </div>
     <location-viewer
@@ -44,14 +40,6 @@
       <i class="el-icon-success tip-icon"></i><br />
       暂时没有为您找到更优的存储方案！
     </div>
-    <div v-if="migrating">
-      <i class="el-icon-info tip-icon"></i><br />
-      数据迁移中……
-      <div>
-        <span>当前进度：</span>
-        <el-progress :percentage="curPercent" :stroke-width="20" text-inside :status="status"></el-progress>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -60,10 +48,11 @@ import MyWS from "@/api/WebSocket";
 import Plan from "@/api/plan";
 import Clouds from "@/api/clouds";
 import locationViewer from "@/components/viewer/locationViewer.vue";
+import PlanDetail from "@/components/userCenter/planDetail.vue";
 
 export default {
   name: "dataMigration",
-  components: { locationViewer },
+  components: { PlanDetail, locationViewer },
   inject: ["formatPrice"],
   data() {
     return {
@@ -174,6 +163,9 @@ export default {
         .then(() => {
           this.allClouds = this.allClouds || [];
         });
+    },
+    formatPercent(per) {
+      return per === 100 ? "迁移已完成！" : `迁移中:${per}%`;
     }
   },
   mounted() {
@@ -232,10 +224,10 @@ export default {
   -webkit-justify-content: space-between;
   -ms-flex-pack: justify;
   justify-content: space-between;
-  width: 800px;
+  width: 1400px;
 }
 .location-viewer {
-  width: 800px;
+  width: 1400px;
   height: 400px;
 }
 .text {
@@ -261,5 +253,18 @@ export default {
   height: 200px;
   display: inline-block;
   margin: 0 10px;
+}
+.migration-progress {
+  width: 600px;
+  .migration-progress-text {
+    margin: 20px 0;
+  }
+  .migration-progress-bar {
+    margin: 50px;
+    /deep/ i {
+      font-size: 50px;
+      font-weight: 1000;
+    }
+  }
 }
 </style>
