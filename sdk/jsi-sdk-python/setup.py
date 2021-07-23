@@ -14,4 +14,8 @@ setup(
     long_description_content_type="text/markdown",
     url="https://www.jointcloudstorage.cn",
     packages=find_packages(),
+    python_requires=">=3.6",
+    install_requires=[
+        "requests>=2.26.0",
+    ],
 )

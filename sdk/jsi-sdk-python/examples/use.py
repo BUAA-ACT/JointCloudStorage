@@ -1,7 +1,6 @@
 import os
 
 from JointCloudStorage import *
-import requests
 
 if __name__ == '__main__':
     access_key = "47bed2954a3647fdbc7a3364778c388f"
