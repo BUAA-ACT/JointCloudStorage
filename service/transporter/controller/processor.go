@@ -365,17 +365,12 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 		}
 		switch storageModel {
 		case "Replica":
-			fileInfo, err = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
-			if util.CheckErr(err, "New File Info") {
-				return err
-			}
 			for i, client := range storageClients {
 				logrus.Debugf("多副本模式上传，云存储: %v", i)
 				_, err = processor.Monitor.AddUploadTraffic(t.Uid, fileInfo.Size, t.TaskOptions.DestinationStoragePlan.Clouds[i])
 				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath(), t.Uid)
 			}
 		case "EC": // 纠删码模式
-			fileInfo, err = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
 			N := t.TaskOptions.DestinationStoragePlan.N
 			K := t.TaskOptions.DestinationStoragePlan.K
 			if N < 1 || K < 1 || N+K != len(storageClients) {
@@ -411,6 +406,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 		if util.CheckErr(err, "Upload file to cloud") {
 			return err
 		}
+		fileInfo, _ = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
 		fileInfo.LastModified = time.Now()
 		if err != nil {
 			fileInfo.SyncStatus = model.FileFail

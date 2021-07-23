@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"os"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -31,6 +32,7 @@ type TempFile struct {
 // CreateTmpFile 创建一个临时文件，若指定了 key，则文件名以 key 作为结尾
 func (ts *TempFileStorage) CreateTmpFile(key string) (*os.File, *TempFile) {
 	prefix := uuid.New().String()
+	key = strings.ReplaceAll(key, "/", "_")
 	fileName := "/" + prefix
 	if key != "" {
 		fileName += "_" + key
