@@ -371,15 +371,17 @@ func (d *Dao) InsertFiles(files []File) error {
 	}
 
 	col := d.client.Database(d.database).Collection(d.fileCollection)
-	for i, file := range files {
-		filter := bson.M{
-			"file_id": file.FileID,
-		}
+	for _, file := range files {
 		_, err := col.UpdateOne(
 			context.TODO(),
-			filter,
 			bson.M{
-				"$set": fs[i],
+				"file_id": file.FileID,
+			},
+			bson.D{
+				{"$set", file},
+			},
+			&options.UpdateOptions{
+				Upsert: bool2pointer(true),
 			},
 		)
 		if err != nil {
