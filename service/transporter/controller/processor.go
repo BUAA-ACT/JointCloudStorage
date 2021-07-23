@@ -592,6 +592,13 @@ func (processor *TaskProcessor) ProcessMigrate(t *model.Task) (err error) {
 	t.Progress = 100.0
 	_ = processor.TaskStorage.SetTask(t.Tid, t)
 	logrus.Debugf("Task %v Process: %v", t.Tid, t.Progress)
+	user, err := processor.UserDatabase.GetUserFromID(t.Uid)
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "processor", "can't get userInfo when process migrate", t.Uid, "", err.Error())
+		return err
+	}
+	user.Status = model.NormalUser
+	err = processor.UserDatabase.UpdateUserInfo(user)
 	return nil //todo
 }
 
