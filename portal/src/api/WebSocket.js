@@ -32,7 +32,13 @@ export default class MyWS {
    * @param {string | number} port port of WebSocket Server
    */
   constructor(path, host = window.location.hostname, port = window.location.port) {
-    this.fullPath = `ws://${host}:${port}${path}`;
+    let protocol;
+    if (window.location.protocol === "https:") {
+      protocol = "wss:";
+    } else {
+      protocol = "ws:";
+    }
+    this.fullPath = `${protocol}//${host}:${port}${path}`;
     let ws = MyWS.wsPool[this.fullPath];
     if (!(ws && ws.readyState === WebSocket.OPEN)) {
       ws = new WebSocket(this.fullPath);
