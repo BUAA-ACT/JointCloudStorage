@@ -371,14 +371,16 @@ func (d *Dao) InsertFiles(files []File) error {
 	}
 
 	col := d.client.Database(d.database).Collection(d.fileCollection)
-	for _, file := range files {
+	for i, file := range files {
 		filter := bson.M{
 			"file_id": file.FileID,
 		}
 		_, err := col.UpdateOne(
 			context.TODO(),
 			filter,
-			fs,
+			bson.M{
+				"$set": fs[i],
+			},
 		)
 		if err != nil {
 			return err
