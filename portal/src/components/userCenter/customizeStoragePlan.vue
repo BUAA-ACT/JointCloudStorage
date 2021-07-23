@@ -70,9 +70,10 @@ export default {
             .then(resp => {
               if (resp) {
                 this.$message.success("自定义存储方案成功！");
+                this.curStep = 0;
+                this.$store.dispatch("updateInfo", "StoragePlan");
+                this.$emit("success");
               }
-              this.curStep = 0;
-              this.$emit("success");
             })
             .catch(() => {
               this.$emit("failed");
@@ -89,9 +90,10 @@ export default {
             .then(resp => {
               if (resp) {
                 this.$message.success("自定义存储方案成功！");
+                this.curStep = 0;
+                this.$store.dispatch("updateInfo", "StoragePlan");
+                this.$emit("success");
               }
-              this.curStep = 0;
-              this.$emit("success");
             })
             .catch(() => {
               this.$emit("failed");
