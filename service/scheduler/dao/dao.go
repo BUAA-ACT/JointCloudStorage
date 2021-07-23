@@ -371,8 +371,15 @@ func (d *Dao) InsertFiles(files []File) error {
 	}
 
 	col := d.client.Database(d.database).Collection(d.fileCollection)
-	_, err := col.InsertMany(
+	filter := make([]interface{}, len(files))
+	for i, file := range files {
+		filter[i] = bson.M {
+			"file_id": file.FileID,
+		}
+	}
+	_, err := col.UpdateMany(
 		context.TODO(),
+		filter,
 		fs,
 	)
 	if err != nil {

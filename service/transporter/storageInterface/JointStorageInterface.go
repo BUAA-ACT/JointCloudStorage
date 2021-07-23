@@ -95,6 +95,7 @@ func (jsi *JointStorageInterface) PutObject(c *gin.Context) {
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "JSI PutObject", "upload task process fail",
 			"", "err", err.Error())
+		c.String(http.StatusInternalServerError, err.Error())
 	}
 	// 返回用户结果
 	c.String(http.StatusOK, "")
@@ -117,6 +118,7 @@ func (jsi *JointStorageInterface) GetObject(c *gin.Context) {
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "JSI GetObject", "GetObject task process fail",
 			"", "err", err.Error())
+		c.String(http.StatusInternalServerError, err.Error())
 	}
 	c.File(path)
 }
@@ -150,6 +152,7 @@ func (jsi *JointStorageInterface) DeleteObject(c *gin.Context) {
 
 func (jsi *JointStorageInterface) GetObjectList(c *gin.Context) {
 	uid := c.MustGet("uid").(string)
+	prefix := c.Query("keyPrefix")
 	userInfo, err := jsi.processor.UserDatabase.GetUserFromID(uid)
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "JSI GetObjectList", "get Userinfo fail",
@@ -157,7 +160,7 @@ func (jsi *JointStorageInterface) GetObjectList(c *gin.Context) {
 		c.String(http.StatusInternalServerError, "")
 		return
 	}
-	task := createTask(userInfo.UserId, model.INDEX, "/", "", nil, nil)
+	task := createTask(userInfo.UserId, model.INDEX, prefix, "", nil, nil)
 	files, err := jsi.processor.ProcessIndexFile(task)
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "JSI GetObjectList", "get Userinfo fail",
