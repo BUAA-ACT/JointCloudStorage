@@ -12,8 +12,10 @@ host_list={"aliyun-hohhot.jointcloudstorage.cn", "aliyun-qingdao.jointcloudstora
 for host in ${host_list[@]}; do
     echo "Install SSL for $host"
     scp -r /home/jcspan/ssl/jointcloudstorage.cn/ jcspan@$host:/home/jcspan/ssl/
-    scp ./nginx-host.conf jcspan@$host:/etc/nginx/conf.d/jcspan.conf
-    ssh -t $host "sudo service nginx restart"
+    scp ./nginx-host.conf jcspan@$host:/home/jcspan/nginx/nginx-host.conf
+    ssh -t jcspan@$host "sudo mv /etc/nginx/conf.d/jcspan.conf /etc/nginx/conf.d/jcspan.conf.bak"
+    ssh -t jcspan@$host "sudo cp /home/jcspan/nginx/nginx-host.conf /etc/nginx/conf.d/jcspan.conf"
+    ssh -t jcspan@$host "sudo service nginx restart"
     echo "Install SSL for $host success"
 done
 
