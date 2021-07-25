@@ -37,6 +37,7 @@ func NewInterface(processor *controller.TaskProcessor) *JointStorageInterface {
 		state.GET("/plan", jsi.JSIAuthMiddleware(), jsi.GetStoragePlan)
 		state.POST("/plan", jsi.JSIAuthMiddleware(), jsi.PostStoragePlan)
 		state.GET("/server", jsi.GetServerInfo)
+		state.GET("/task/*taskID", jsi.JSIAuthMiddleware(), jsi.GetTaskInfo)
 	}
 	jsi.GET("/", jsi.GetServerInfo)
 
@@ -88,6 +89,10 @@ func (jsi *JointStorageInterface) GetServerInfo(c *gin.Context) {
 func (jsi *JointStorageInterface) PutObject(c *gin.Context) {
 	key := c.MustGet("key").(string)
 	userInfo := c.MustGet("userInfo").(*model.User)
+	isAsync := false
+	if c.Query("isAsync") == "true" {
+		isAsync = true
+	}
 	// 获取用户存储方案
 	storagePlan := userInfo.StoragePlan
 	fmt.Print(storagePlan)
@@ -103,14 +108,27 @@ func (jsi *JointStorageInterface) PutObject(c *gin.Context) {
 
 	// 调用 processor ，处理 upload 请求
 	task := createTask(userInfo.UserId, model.UPLOAD, tempFile.FilePath, key, nil, &storagePlan)
-	err = jsi.processor.ProcessUpload(task)
-	if err != nil {
-		util.Log(logrus.ErrorLevel, "JSI PutObject", "upload task process fail",
-			"", "err", err.Error())
-		c.String(http.StatusInternalServerError, err.Error())
+	if !isAsync {
+		err = jsi.processor.ProcessUpload(task)
+		if err != nil {
+			util.Log(logrus.ErrorLevel, "JSI PutObject", "upload task process fail",
+				"", "err", err.Error())
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		// 返回用户结果
+		c.String(http.StatusOK, "")
+	} else {
+		tid, err := jsi.processor.AddTask(task)
+		if err != nil {
+			util.Log(logrus.ErrorLevel, "JSI PutObject", "upload add task fail",
+				"", "err", err.Error())
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		c.String(http.StatusOK, tid.Hex())
 	}
-	// 返回用户结果
-	c.String(http.StatusOK, "")
+
 }
 
 func (jsi *JointStorageInterface) GetObject(c *gin.Context) {
@@ -199,7 +217,24 @@ func (jsi *JointStorageInterface) PostStoragePlan(c *gin.Context) {
 		_ = c.AbortWithError(http.StatusBadRequest, errors.New("internal error"))
 		return
 	}
-	c.String(http.StatusOK, tid.String())
+	c.String(http.StatusOK, tid.Hex())
+}
+
+func (jsi *JointStorageInterface) GetTaskInfo(c *gin.Context) {
+	userInfo := c.MustGet("userInfo").(*model.User)
+	taskID := c.Param("taskID")
+	taskID = strings.Trim(taskID, "/")
+	tid, err := primitive.ObjectIDFromHex(taskID)
+	task, err := jsi.processor.TaskStorage.GetTask(tid)
+	if err != nil {
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("task id not exist"))
+		return
+	}
+	if task.Uid != userInfo.UserId {
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("task id not exist"))
+		return
+	}
+	c.JSON(http.StatusOK, &task)
 }
 
 func (jsi *JointStorageInterface) convertToUserStoragePlan(plan model.StoragePlan) (*model.UserStoragePlan, error) {
