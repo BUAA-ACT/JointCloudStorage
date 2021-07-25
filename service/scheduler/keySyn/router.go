@@ -5,10 +5,15 @@ import (
 	"shaoliyin.me/jcspan/dao"
 )
 
+
+var (
+	endPointAddKey		=	"/add_key"
+	endPointDeleteKey	=	"/delete_key"
+)
 func KeySynInit(cid string, r *gin.Engine) {
 	keyDao = dao.GetDatabaseInstance()
 	localCid = cid
 
-	r.POST("/add_key", PostKeyUpsert)
-	r.POST("/delete_key", PostKeyDelete)
+	r.POST(endPointAddKey, PostKeyUpsert)
+	r.POST(endPointDeleteKey, PostKeyDelete)
 }
