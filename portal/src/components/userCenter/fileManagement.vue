@@ -3,16 +3,19 @@
     <div class="refresh-btn">
       <el-button type="primary" @click="fetchData"><i class="el-icon-refresh"></i></el-button>
     </div>
-    <el-upload action="foobar" :http-request="handleUpload">
+    <el-upload action="foobar" :http-request="handleUpload" ref="uploader">
       <el-button type="primary"><i class="el-icon-upload2"></i> 上传文件</el-button>
     </el-upload>
     <el-table
       v-loading="listLoading"
       :data="files.filter(data => !search || data.FileInfo.FileName.toLowerCase().includes(search.toLowerCase()))"
       fit
+      :row-class-name="isShowIcon"
+      @row-click="rowClick"
+      :default-sort="{ prop: 'FileInfo.FileName', order: 'ascending' }"
     >
       <el-table-column type="expand">
-        <template slot-scope="props">
+        <template slot-scope="props" v-if="props.row.FileType !== 'DIR'">
           <el-form label-position="left" inline class="demo-table-expand">
             <el-form-item label="同步状态">
               <span>{{ props.row.FileInfo.SyncStatus }}</span>
@@ -26,16 +29,21 @@
           </el-form>
         </template>
       </el-table-column>
-      <el-table-column label="文件名" prop="FileInfo.FileName" :formatter="filenameFormatter" />
-      <el-table-column label="大小" prop="FileInfo.Size" :formatter="sizeFormatter" />
-      <el-table-column label="修改时间" prop="FileInfo.LastModified" :formatter="dateFormatter" />
+      <el-table-column label="文件名" prop="FileInfo.FileName" :formatter="filenameFormatter" sortable />
+      <el-table-column label="大小" prop="FileInfo.Size" :formatter="sizeFormatter" sortable />
+      <el-table-column label="修改时间" prop="FileInfo.LastModified" :formatter="dateFormatter" sortable />
       <el-table-column align="right">
         <template slot="header">
           <el-input v-model="search" size="mini" placeholder="搜索文件" />
         </template>
         <template slot-scope="scope">
-          <el-button size="mini" type="primary" @click="handleDownload(scope.row.FileInfo.FileName)">下载</el-button>
-          <el-button size="mini" type="danger" @click="handleDelete(scope.row.FileInfo.FileName)">删除</el-button>
+          <el-button v-if="scope.row.FileType === 'FILE'" size="mini" type="primary" @click="handleDownload(scope.row.FileInfo.FileName)">
+            下载
+          </el-button>
+          <el-button v-if="scope.row.FileType === 'FILE'" size="mini" type="danger" @click="handleDelete(scope.row.FileInfo.FileName)">
+            删除
+          </el-button>
+          <el-button v-if="scope.row.FileType === 'DIR'" size="mini" type="primary" @click="openDir(scope.row.FileInfo.FileName)">打开</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -52,29 +60,40 @@ export default {
     return {
       files: [],
       search: "",
-      listLoading: false
+      listLoading: false,
+      curPath: "/"
     };
   },
   created() {
     this.fetchData();
   },
   methods: {
-    fetchData() {
+    fetchData(path) {
       this.listLoading = true;
-      cloudStorage.getFiles("/").then(response => {
+      cloudStorage.getFiles(path || this.curPath).then(response => {
         setTimeout(() => {
           if (response.Files != null) {
             this.files = response.Files;
+            this.curPath = path || this.curPath;
           } else {
             this.files = [];
           }
+          if (this.curPath !== "/") {
+            this.files.splice(0, 0, {
+              FileType: "DIR",
+              FileInfo: {
+                FileName: ".."
+              }
+            });
+          }
+          this.$refs.uploader.clearFiles();
           this.listLoading = false;
         }, 300);
       });
     },
     handleUpload(item) {
       const self = this;
-      cloudStorage.getUploadAddress(item.file.name).then(response => {
+      cloudStorage.getUploadAddress(`${this.curPath}${item.file.name}`).then(response => {
         const token = response.Token;
         const addr = `${window.location.protocol}//${window.location.hostname}:${window.location.port}/upload`;
         cloudStorage.upload(item, token, addr).then(() => {
@@ -109,9 +128,15 @@ export default {
       });
     },
     sizeFormatter(row, column, bytes) {
+      if (row.FileType === "DIR") {
+        return "";
+      }
       return other.formatBytes(bytes);
     },
     dateFormatter(row, column, timestamp) {
+      if (row.FileType === "DIR") {
+        return "";
+      }
       const date = new Date(timestamp);
       return date.toLocaleString("zh-CN");
     },
@@ -137,12 +162,35 @@ export default {
       }
       const date = new Date(timestamp);
       return date.toLocaleString("zh-CN");
+    },
+    openDir(dirName) {
+      this.listLoading = true;
+      let path = dirName;
+      if (path === "..") {
+        if (this.curPath === "/") {
+          path = "/";
+        } else {
+          path = this.curPath.substring(0, this.curPath.lastIndexOf("/", this.curPath.length - 2) + 1);
+        }
+      }
+      this.fetchData(path);
+    },
+    isShowIcon({ row }) {
+      if (row.FileType === "DIR") {
+        return "dir-row";
+      }
+      return "";
+    },
+    rowClick(row) {
+      if (row.FileType === "DIR") {
+        this.openDir(row.FileInfo.FileName);
+      }
     }
   }
 };
 </script>
 
-<style>
+<style lang="scss">
 .el-tag + .el-tag {
   margin-left: 5px;
 }
@@ -165,5 +213,14 @@ export default {
 .refresh-btn {
   float: left;
   margin-right: 5px;
+}
+.dir-row {
+  .el-table__expand-icon {
+    pointer-events: none !important;
+    cursor: default;
+    .el-icon-arrow-right:before {
+      content: "\e78a";
+    }
+  }
 }
 </style>
