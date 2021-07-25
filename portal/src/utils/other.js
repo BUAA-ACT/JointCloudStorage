@@ -37,6 +37,6 @@ export default {
     return undefined;
   },
   formatPrice(number, fixed = 4) {
-    return number.toFixed(fixed);
+    return Number(number).toFixed(fixed);
   }
 };
