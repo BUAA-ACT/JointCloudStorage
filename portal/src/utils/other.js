@@ -9,5 +9,34 @@ export default {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     return `${parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`;
+  },
+  /**
+   * Sleep Implemented by Promise
+   * @param {number} time
+   * @returns {Promise<void>}
+   */
+  sleep(time) {
+    return new Promise(resolve => setTimeout(resolve, time));
+  },
+  underline(data) {
+    if (typeof data === "string") {
+      return data.replace(/([A-Z])/g, (p, m) => `_${m.toLowerCase()}`);
+    }
+    if (Array.isArray(data)) {
+      return data.map(item => this.underline(item));
+    }
+    return undefined;
+  },
+  underlineUpperCase(data) {
+    if (typeof data === "string") {
+      return this.underline(data).toUpperCase();
+    }
+    if (Array.isArray(data)) {
+      return data.map(item => this.underline(item));
+    }
+    return undefined;
+  },
+  formatPrice(number, fixed = 4) {
+    return number.toFixed(fixed);
   }
 };

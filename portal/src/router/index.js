@@ -1,5 +1,6 @@
 import VueRouter from "vue-router";
 import ElementUI from "element-ui";
+import Other from "@/utils/other";
 import Index from "../views/index.vue";
 import store from "../store";
 
@@ -11,6 +12,11 @@ const router = [
       keepAlive: true // 需要被缓存
     },
     component: Index
+  },
+  {
+    path: "/401",
+    name: "Page401",
+    component: () => import("../views/error-page/401.vue")
   },
   {
     path: "/404",
@@ -383,20 +389,25 @@ const createRouter = () =>
   });
 
 const vueRouter = createRouter();
-vueRouter.beforeEach((to, from, next) => {
-  const loading = ElementUI.Loading.service();
-
-  setTimeout(() => {
-    loading.close();
-  }, 1000);
-  next();
-});
+let loading;
 
 vueRouter.beforeEach(async (to, from, next) => {
+  loading = ElementUI.Loading.service({});
+  while (!store.getters.ready) {
+    // eslint-disable-next-line no-await-in-loop
+    await Other.sleep(50);
+  }
   const hasToken = store.getters.token;
+  const { isAdmin } = store.getters;
   if (hasToken) {
     if (to.path === "/login") {
       next({ path: to.query.redirect || "/" });
+    } else if (to.path.includes("admin")) {
+      if (isAdmin) {
+        next();
+      } else {
+        next({ path: "/401" });
+      }
     } else {
       next();
     }
@@ -407,4 +418,7 @@ vueRouter.beforeEach(async (to, from, next) => {
   }
 });
 
+vueRouter.afterEach(() => {
+  loading.close();
+});
 export default vueRouter;

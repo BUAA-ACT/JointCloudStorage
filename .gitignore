@@ -10,3 +10,5 @@ build/
 demo/Display/venv
 demo/Display/__pycache__
 demo/Display/.idea
+sdk/jsi-sdk-python/venv/
+sdk/jsi-sdk-python/JointCloudStorage/__pycache__/

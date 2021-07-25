@@ -24,6 +24,7 @@ func setupRouter(r *gin.Engine) {
 	r.GET("/testGet", controller.UserTestGet)
 	r.GET("/cookie", controller.CookieTestGet)
 	r.POST("/header", controller.HeaderTestPost)
+	r.GET("/websocket", controller.WebSocketTestGet)
 
 	/* user function */
 	r.POST("/user/register", controller.UserRegister)
@@ -44,6 +45,9 @@ func setupRouter(r *gin.Engine) {
 	r.POST("/user/remakeKey", controller.UserRemakeKey)
 	//r.POST("/user/uploadAvatar",controller.UserUploadAvatar)
 
+	/* cloud function */
+	r.POST("/cloud/thisName", controller.GetThisCloudName)
+
 	/* plan function */
 	//r.POST("/plan/changeUserStoragePlan", controller.UserSetStoragePlan)
 	r.POST("/plan/chooseStoragePlan", controller.UserChooseStoragePlan)
@@ -62,6 +66,7 @@ func setupRouter(r *gin.Engine) {
 
 	/* task function */
 	r.POST("/task/getTask", controller.UserGetTask)
+	r.GET("/task/getMigration", controller.UserGetMigrationTask)
 
 	/* admin & cloud function */
 	r.POST("/cloud/getAllClouds", controller.GetAllClouds)
@@ -72,28 +77,11 @@ func setupRouter(r *gin.Engine) {
 	r.POST("/cloud/getAddedClouds", controller.AdminGetAddedClouds)
 }
 
-func Cors() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		method := c.Request.Method
-		//if origin != "" {
-		c.Header("Access-Control-Allow-Origin", "*") // 可将将 * 替换为指定的域名
-		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
-		c.Header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
-		c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Cache-Control, Content-Language, Content-Type")
-		c.Header("Access-Control-Allow-Credentials", "true")
-		//}
-		if method == "OPTIONS" {
-			c.AbortWithStatus(http.StatusNoContent)
-		}
-		c.Next()
-	}
-}
-
 func StartServe(configFilePath string) {
 	args.LoadProperties(configFilePath)
 	r := gin.Default()
 	//cross
-	r.Use(Cors())
+	r.Use(controller.Cors)
 	//route
 	setupRouter(r)
 	dao.ConnectInitDao()

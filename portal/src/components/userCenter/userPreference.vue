@@ -53,15 +53,11 @@ export default {
         .catch(() => {
           this.loading = false;
         });
-      this.$store.dispatch("getInfo").then(() => {
+      this.$store.dispatch("updateInfo", "Preference").then(() => {
         this.getUserPreference();
       });
     },
     async getUserPreference() {
-      if (!this.$store.getters.ready) {
-        setTimeout(() => this.getUserPreference(), 50);
-        return;
-      }
       if (this.$store.getters.preference.Vendor !== 0) {
         this.form = { ...this.$store.getters.preference, AllowDelay: this.form.AllowDelay };
       } else {

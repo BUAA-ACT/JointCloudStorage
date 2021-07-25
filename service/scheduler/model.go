@@ -14,7 +14,8 @@ func storagePlan(param GetStoragePlanParam, clouds []dao.Cloud) GetStoragePlanDa
 	// 初始化参数
 	N := len(clouds)     // 可用云服务数量
 	nMin := param.Vendor // 存储方案所包含云服务的数量下界
-	nMax := minInt(N, 5) // 存储方案所包含云服务的数量上界
+	//nMax := minInt(N, 5) // 存储方案所包含云服务的数量上界
+	nMax := nMin
 
 	sMin := 999.9 // 当前最小存储成本
 	tMin := 999.9 // 当前最小流量成本
@@ -57,7 +58,7 @@ func storagePlan(param GetStoragePlanParam, clouds []dao.Cloud) GetStoragePlanDa
 				}
 
 				// 计算并验证流量成本
-				t := calTrafficPrice(plan)
+				t := calTrafficPrice(plan, true)
 				if t > param.TrafficPrice {
 					continue
 				}
@@ -104,17 +105,19 @@ func calStoragePrice(plan dao.StoragePlan) float64 {
 	return price
 }
 
-func calTrafficPrice(plan dao.StoragePlan) float64 {
+func calTrafficPrice(plan dao.StoragePlan, resort bool) float64 {
 	clouds := plan.Clouds
-	sort.Slice(clouds, func(i, j int) bool {
-		if clouds[i].TrafficPrice != clouds[j].TrafficPrice {
-			return clouds[i].TrafficPrice < clouds[j].TrafficPrice
-		} else if clouds[i].StoragePrice != clouds[j].StoragePrice {
-			return clouds[i].StoragePrice < clouds[j].StoragePrice
-		} else {
-			return clouds[i].Availability > clouds[j].Availability
-		}
-	})
+	if resort {
+		sort.Slice(clouds, func(i, j int) bool {
+			if clouds[i].TrafficPrice != clouds[j].TrafficPrice {
+				return clouds[i].TrafficPrice < clouds[j].TrafficPrice
+			} else if clouds[i].StoragePrice != clouds[j].StoragePrice {
+				return clouds[i].StoragePrice < clouds[j].StoragePrice
+			} else {
+				return clouds[i].Availability > clouds[j].Availability
+			}
+		})
+	}
 
 	if plan.K == 1 {
 		return clouds[0].TrafficPrice
@@ -219,6 +222,7 @@ func reSchedule(interval time.Duration) {
 				CloudsOld:      deleted,
 				CloudsNew:      added,
 				Cost:           42,
+				Status:         dao.AdviceStatusPending,
 			}
 
 			// 写入数据库
@@ -229,7 +233,7 @@ func reSchedule(interval time.Duration) {
 			}
 			logInfo("Created new migration advice", requestID, adv)
 		}
-		logInfo("Finsish reschedule storage plans", requestID)
+		logInfo("Finish reschedule storage plans", requestID)
 	}
 }
 

@@ -77,7 +77,7 @@ export default {
     }
   },
   async beforeMount() {
-    await this.$store.dispatch("getInfo");
+    await this.$store.dispatch("updateInfo", "DataStats");
     await this.getAllCloud();
   }
 };

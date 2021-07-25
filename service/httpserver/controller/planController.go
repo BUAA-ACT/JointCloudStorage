@@ -18,7 +18,7 @@ func UserGetAllStoragePlan(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -76,7 +76,7 @@ func UserGetAdvice(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -85,12 +85,21 @@ func UserGetAdvice(con *gin.Context) {
 	if !valid {
 		return
 	}
+	user, infoSuccess := dao.UserDao.GetUserInfo(userID)
+	if !checkDaoSuccess(con, infoSuccess) {
+		return
+	}
 	advices, adviceSuccess := dao.MigrationAdviceDao.GetNewAdvice(userID)
 	if !checkDaoSuccess(con, adviceSuccess) {
 		return
 	}
-	log.Print("advices: ")
-	log.Println(*advices)
+	// choose advice
+	empty := make([]model.MigrationAdvice, 0)
+	if user.Status != args.UserForbiddenStatus {
+		if len(*advices) > 0 && (*advices)[0].Status == args.AdviceStatusChoose {
+			advices = &empty
+		}
+	}
 	// return advices
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
@@ -106,7 +115,7 @@ func UserAbandonAdvice(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -115,18 +124,32 @@ func UserAbandonAdvice(con *gin.Context) {
 	if !valid {
 		return
 	}
-	deleteAdviceResult, deleteAdviceSuccess := dao.MigrationAdviceDao.DeleteAdvice(userID)
-	if !checkDaoSuccess(con, deleteAdviceSuccess) {
+	// delete advice with user status
+	user, infoSuccess := dao.UserDao.GetUserInfo(userID)
+	if !checkDaoSuccess(con, infoSuccess) {
 		return
 	}
-	// nothing has been delete
-	if deleteAdviceResult.DeletedCount == 0 {
+	if user.Status == args.UserForbiddenStatus {
 		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeDeleteNothing,
-			"msg":  "没有删除任何方案",
+			"code": args.CodeStatusForbidden,
+			"msg":  "用户正在迁移不能删除",
 			"data": gin.H{},
 		})
 		return
+	} else {
+		deleteAdviceResult, deleteAdviceSuccess := dao.MigrationAdviceDao.DeleteAdvice(userID)
+		if !checkDaoSuccess(con, deleteAdviceSuccess) {
+			return
+		}
+		// nothing has been delete
+		if deleteAdviceResult.DeletedCount == 0 {
+			con.JSON(http.StatusOK, gin.H{
+				"code": args.CodeDeleteNothing,
+				"msg":  "重复删除迁移建议",
+				"data": gin.H{},
+			})
+			return
+		}
 	}
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
@@ -141,7 +164,7 @@ func UserChooseStoragePlan(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordStoragePlan: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -190,11 +213,11 @@ func UserChooseStoragePlan(con *gin.Context) {
 	if !checkDaoSuccess(con, credentialSuccess) {
 		return
 	}
-	// save new plan
-	storagePlanSuccess := dao.UserDao.SetUserStoragePlan(userID, storagePlan)
-	if !checkDaoSuccess(con, storagePlanSuccess) {
-		return
-	}
+	// save new plan 不需要再次保存新的存储方案，存储方案交给 scheduler 同步
+	//storagePlanSuccess := dao.UserDao.SetUserStoragePlan(userID, storagePlan)
+	//if !checkDaoSuccess(con, storagePlanSuccess) {
+	//	return
+	//}
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
 		"msg":  "设置存储方案成功",
@@ -206,7 +229,7 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	fieldRequired := map[string]bool{
 		args.FieldWordAccessToken: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, &fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, &fieldRequired)
 	if tools.RequiredFieldNotExist(&fieldRequired, existMap) {
 		return
 	}
@@ -238,10 +261,17 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	if !checkDaoSuccess(con, adviceSuccess) {
 		return
 	}
+	// advice must be pending
 	nowAdvice := (*newAdvices)[0]
+	if nowAdvice.Status != args.AdviceStatusPending {
+		con.JSON(http.StatusOK, gin.H{
+			"code": args.CodeChangeNothing,
+			"msg":  "迁移建议非法,不能进行迁移",
+			"data": gin.H{},
+		})
+	}
 	// post to notice scheduler this plan
 	postPlanToSchedulerResponse, postPlanToSchedulerSuccess := scheduler.SetStoragePlanToScheduler(userID, code.AesDecrypt(user.Password, *args.EncryptKey), &nowAdvice.StoragePlanNew)
-	// save new plan
 	if !postPlanToSchedulerSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
@@ -283,7 +313,7 @@ func UserAcceptStoragePlan(con *gin.Context) {
 	}
 
 	// use "" to tell transporter migrate all files
-	syncFromTransporterResponse, syncFromTransporterSuccess := transporter.SyncFile("", userID, sourcePlan, destinationPlan)
+	syncFromTransporterResponse, syncFromTransporterSuccess := transporter.SyncFile("/", userID, sourcePlan, destinationPlan)
 	if !syncFromTransporterSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
@@ -301,22 +331,13 @@ func UserAcceptStoragePlan(con *gin.Context) {
 		})
 		return
 	}
-	// delete advice
-	deleteAdviceResult, deleteAdviceSuccess := dao.MigrationAdviceDao.DeleteAdvice(userID)
-	if !checkDaoSuccess(con, deleteAdviceSuccess) {
+	// change advice status
+	_, setAdviceSuccess := dao.MigrationAdviceDao.SetAdviceStatus(userID, args.AdviceStatusChoose)
+	if !checkDaoSuccess(con, setAdviceSuccess) {
 		return
 	}
 	// recover user status : forbidden -> normal ?
 
-	// delete nothing
-	if deleteAdviceResult.DeletedCount == 0 {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodeDeleteNothing,
-			"msg":  "没有删除任何方案",
-			"data": gin.H{},
-		})
-		return
-	}
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
 		"msg":  "设置存储方案成功",
@@ -335,7 +356,7 @@ func UserSetStoragePlan(con *gin.Context) {
 		args.FieldWordAccessToken: true,
 		args.FieldWordStoragePlan: true,
 	}
-	valueMap, existMap := getQueryAndReturn(con, fieldRequired)
+	valueMap, existMap := getQueryAndReturnWithHttp(con, fieldRequired)
 	if tools.RequiredFieldNotExist(fieldRequired, existMap) {
 		return
 	}

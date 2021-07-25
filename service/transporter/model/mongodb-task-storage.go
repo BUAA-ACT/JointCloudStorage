@@ -114,7 +114,7 @@ func (task *MongoTaskStorage) GetTaskList(n int) (t []*Task) {
 	collection := task.client.Database(task.databaseName).Collection(task.collectionName)
 	findOptions := options.Find()
 	findOptions.SetLimit(int64(n))
-	cur, err := collection.Find(context.TODO(), bson.D{{"state", WAITING}}, findOptions)
+	cur, err := collection.Find(context.TODO(), bson.D{{"task_state", WAITING}}, findOptions)
 
 	if err != nil {
 		log.Print(err)
@@ -153,7 +153,7 @@ func (task *MongoTaskStorage) GetTask(tid primitive.ObjectID) (*Task, error) {
 
 	//get the collection and find by _id
 	collection := task.client.Database(task.databaseName).Collection(task.collectionName)
-	err = collection.FindOne(context.TODO(), bson.D{{"_id", tid}}).Decode(&result)
+	err = collection.FindOne(context.TODO(), bson.M{"_id": tid}).Decode(&result)
 	if err != nil {
 		log.Print(err)
 		return nil, err
@@ -172,7 +172,7 @@ func (task *MongoTaskStorage) SetTaskState(tid primitive.ObjectID, state TaskSta
 	filter := bson.D{{"_id", tid}}
 	update := bson.D{
 		{"$set", bson.D{
-			{"state", state},
+			{"task_state", state},
 		}},
 	}
 	collection := task.client.Database(task.databaseName).Collection(task.collectionName)
@@ -191,16 +191,7 @@ func (task *MongoTaskStorage) SetTask(tid primitive.ObjectID, t *Task) error {
 	}
 
 	update := bson.D{
-		{"$set", bson.D{
-			{"tasktype", t.TaskType},
-			{"state", t.State},
-			{"starttime", t.StartTime},
-			{"uid", t.Uid},
-			{"sourcepath", t.SourcePath},
-			{"destinationpath", t.DestinationPath},
-			{"taskoptions", t.TaskOptions},
-			{"progress", t.Progress},
-		}},
+		{"$set", t},
 	}
 	collection := task.client.Database(task.databaseName).Collection(task.collectionName)
 	_, err = collection.UpdateByID(context.TODO(), tid, update)
@@ -235,7 +226,7 @@ func (task *MongoTaskStorage) IsAllDone() bool {
 
 	//get the collection and find by _id
 	collection := task.client.Database(task.databaseName).Collection(task.collectionName)
-	filter := bson.M{"state": bson.M{
+	filter := bson.M{"task_state": bson.M{
 		"$nin": bson.A{FAIL, FINISH},
 	}}
 	result, err := collection.Find(context.TODO(), filter)

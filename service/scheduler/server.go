@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"math"
 	"net/http"
 	"time"
 
@@ -244,8 +245,8 @@ func PostStoragePlan(c *gin.Context) {
 		// 来自本云httpserver的请求
 		plan := &param.StoragePlan
 		plan.StoragePrice = calStoragePrice(*plan)
-		plan.Availability = calStoragePrice(*plan)
-		plan.TrafficPrice = calTrafficPrice(*plan)
+		plan.Availability = calAvailability(*plan)
+		plan.TrafficPrice = calTrafficPrice(*plan, false)
 		var users []dao.AccessCredential
 		ch := make(chan *dao.AccessCredential)
 
@@ -297,6 +298,10 @@ func PostStoragePlan(c *gin.Context) {
 			logError(err, requestID, "更新存储方案时获取用户信息失败")
 		} else {
 			user.StoragePlan = param.StoragePlan
+			user.Preference.Vendor = param.StoragePlan.N // 存储偏好，副本数
+			user.Preference.StoragePrice = math.Max(user.Preference.StoragePrice, user.StoragePlan.StoragePrice)
+			user.Preference.TrafficPrice = math.Max(user.Preference.TrafficPrice, user.StoragePlan.TrafficPrice)
+			user.Preference.Availability = math.Min(user.Preference.Availability, user.StoragePlan.Availability)
 			err = db.InsertUser(user)
 			if err != nil {
 				logError(err, requestID, "更新用户存储方案失败")
@@ -325,18 +330,31 @@ func PostStoragePlan(c *gin.Context) {
 
 		// 新建用户
 		passwd := param.Password
-		// 密码为空时生成随机密码
+		// 密码为空时从数据库获取已有 User
+		var user dao.User
 		if passwd == "" {
-			passwd = genPassword()
-		}
-		user := dao.User{
-			UserId:       param.UserID,
-			Email:        param.UserID,
-			Nickname:     param.UserID,
-			Password:     AesEncrypt(passwd, *flagAESKey),
-			Role:         dao.RoleGuest,
-			LastModified: time.Now(),
-			StoragePlan:  param.StoragePlan,
+			user, err = db.GetUser(param.UserID)
+			if err != nil {
+				logError(err, requestID, "Get user failed", user)
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"RequestID": requestID,
+					"Code":      codeInternalError,
+					"Msg":       errorMsg[codeInternalError],
+				})
+				return
+			}
+			user.StoragePlan = param.StoragePlan
+			user.LastModified = time.Now()
+		} else {
+			user = dao.User{
+				UserId:       param.UserID,
+				Email:        param.UserID,
+				Nickname:     param.UserID,
+				Password:     AesEncrypt(passwd, *flagAESKey),
+				Role:         dao.RoleGuest,
+				LastModified: time.Now(),
+				StoragePlan:  param.StoragePlan,
+			}
 		}
 		err = db.InsertUser(user)
 		if err != nil {

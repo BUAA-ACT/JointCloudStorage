@@ -3,6 +3,19 @@
     <el-row :gutter="10">
       <el-col :xs="16" :sm="16" :md="16" :lg="14">
         <a href="/"><img src="@/assets/logo.png" class="logoImg" alt="logo"/></a>
+        <span class="logoImg menu-header">
+          <!--          <span>{{ curCloudName }}</span>-->
+          <svg viewBox="0 0 120 26" class="svgBox">
+            <defs>
+              <linearGradient id="changer" x1="0" y1="0" x2="100%" y2="0">
+                <stop offset="0" stop-color="rgb(43, 111, 193)" />
+                <stop offset="50%" stop-color="rgb(49, 140, 179)" />
+                <stop offset="100%" stop-color="rgb(56, 172, 164)" />
+              </linearGradient>
+            </defs>
+            <text text-anchor="start" fill="url(#changer)" x="-90%" y="1em">{{ curCloudName }}</text>
+          </svg>
+        </span>
       </el-col>
       <el-col :xs="8" :sm="8" :md="8" :lg="10" class="insideFloatRight">
         <el-link v-if="!userName" href="#/register">注册</el-link>
@@ -39,6 +52,8 @@
 </template>
 
 <script>
+import Cloud from "@/api/clouds";
+
 export default {
   name: "headNav",
   props: {
@@ -58,7 +73,8 @@ export default {
         4: "/clusterService",
         5: "/solution",
         6: "/404"
-      }
+      },
+      curCloudName: "阿里云青岛"
     };
   },
   created() {
@@ -89,7 +105,17 @@ export default {
         this.$store.dispatch("logout");
         this.$router.push({ path: "/", query: { redirect: this.$route.path } });
       }
+    },
+    getCurCloudName() {
+      Cloud.getCurCloudName().then(resp => {
+        if (resp) {
+          this.curCloudName = resp.CloudName;
+        }
+      });
     }
+  },
+  beforeMount() {
+    this.getCurCloudName();
   }
 };
 </script>
@@ -153,5 +179,27 @@ li {
 // }
 .el-input__inner {
   border-radius: 50%;
+}
+
+.menu-header {
+  font-size: 20px;
+  color: rgb(43, 111, 193);
+  letter-spacing: 5px;
+  float: left;
+  margin-top: 32px;
+  height: 22px;
+}
+
+.svgBox {
+  width: fit-content;
+  height: 22px;
+  vertical-align: baseline;
+  position: relative;
+  top: 2px;
+}
+
+.gradient-text-three {
+  font-size: 24px;
+  fill: url(#SVGID_1_);
 }
 </style>

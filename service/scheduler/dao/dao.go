@@ -16,6 +16,10 @@ const (
 	RoleGuest = "GUEST"
 )
 
+const (
+	AdviceStatusPending = "PENDING"
+)
+
 // Dao encapsulates database operations.
 type Dao struct {
 	client          *mongo.Client
@@ -107,6 +111,7 @@ type MigrationAdvice struct {
 	CloudsOld      []Cloud     `bson:"clouds_old"`
 	CloudsNew      []Cloud     `bson:"clouds_new"`
 	Cost           float64     `bson:"cost"`
+	Status         string      `bson:"status"`
 }
 
 type AccessKey struct {
@@ -366,12 +371,22 @@ func (d *Dao) InsertFiles(files []File) error {
 	}
 
 	col := d.client.Database(d.database).Collection(d.fileCollection)
-	_, err := col.InsertMany(
-		context.TODO(),
-		fs,
-	)
-	if err != nil {
-		return err
+	for _, file := range files {
+		_, err := col.UpdateOne(
+			context.TODO(),
+			bson.M{
+				"file_id": file.FileID,
+			},
+			bson.D{
+				{"$set", file},
+			},
+			&options.UpdateOptions{
+				Upsert: bool2pointer(true),
+			},
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

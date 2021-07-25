@@ -3,6 +3,7 @@ import Vuex from "vuex";
 import Common from "@/api/common";
 import { getToken, setToken, removeToken } from "@/utils/auth";
 import user from "@/utils/user";
+import Other from "@/utils/other";
 
 Vue.use(Vuex);
 
@@ -21,7 +22,7 @@ export default new Vuex.Store({
       Volume: 0
     },
     role: [],
-    ready: false
+    ready: true
   },
   getters: {
     token: state => {
@@ -85,7 +86,7 @@ export default new Vuex.Store({
       state.status = status;
     },
     RESET_ALL: state => {
-      state.ready = false;
+      state.ready = true;
       state.token = null;
       removeToken();
       state.name = null;
@@ -112,6 +113,14 @@ export default new Vuex.Store({
         await dispatch("getInfo", resp.AccessToken);
       });
     },
+    /**
+     * 获取用户所有信息
+     * `ready` 字段表示当前状态
+     * @param getters
+     * @param commit
+     * @param pToken
+     * @returns {Promise<void>}
+     */
     async getInfo({ getters, commit }, pToken) {
       let token = pToken || null;
       if (pToken === undefined) {
@@ -120,24 +129,29 @@ export default new Vuex.Store({
       if (token === null) {
         return;
       }
-      await Common.checkToken(token).then(async resp => {
-        if (!resp) {
-          commit("RESET_ALL");
-          return;
-        }
-        commit("SET_TOKEN", token);
-        await Common.getUserInfo(token).then(data => {
-          const { Email, Nickname, Preference, StoragePlan, DataStats, Status, Role } = data.UserInfo;
-          commit("SET_NAME", Email);
-          commit("SET_NICKNAME", Nickname);
-          commit("SET_PREFERENCE", Preference);
-          commit("SET_STORAGE_PLAN", StoragePlan);
-          commit("SET_DATA_STATS", DataStats);
-          commit("SET_STATUS", Status);
+      commit("SET_READY", false);
+      await Common.checkToken(token)
+        .then(async resp => {
+          if (!resp) {
+            commit("RESET_ALL");
+            return;
+          }
+          commit("SET_TOKEN", token);
+          await Common.getUserInfo(token).then(data => {
+            const { Email, Nickname, Preference, StoragePlan, DataStats, Status, Role } = data.UserInfo;
+            commit("SET_NAME", Email);
+            commit("SET_NICKNAME", Nickname);
+            commit("SET_PREFERENCE", Preference);
+            commit("SET_STORAGE_PLAN", StoragePlan);
+            commit("SET_DATA_STATS", DataStats);
+            commit("SET_STATUS", Status);
+            commit("SET_ROLE", Role);
+          });
+        })
+        .catch()
+        .then(() => {
           commit("SET_READY", true);
-          commit("SET_ROLE", Role);
         });
-      });
     },
     async logout({ state, commit }) {
       Common.logout(state.token).then(() => {
@@ -149,6 +163,27 @@ export default new Vuex.Store({
       if (getters.vendor === 0) {
         user.firstLoginNotification();
       }
+    },
+    /**
+     * 更新用户信息某字段
+     * 与 `getInfo` 不同的是，本方法不会影响 `ready` 字段
+     * @param getters
+     * @param commit
+     * @param {"Preference" | "StoragePlan" | "DataStats" | "Status" | "Role"} field
+     * @returns {Promise<void>}
+     */
+    async updateInfo({ getters, commit }, field) {
+      let value;
+      if (typeof field === "string") {
+        await Common.getUserInfo(getters.token).then(data => {
+          value = data.UserInfo[field];
+          commit(`SET${Other.underlineUpperCase(field)}`, value);
+        });
+      }
+      if (!value) {
+        return Promise.reject(new Error("Invalid field name"));
+      }
+      return Promise.resolve();
     }
   },
   modules: {}

@@ -6,6 +6,9 @@
 const TerserPlugin = require("terser-webpack-plugin");
 const FileManagerPlugin = require("filemanager-webpack-plugin");
 
+const serverIP = "127.0.0.1";
+const transporterIP = "192.168.105.13";
+
 const path = require("path");
 
 function resolve(dir) {
@@ -90,19 +93,22 @@ module.exports = {
   devServer: {
     proxy: {
       "/file": {
-        target: `http://127.0.0.1:8081`
+        target: `http://${serverIP}:8081`
       },
       "/plan": {
-        target: `http://127.0.0.1:8081`
+        target: `http://${serverIP}:8081`
       },
       "/user": {
-        target: `http://127.0.0.1:8081`
+        target: `http://${serverIP}:8081`
       },
       "/cloud": {
-        target: `http://127.0.0.1:8081`
+        target: `http://${serverIP}:8081`
       },
       "/upload": {
-        target: `http://192.168.105.13:8083`
+        target: `http://${transporterIP}:8083`
+      },
+      "/task": {
+        target: `http://${serverIP}:8081`
       }
     }
   }

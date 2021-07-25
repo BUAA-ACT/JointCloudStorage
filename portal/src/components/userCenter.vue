@@ -30,8 +30,15 @@
 </template>
 
 <script>
+import Other from "@/utils/other";
+
 export default {
   components: {},
+  provide() {
+    return {
+      formatPrice: Other.formatPrice
+    };
+  },
   data() {
     return {
       navList: {
@@ -55,7 +62,7 @@ export default {
     handleSelect(key) {
       this.$log(key);
       this.$log(this.$route.path);
-      if (this.$route.path !== this.navList[key]) {
+      if (this.$route.path !== `/cloudStorage/${this.navList[key]}`) {
         this.$router.push({ path: `/cloudStorage/${this.navList[key]}` });
       }
     }

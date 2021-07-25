@@ -44,6 +44,7 @@ services:
         command: ./transporter
         ports:
             - "8083:8083"
+            - "8085:8085"
             
     mongodb:
         image: mongo:4.4.5

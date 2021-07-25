@@ -2,6 +2,7 @@ package controller
 
 import (
 	"act.buaa.edu.cn/jcspan/transporter/model"
+	"act.buaa.edu.cn/jcspan/transporter/util"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -13,6 +14,7 @@ type Scheduler interface {
 	UploadFileMetadata(clouds []string, uid string, file *model.File) error
 	DeleteFileMetadata(clouds []string, uid string, file *model.File) error
 	MigrateFileMetadata(clouds []string, uid string, file *model.File) error
+	SetUserStoragePlan(user *model.User, plan *model.UserStoragePlan) error
 }
 
 type JcsPanScheduler struct {
@@ -42,6 +44,41 @@ type MetadataReply struct {
 	Code      int
 	Msg       string
 	RequestID string
+}
+
+// PostStoragePlan data struct
+type PostStoragePlan struct {
+	CloudID     string                `json:"CloudID" bson:"cloud_id"`
+	UserID      string                `json:"UserID" bson:"user_id"`
+	Password    string                `json:"Password" bson:"password"`
+	StoragePlan model.UserStoragePlan `json:"StoragePlan" bson:"storage_plan"`
+}
+
+func (s *JcsPanScheduler) SetUserStoragePlan(user *model.User, plan *model.UserStoragePlan) error {
+
+	postStoragePlan := PostStoragePlan{
+		CloudID:     util.Config.LocalCloudID,
+		UserID:      user.UserId,
+		Password:    user.Password,
+		StoragePlan: *plan,
+	}
+	postStoragePlanJson, _ := json.Marshal(postStoragePlan)
+	resp, err := http.Post(s.SchedulerHostUrl+"/storage_plan", "application/json", bytes.NewReader(postStoragePlanJson))
+	if err != nil {
+		util.Log(logrus.ErrorLevel, "Scheduler Set User Storage Plan", "post err", "", "err", err.Error())
+		return errors.New("scheduler resp error")
+	}
+	var reply MetadataReply
+	err = json.NewDecoder(resp.Body).Decode(&reply)
+	if err != nil {
+		return err
+	}
+	if reply.Code != http.StatusOK {
+		util.Log(logrus.ErrorLevel, "Scheduler Set User Storage Plan", "get resp code err", "200", string(rune(reply.Code)), reply.Msg)
+		return err
+	}
+	return nil
+
 }
 
 func (s *JcsPanScheduler) sendFileMetadata(mType MetaDataProcessType,

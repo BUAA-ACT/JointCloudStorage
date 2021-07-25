@@ -25,8 +25,8 @@ func (d *Dao) InsertVerifyCode(email string, code string) bool {
 			{"verify_code_create_time", timeNow},
 		},
 	}}
-	_, err := col.UpdateOne(context.TODO(), filter, update, opts)
-	return !tools.PrintError(err)
+	_, insertErr := col.UpdateOne(context.TODO(), filter, update, opts)
+	return !tools.PrintError(insertErr)
 }
 
 func (d *Dao) VerifyEmail(email string, verifyCode string) bool {
@@ -52,8 +52,8 @@ func (d *Dao) InsertAccessToken(token string, userID string) bool {
 		AccessTokenCreateTime: timeNow,
 		AccessTokenModifyTime: timeNow,
 	}
-	_, err := col.InsertOne(context.TODO(), accessToken)
-	return !tools.PrintError(err)
+	_, insertErr := col.InsertOne(context.TODO(), accessToken)
+	return !tools.PrintError(insertErr)
 }
 
 func (d *Dao) CheckValid(token string) (string, bool) {
@@ -76,13 +76,13 @@ func (d *Dao) CheckValid(token string) (string, bool) {
 	}
 	if timeNow.Sub(originToken.AccessTokenModifyTime).Hours() >= 4.0 || timeNow.Sub(originToken.AccessTokenCreateTime).Hours() >= 14*24.0 {
 		// out of date and need to delete
-		_, err := col.DeleteMany(context.TODO(), filter)
-		tools.PrintError(err)
+		_, deleteErr := col.DeleteMany(context.TODO(), filter)
+		tools.PrintError(deleteErr)
 		return "", false
 	} else {
 		// in time and need to update
-		_, err := col.UpdateMany(context.TODO(), filter, update)
-		tools.PrintError(err)
+		_, changeErr := col.UpdateMany(context.TODO(), filter, update)
+		tools.PrintError(changeErr)
 		return originToken.UserID, true
 	}
 }
@@ -92,6 +92,6 @@ func (d *Dao) DeleteAccessToken(accessToken string) (*mongo.DeleteResult, bool) 
 	filter := bson.M{
 		"access_token": accessToken,
 	}
-	result, err := col.DeleteMany(context.TODO(), filter)
-	return result, !tools.PrintError(err)
+	result, deleteErr := col.DeleteMany(context.TODO(), filter)
+	return result, !tools.PrintError(deleteErr)
 }

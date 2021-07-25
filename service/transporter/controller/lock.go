@@ -37,6 +37,11 @@ func NewLock(addr string) (*Lock, error) {
 	return l, nil
 }
 
+func (l *Lock) getRealPath(path string) string {
+	path = "/jcs" + path
+	return path
+}
+
 func (l *Lock) Lock(path string) error {
 	// 检查前缀格式
 	if len(path) == 0 {
@@ -97,23 +102,22 @@ func (l *Lock) Lock(path string) error {
 }
 
 func (l *Lock) UnLockAll(path string) {
-	path = "/jcs" + path
-	_, _, err := l.c.Get(path)
+	realPath := l.getRealPath(path)
+	_, _, err := l.c.Get(realPath)
 	if err != nil {
 		return
 	}
-	children, _, err := l.c.Children(path)
 
-	if len(children) == 0 {
-		err = l.UnLock(path)
-		if err != nil {
-			logrus.Errorf("unlock err: %v", err)
-		}
-		return
-	} else {
+	children, _, err := l.c.Children(realPath)
+
+	if len(children) != 0 {
 		for _, child := range children {
 			l.UnLockAll(path + sep + child)
 		}
+	}
+	err = l.UnLock(path)
+	if err != nil {
+		logrus.Errorf("unlock err: %v", err)
 	}
 	return
 }

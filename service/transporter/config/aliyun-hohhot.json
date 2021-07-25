@@ -12,6 +12,7 @@
   "DefaultStorageClient": "Aws",
   "Host": "0.0.0.0",
   "Port": 8083,
+  "JSIPort": 8085,
   "ZookeeperHost":"192.168.105.13",
   "LocalCloudID": "aliyun-hohhot",
   "SchedulerHost": "http://192.168.105.13:8082"

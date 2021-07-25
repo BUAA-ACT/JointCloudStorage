@@ -10,7 +10,7 @@ import (
 )
 
 func PreUploadFile(path string, user *model.User) (*model.TaskResponse, bool) {
-	task := model.Task{
+	task := model.TaskRequest{
 		TaskType:               args.TaskTypeUpload,
 		UserID:                 user.UserID,
 		DestinationPath:        path,
@@ -33,7 +33,7 @@ func PreUploadFile(path string, user *model.User) (*model.TaskResponse, bool) {
 }
 
 func DownLoadFile(downloadName string, userID string, downloadPlan model.StoragePlan) (*model.TaskResponse, bool) {
-	task := model.Task{
+	task := model.TaskRequest{
 		TaskType:          args.TaskTypeDownload,
 		UserID:            userID,
 		SourcePath:        downloadName,
@@ -56,7 +56,7 @@ func DownLoadFile(downloadName string, userID string, downloadPlan model.Storage
 }
 
 func DeleteFile(deleteName string, user *model.User) bool {
-	task := model.Task{
+	task := model.TaskRequest{
 		TaskType:          args.TaskTypeDelete,
 		UserID:            user.UserID,
 		SourcePath:        deleteName,
@@ -79,8 +79,8 @@ func DeleteFile(deleteName string, user *model.User) bool {
 }
 
 func SyncFile(path string, userID string, oldPlan *model.StoragePlan, newPlan *model.StoragePlan) (*model.TaskResponse, bool) {
-	task := model.Task{
-		TaskType:               args.TaskTypeSync,
+	task := model.TaskRequest{
+		TaskType:               args.TaskTypeMigrate,
 		UserID:                 userID,
 		SourcePath:             path,
 		SourceStoragePlan:      *oldPlan,
