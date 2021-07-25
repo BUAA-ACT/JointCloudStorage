@@ -7,3 +7,6 @@ bin/
 configs/private/
 build/
 **/go.sum
+demo/Display/venv
+demo/Display/__pycache__
+demo/Display/.idea
