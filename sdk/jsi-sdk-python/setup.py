@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="jcs-sdk",
-    version="1.0.0",
+    version="1.7.25",
     author="sincerexia",  # 项目作者
     author_email="zhangjh@act.buaa.edu.cn",
     description="This is the official Python SDK for JointCloudStorage",
