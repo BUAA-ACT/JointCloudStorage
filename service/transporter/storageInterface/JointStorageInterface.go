@@ -36,7 +36,10 @@ func NewInterface(processor *controller.TaskProcessor) *JointStorageInterface {
 		state.GET("/storage", jsi.JSIAuthMiddleware(), jsi.GetStorageInfo)
 		state.GET("/plan", jsi.JSIAuthMiddleware(), jsi.GetStoragePlan)
 		state.POST("/plan", jsi.JSIAuthMiddleware(), jsi.PostStoragePlan)
+		state.GET("/server", jsi.GetServerInfo)
+		state.GET("/task/*taskID", jsi.JSIAuthMiddleware(), jsi.GetTaskInfo)
 	}
+	jsi.GET("/", jsi.GetServerInfo)
 
 	return &jsi
 }
@@ -68,13 +71,27 @@ func (jsi *JointStorageInterface) defaultReply(c *gin.Context) {
 		c.Request.Method, c.Request.URL.Path, key)
 }
 
+type ServerInfo struct {
+	CloudId            string
+	TransporterVersion string
+	ServerTime         time.Time
+}
+
+func (jsi *JointStorageInterface) GetServerInfo(c *gin.Context) {
+	info := ServerInfo{
+		CloudId:            util.Config.LocalCloudID,
+		TransporterVersion: util.GetVersionStr(),
+		ServerTime:         time.Now(),
+	}
+	c.JSON(http.StatusOK, &info)
+}
+
 func (jsi *JointStorageInterface) PutObject(c *gin.Context) {
-	uid := c.MustGet("uid").(string)
 	key := c.MustGet("key").(string)
-	userInfo, err := jsi.processor.UserDatabase.GetUserFromID(uid)
-	if err != nil {
-		util.Log(logrus.ErrorLevel, "JSI PutObject", "get Userinfo fail",
-			"", "err", err.Error())
+	userInfo := c.MustGet("userInfo").(*model.User)
+	isAsync := false
+	if c.Query("isAsync") == "true" {
+		isAsync = true
 	}
 	// 获取用户存储方案
 	storagePlan := userInfo.StoragePlan
@@ -83,7 +100,7 @@ func (jsi *JointStorageInterface) PutObject(c *gin.Context) {
 	// 文件落盘到本地
 	f, tempFile := jsi.processor.TempFileStorage.CreateTmpFile(key)
 	defer f.Close()
-	_, err = io.Copy(f, c.Request.Body)
+	_, err := io.Copy(f, c.Request.Body)
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "JSI PutObject", "copy request body to file fail",
 			"", "err", err.Error())
@@ -91,24 +108,32 @@ func (jsi *JointStorageInterface) PutObject(c *gin.Context) {
 
 	// 调用 processor ，处理 upload 请求
 	task := createTask(userInfo.UserId, model.UPLOAD, tempFile.FilePath, key, nil, &storagePlan)
-	err = jsi.processor.ProcessUpload(task)
-	if err != nil {
-		util.Log(logrus.ErrorLevel, "JSI PutObject", "upload task process fail",
-			"", "err", err.Error())
-		c.String(http.StatusInternalServerError, err.Error())
+	if !isAsync {
+		err = jsi.processor.ProcessUpload(task)
+		if err != nil {
+			util.Log(logrus.ErrorLevel, "JSI PutObject", "upload task process fail",
+				"", "err", err.Error())
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		// 返回用户结果
+		c.String(http.StatusOK, "")
+	} else {
+		tid, err := jsi.processor.AddTask(task)
+		if err != nil {
+			util.Log(logrus.ErrorLevel, "JSI PutObject", "upload add task fail",
+				"", "err", err.Error())
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		c.String(http.StatusOK, tid.Hex())
 	}
-	// 返回用户结果
-	c.String(http.StatusOK, "")
+
 }
 
 func (jsi *JointStorageInterface) GetObject(c *gin.Context) {
-	uid := c.MustGet("uid").(string)
 	key := c.MustGet("key").(string)
-	userInfo, err := jsi.processor.UserDatabase.GetUserFromID(uid)
-	if err != nil {
-		util.Log(logrus.ErrorLevel, "JSI GetObject", "get Userinfo fail",
-			"", "err", err.Error())
-	}
+	userInfo := c.MustGet("userInfo").(*model.User)
 	// 获取用户存储方案
 	storagePlan := userInfo.StoragePlan
 	fmt.Print(storagePlan)
@@ -124,20 +149,13 @@ func (jsi *JointStorageInterface) GetObject(c *gin.Context) {
 }
 
 func (jsi *JointStorageInterface) DeleteObject(c *gin.Context) {
-	uid := c.MustGet("uid").(string)
 	key := c.MustGet("key").(string)
-	userInfo, err := jsi.processor.UserDatabase.GetUserFromID(uid)
-	if err != nil {
-		util.Log(logrus.ErrorLevel, "JSI DeleteObject", "get Userinfo fail",
-			"", "err", err.Error())
-		c.String(http.StatusInternalServerError, "")
-		return
-	}
+	userInfo := c.MustGet("userInfo").(*model.User)
 	// 获取用户存储方案
 	storagePlan := userInfo.StoragePlan
 	fmt.Print(storagePlan)
 	task := createTask(userInfo.UserId, model.DELETE, key, "", &storagePlan, nil)
-
+	var err error
 	err = jsi.processor.DeleteFileInfo(task)
 	if err != nil {
 		util.Log(logrus.ErrorLevel, "JSI DeleteObject", "processor delete file info fail",
@@ -151,15 +169,8 @@ func (jsi *JointStorageInterface) DeleteObject(c *gin.Context) {
 }
 
 func (jsi *JointStorageInterface) GetObjectList(c *gin.Context) {
-	uid := c.MustGet("uid").(string)
 	prefix := c.Query("keyPrefix")
-	userInfo, err := jsi.processor.UserDatabase.GetUserFromID(uid)
-	if err != nil {
-		util.Log(logrus.ErrorLevel, "JSI GetObjectList", "get Userinfo fail",
-			"", "err", err.Error())
-		c.String(http.StatusInternalServerError, "")
-		return
-	}
+	userInfo := c.MustGet("userInfo").(*model.User)
 	task := createTask(userInfo.UserId, model.INDEX, prefix, "", nil, nil)
 	files, err := jsi.processor.ProcessIndexFile(task)
 	if err != nil {
@@ -206,7 +217,24 @@ func (jsi *JointStorageInterface) PostStoragePlan(c *gin.Context) {
 		_ = c.AbortWithError(http.StatusBadRequest, errors.New("internal error"))
 		return
 	}
-	c.String(http.StatusOK, tid.String())
+	c.String(http.StatusOK, tid.Hex())
+}
+
+func (jsi *JointStorageInterface) GetTaskInfo(c *gin.Context) {
+	userInfo := c.MustGet("userInfo").(*model.User)
+	taskID := c.Param("taskID")
+	taskID = strings.Trim(taskID, "/")
+	tid, err := primitive.ObjectIDFromHex(taskID)
+	task, err := jsi.processor.TaskStorage.GetTask(tid)
+	if err != nil {
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("task id not exist"))
+		return
+	}
+	if task.Uid != userInfo.UserId {
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("task id not exist"))
+		return
+	}
+	c.JSON(http.StatusOK, &task)
 }
 
 func (jsi *JointStorageInterface) convertToUserStoragePlan(plan model.StoragePlan) (*model.UserStoragePlan, error) {

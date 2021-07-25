@@ -63,6 +63,8 @@ func TestMain(m *testing.M) {
 	AK = key.AccessKey
 	SK = key.SecretKey
 	JSI = NewInterface(&processor)
+
+	genTestFile()
 	exitCode := m.Run()
 	os.Exit(exitCode)
 }
@@ -85,12 +87,15 @@ func genTestFile() {
 	}
 }
 
-func TestNewInterface(t *testing.T) {
-	req, _ := http.NewRequest("GET", "/", nil)
+func TestJointStorageInterface_GetServerInfo(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/state/server", nil)
 	req, _ = JSISign(req, AK, SK)
 	recorder := httptest.NewRecorder()
 	JSI.ServeHTTP(recorder, req)
-	t.Log(string(recorder.Body.Bytes()))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("http code incorrect")
+	}
+	t.Log(recorder.Body.String())
 }
 
 func TestJointStorageInterface_PutObject(t *testing.T) {
@@ -107,6 +112,27 @@ func TestJointStorageInterface_PutObject(t *testing.T) {
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("http code incorrect")
 	}
+	t.Run("test async", func(t *testing.T) {
+		fh.Seek(0, 0)
+		io.Copy(bodyBuf, fh)
+		req, err = http.NewRequest("PUT", "/object/jsiTest2.txt?isAsync=true", bodyBuf)
+		req, err = JSISign(req, AK, SK)
+		recorder = httptest.NewRecorder()
+		JSI.ServeHTTP(recorder, req)
+		if recorder.Code != http.StatusOK {
+			t.Fatalf("http code incorrect")
+		}
+		t.Logf(recorder.Body.String())
+		req, err = http.NewRequest("GET", "/state/task/"+recorder.Body.String(), nil)
+		req, err = JSISign(req, AK, SK)
+		recorder = httptest.NewRecorder()
+		JSI.ServeHTTP(recorder, req)
+		if recorder.Code != http.StatusOK {
+			t.Fatalf("http code incorrect")
+		}
+		t.Logf("task state: %v", recorder.Body.String())
+		waitAllDone()
+	})
 }
 
 func TestJointStorageInterface_GetMethod(t *testing.T) {

@@ -1,6 +1,6 @@
 -include .env
 
-VERSION := v0.1
+VERSION := v1.7.25
 GIT_REV := $(shell git rev-parse --short HEAD)
 BUILD_TIME := $(shell $(date +'%Y-%m-%d_%T'))
 #PROJECT_NAME := $(shell basename "$(PWD)")

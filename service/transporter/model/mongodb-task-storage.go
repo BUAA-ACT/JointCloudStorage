@@ -153,7 +153,7 @@ func (task *MongoTaskStorage) GetTask(tid primitive.ObjectID) (*Task, error) {
 
 	//get the collection and find by _id
 	collection := task.client.Database(task.databaseName).Collection(task.collectionName)
-	err = collection.FindOne(context.TODO(), bson.D{{"_id", tid}}).Decode(&result)
+	err = collection.FindOne(context.TODO(), bson.M{"_id": tid}).Decode(&result)
 	if err != nil {
 		log.Print(err)
 		return nil, err

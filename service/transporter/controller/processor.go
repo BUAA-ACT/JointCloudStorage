@@ -74,8 +74,10 @@ func (processor *TaskProcessor) SetProcessResult(t *model.Task, err error) {
 		logrus.Errorf("Process Task Fail: %v", err)
 		processor.TaskStorage.SetTaskState(t.Tid, model.FAIL)
 	} else {
+		t.Progress = 100
+		t.State = model.FINISH
 		logrus.Infof("Process %v Task Sucess, tid :%v", t.TaskType, t.Tid.Hex())
-		processor.TaskStorage.SetTaskState(t.Tid, model.FINISH)
+		processor.TaskStorage.SetTask(t.Tid, t)
 	}
 }
 
