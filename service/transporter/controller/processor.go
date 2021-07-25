@@ -363,6 +363,8 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 			}
 			storageClients = append(storageClients, client)
 		}
+		fileInfo, _ = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
+		fileInfo.LastModified = time.Now()
 		switch storageModel {
 		case "Replica":
 			for i, client := range storageClients {
@@ -406,8 +408,6 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 		if util.CheckErr(err, "Upload file to cloud") {
 			return err
 		}
-		fileInfo, _ = model.NewFileInfoFromPath(t.SourcePath, t.Uid, t.DestinationPath)
-		fileInfo.LastModified = time.Now()
 		if err != nil {
 			fileInfo.SyncStatus = model.FileFail
 		} else {
