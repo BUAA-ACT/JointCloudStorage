@@ -1,8 +1,8 @@
 <template>
   <div class="block">
-    <el-carousel :interval="5000" arrow="always">
-      <el-carousel-item v-for="item in 4" :key="item">
-        <div style="height:100%" :class="'imgIcon-banner-' + item"></div>
+    <el-carousel :interval="0" arrow="always" :initial-index="4">
+      <el-carousel-item v-for="item in 5" :key="item">
+        <div style="height:100%" :class="'imgIcon-banner-' + item" @click="goto(item)"></div>
       </el-carousel-item>
     </el-carousel>
     <!--    <div class="manufacturer">-->
@@ -236,10 +236,24 @@ export default {
     },
     imgUrlChange(icon) {
       return `@/assets/${icon}.png`;
+    },
+    goto(item) {
+      if (item === 5) {
+        this.$router.push("/userCenter");
+      }
     }
   }
 };
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style lang="scss"></style>
+<style lang="scss">
+.imgIcon-banner-5 {
+  background-image: url(../assets/jcspan.png), url(../assets/banner-bg3.png);
+  background-repeat: no-repeat;
+  background-size: auto 80%, auto 100%;
+  background-position: center;
+  background-color: #fff;
+  cursor: pointer;
+}
+</style>
