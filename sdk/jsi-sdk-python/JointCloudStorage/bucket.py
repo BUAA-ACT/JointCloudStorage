@@ -34,10 +34,16 @@ class Bucket(_BASE):
 
     """
     CATEGORY_OBJECT = "object"
-    CATEGORY_STATE = "state"
 
     def __init__(self, auth, endpoint: str):
         super().__init__(auth, endpoint)
+
+    def put_object_async(self, key, data) -> str:
+        params = {
+            'isAsync': "true"
+        }
+        result = self._do('PUT', Bucket.CATEGORY_OBJECT, key=key, data=data, params=params)
+        return result.text
 
     def put_object(self, key, data):
         self._do('PUT', Bucket.CATEGORY_OBJECT, key=key, data=data)
@@ -57,5 +63,7 @@ class Bucket(_BASE):
         }
         req = self._do('GET', Bucket.CATEGORY_OBJECT, key="", params=params)
         result = req.json()
+        if not result:
+            result = []
         return result
 

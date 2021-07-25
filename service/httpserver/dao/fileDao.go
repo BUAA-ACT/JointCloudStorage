@@ -15,6 +15,9 @@ func (d *Dao) ListFiles(userID string, path string, isDir bool) (*[]model.File, 
 	// TODO time complex high !!!
 	filterDir := bson.M{
 		"owner": userID,
+		"file_name": bson.M{
+			"$regex": path + "*",
+		},
 	}
 	filterFile := bson.M{
 		"owner":     userID,

@@ -5,7 +5,7 @@
         <a href="/"><img src="@/assets/logo.png" class="logoImg" alt="logo"/></a>
         <span class="logoImg menu-header">
           <!--          <span>{{ curCloudName }}</span>-->
-          <svg viewBox="0 0 120 26" class="svgBox">
+          <svg viewBox="0 0 300 26" class="svgBox">
             <defs>
               <linearGradient id="changer" x1="0" y1="0" x2="100%" y2="0">
                 <stop offset="0" stop-color="rgb(43, 111, 193)" />
@@ -13,7 +13,7 @@
                 <stop offset="100%" stop-color="rgb(56, 172, 164)" />
               </linearGradient>
             </defs>
-            <text text-anchor="start" fill="url(#changer)" x="-90%" y="1em">{{ curCloudName }}</text>
+            <text text-anchor="start" fill="url(#changer)" x="0" y="1em">{{ curCloudName }}</text>
           </svg>
         </span>
       </el-col>
@@ -196,10 +196,6 @@ li {
   vertical-align: baseline;
   position: relative;
   top: 2px;
-}
-
-.gradient-text-three {
-  font-size: 24px;
-  fill: url(#SVGID_1_);
+  text-align: left;
 }
 </style>

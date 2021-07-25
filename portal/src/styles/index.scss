@@ -106,17 +106,15 @@ $class-prefix: "imgIcon";
   min-width: 800px;
   width: 86%;
   max-width: 1200px;
-  margin: 0 auto;
   // padding: 0;
   height: 110px;
-  margin-top: 20px;
+  margin: 20px auto auto;
   overflow: hidden;
 
 }
 .logoImg{
   height: 50px;
-  margin: 10px 0;
-  margin-bottom: 0;
+  margin: 10px 0 0;
   float: left;
 }
 .el-header .title {
@@ -126,9 +124,7 @@ $class-prefix: "imgIcon";
   line-height: 40px;
   font-size: 30px;
   color: #333333;
-  margin: 0 10px;
-  margin-top: 20px;
-  margin-left: 20px;
+  margin: 20px 10px 0 20px;
   padding-left: 20px;
   border-left: 2px solid #333333;
 }
@@ -339,9 +335,8 @@ p{
   text-align: left;
   height: 600px;
   .manufacturer{
-    padding: 0 20px;
     box-sizing: border-box;
-    padding-top: 30px;
+    padding: 30px 20px 0;
     // *{
     //   box-sizing: initial;
     // }
@@ -456,8 +451,7 @@ p{
   max-width: 1200px;
   margin: 0 auto;
   box-sizing: border-box;
-  padding: 70px 20px;
-  padding-top: 40px;
+  padding: 40px 20px 70px;
   text-align: left;
   .card{
     height: 360px;
@@ -548,6 +542,7 @@ p{
     background-color: #ffffff;
     border-bottom: 1px solid #dfdfdf;
     padding: 32px;
+    font-size: 16px;
     .imgIcon{
       float: left;
       display: block;
@@ -651,9 +646,8 @@ p{
 }
 .requirementForm{
   .indexTitle{
-    margin: 0;
     padding-bottom: 10px;
-    margin-bottom: 20px;
+    margin: 0 0 20px;
   }
 }
 .solutionList{
@@ -807,8 +801,7 @@ span.tips{
   }
   .manufacturer{
     width: 86%;
-    padding: 50px 20px;
-    padding-top: 20px;
+    padding: 20px 20px 50px;
     .indexTitle{
       font-size: 1rem;
     }

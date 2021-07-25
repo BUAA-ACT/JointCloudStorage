@@ -90,10 +90,10 @@ func keySyn(ak dao.AccessKey, caller string, synType string) error {
 				var req *http.Request
 				switch synType {
 				case SynTypeUpsert:
-					addr := utils.GenAddress(cloud.CloudID, "/add_key")
+					addr := utils.GenAddress(cloud.CloudID, endPointAddKey)
 					req, err = http.NewRequest("POST", addr, body)
 				case SynTypeDelete:
-					addr := utils.GenAddress(cloud.CloudID, "/delete_key")
+					addr := utils.GenAddress(cloud.CloudID, endPointDeleteKey)
 					req, err = http.NewRequest("POST", addr, body)
 				}
 
