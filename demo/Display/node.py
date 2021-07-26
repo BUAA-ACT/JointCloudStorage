@@ -20,7 +20,7 @@ add_arg('endpoint', str, None, "service address,ip:port")
 dict1 = "/step1/"
 dict2 = "/step2/"
 dict3 = "/step3/"
-dict4 = "/step4"
+dict4 = "/step4/"
 
 send_index = 0
 
