@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <div class="refresh-btn">
-      <el-button type="primary" @click="fetchData"><i class="el-icon-refresh"></i></el-button>
+      <el-button type="primary" @click="fetchData()"><i class="el-icon-refresh"></i></el-button>
     </div>
     <el-upload action="foobar" :http-request="handleUpload" ref="uploader">
       <el-button type="primary"><i class="el-icon-upload2"></i> 上传文件</el-button>
