@@ -22,7 +22,7 @@ export default new Vuex.Store({
       Volume: 0
     },
     role: [],
-    ready: true
+    ready: false
   },
   getters: {
     token: state => {

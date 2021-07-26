@@ -106,13 +106,13 @@ export default {
     addActions() {
       this.ws.addAction(this.initialMsg, "open");
       this.ws.addAction(this.updateProgress, "message");
-      this.ws.addAction(this.retryConnection, "close");
+      this.ws.addAction(this.closeConnection, "close");
       this.ws.addAction(this.retryConnection, "error");
     },
     removeActions() {
       this.ws.removeAction(this.initialMsg, "open");
       this.ws.removeAction(this.updateProgress, "message");
-      this.ws.removeAction(this.retryConnection, "close");
+      this.ws.removeAction(this.closeConnection, "close");
       this.ws.removeAction(this.retryConnection, "error");
     },
     async getNewAdvice() {
