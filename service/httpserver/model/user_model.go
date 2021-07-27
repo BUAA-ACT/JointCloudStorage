@@ -49,6 +49,7 @@ type User struct {
 	DataStats         DataStats          `json:"DataStats" bson:"data_stats"`
 	AccessCredentials []AccessCredential `json:"AccessCredentials" bson:"access_credentials"`
 	Status            string             `json:"Status" bson:"status"`
+	MainPoint         string             `json:"MainPoint" bson:"main_point"`
 }
 
 func (user *User) UserHaveStoragePlan() bool {

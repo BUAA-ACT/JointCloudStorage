@@ -27,9 +27,9 @@ func AesEncrypt(orig string, key string) string {
 	return base64.StdEncoding.EncodeToString(cryted)
 }
 
-func AesDecrypt(cryted string, key string) string {
+func AesDecrypt(cryptStr string, key string) string {
 	// 转成字节数组
-	crytedByte, _ := base64.StdEncoding.DecodeString(cryted)
+	cryptByte, _ := base64.StdEncoding.DecodeString(cryptStr)
 	k := []byte(key)
 	// 分组秘钥
 	block, _ := aes.NewCipher(k)
@@ -38,9 +38,9 @@ func AesDecrypt(cryted string, key string) string {
 	// 加密模式
 	blockMode := cipher.NewCBCDecrypter(block, k[:blockSize])
 	// 创建数组
-	orig := make([]byte, len(crytedByte))
+	orig := make([]byte, len(cryptByte))
 	// 解密
-	blockMode.CryptBlocks(orig, crytedByte)
+	blockMode.CryptBlocks(orig, cryptByte)
 	// 去补全码
 	orig = PKCS7UnPadding(orig)
 	return string(orig)

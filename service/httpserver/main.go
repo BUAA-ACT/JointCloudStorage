@@ -4,6 +4,7 @@ import (
 	"cloud-storage-httpserver/args"
 	"cloud-storage-httpserver/controller"
 	"cloud-storage-httpserver/dao"
+	"cloud-storage-httpserver/service/sweeper"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli/v2"
@@ -85,6 +86,9 @@ func StartServe(configFilePath string) {
 	//route
 	setupRouter(r)
 	dao.ConnectInitDao()
+	dao.AddIndex()
+	go sweeper.CleanAccessToken()
+	go sweeper.CleanVerifyCode()
 	_ = r.Run(":" + strconv.FormatUint(*args.HttpserverPort, 10))
 }
 

@@ -11,10 +11,9 @@ import (
 	cloud request
 */
 func (d *Dao) GetAllClouds() (*[]model.Cloud, bool) {
-	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{}
 	var clouds = make([]model.Cloud, 0)
-	result, findErr := col.Find(context.TODO(), filter)
+	result, findErr := d.collectionConnection.Find(context.TODO(), filter)
 	if tools.PrintError(findErr) {
 		return nil, false
 	}
@@ -30,12 +29,11 @@ func (d *Dao) GetAllClouds() (*[]model.Cloud, bool) {
 }
 
 func (d *Dao) GetCloud(cloudID string) (*model.Cloud, bool) {
-	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"cloud_id": cloudID,
 	}
 	var cloud model.Cloud
-	findCloudError := col.FindOne(context.TODO(), filter).Decode(&cloud)
+	findCloudError := d.collectionConnection.FindOne(context.TODO(), filter).Decode(&cloud)
 	if tools.PrintError(findCloudError) {
 		return nil, false
 	}
@@ -46,16 +44,14 @@ func (d *Dao) CheckSameCloudID(cloudID string) bool {
 	filter := bson.M{
 		"cloud_id": cloudID,
 	}
-	col := d.client.Database(d.database).Collection(d.collection)
-	result := col.FindOne(context.TODO(), filter)
+	result := d.collectionConnection.FindOne(context.TODO(), filter)
 	return result.Err() == nil
 }
 
 func (d *Dao) GetAllVoteCloud() (*[]model.CloudController, bool) {
-	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{}
 	var cloudControllers = make([]model.CloudController, 0)
-	result, findErr := col.Find(context.TODO(), filter)
+	result, findErr := d.collectionConnection.Find(context.TODO(), filter)
 	if tools.PrintError(findErr) {
 		return nil, false
 	}
@@ -71,10 +67,9 @@ func (d *Dao) GetAllVoteCloud() (*[]model.CloudController, bool) {
 }
 
 func (d *Dao) GetAllAddedCloud() (*[]model.CloudController, bool) {
-	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{}
 	var addedClouds = make([]model.CloudController, 0)
-	result, findErr := col.Find(context.TODO(), filter)
+	result, findErr := d.collectionConnection.Find(context.TODO(), filter)
 	if tools.PrintError(findErr) {
 		return nil, false
 	}

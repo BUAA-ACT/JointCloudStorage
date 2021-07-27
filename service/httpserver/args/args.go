@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 /* error code*/
@@ -151,7 +152,26 @@ const (
 
 	FileReconstructStatusPending = "Pending"
 	FileReconstructStatusWorking = "Working"
+	FileReconstructStatusFail    = "Fail"
+	FileReconstructStatusBroken  = "Broken"
+	FileReconstructStatusRepair  = "Repairing"
 	FileReconstructStatusDone    = "Done"
+)
+
+/* time const */
+const (
+	SecondsPerMinute                   = 60
+	SecondsPerHour                     = 60 * SecondsPerMinute
+	SecondsPerDay                      = 24 * SecondsPerHour
+	SecondsPerWeek                     = 7 * SecondsPerDay
+	DaysPer400Years                    = 365*400 + 97
+	DaysPer100Years                    = 365*100 + 24
+	DaysPer4Years                      = 365*4 + 1
+	AccessTokenTimeOut   time.Duration = 1 * time.Hour
+	AccessTokenDateOut   time.Duration = 3 * SecondsPerDay * time.Second
+	VerifyCodeTimeOut    time.Duration = SecondsPerDay * time.Second
+	AccessTokenCleanTime time.Duration = 20 * time.Second
+	VerifyCodeCleanTime  time.Duration = 20 * time.Second
 )
 
 /* properties */
