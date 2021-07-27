@@ -393,11 +393,13 @@ let loading;
 
 vueRouter.beforeEach(async (to, from, next) => {
   loading = ElementUI.Loading.service({});
-  while (!store.getters.ready) {
-    // eslint-disable-next-line no-await-in-loop
-    await Other.sleep(50);
-  }
   const hasToken = store.getters.token;
+  if (hasToken) {
+    while (!store.getters.ready) {
+      // eslint-disable-next-line no-await-in-loop
+      await Other.sleep(50);
+    }
+  }
   const { isAdmin } = store.getters;
   if (hasToken) {
     if (to.path === "/login") {
