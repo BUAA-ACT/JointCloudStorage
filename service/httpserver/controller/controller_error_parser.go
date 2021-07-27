@@ -8,7 +8,6 @@ import (
 	"cloud-storage-httpserver/service/tools"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-
 	"log"
 	"net/http"
 	"net/textproto"
@@ -222,7 +221,7 @@ func getVerifyAndReturnWithWebSocket(ws *websocket.Conn, fields *map[string]bool
 	return &fieldValues, &fieldExists
 }
 
-func UserCheckAccessToken(con *gin.Context, accessToken string, permitRoles *[]string) (string, string, bool) {
+func UserCheckAccessToken(con *gin.Context, accessToken string, permitRoles *[]string) (*model.User, bool) {
 	userID, valid := dao.AccessTokenDao.CheckValid(accessToken)
 	if !valid {
 		con.JSON(http.StatusOK, gin.H{
@@ -230,13 +229,14 @@ func UserCheckAccessToken(con *gin.Context, accessToken string, permitRoles *[]s
 			"msg":  "用户令牌无效",
 			"data": gin.H{},
 		})
-		return "", args.UserNoRole, false
+		return nil, false
 	}
 	user, valid := dao.UserDao.GetUserInfo(userID)
 	for _, role := range *permitRoles {
 		// role == UserAllRole can be all permit
 		if user.Role == role || role == args.UserAllRole {
-			return userID, user.Role, true
+			con.SetCookie("AccessToken", accessToken, int(args.AccessTokenTimeOut.Seconds()), "/", strings.Split(con.Request.Host, ":")[0], false, false)
+			return user, true
 		}
 	}
 	con.JSON(http.StatusOK, gin.H{
@@ -244,7 +244,7 @@ func UserCheckAccessToken(con *gin.Context, accessToken string, permitRoles *[]s
 		"msg":  "用户权限错误",
 		"data": gin.H{},
 	})
-	return "", user.Role, false
+	return nil, false
 }
 
 func UserCheckStatus(con *gin.Context, user *model.User, statusMap *map[string]bool) bool {

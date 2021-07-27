@@ -10,12 +10,11 @@ import (
 )
 
 func (d *Dao) GetNewAdvice(userID string) (*[]model.MigrationAdvice, bool) {
-	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userID,
 	}
 	var advices = make([]model.MigrationAdvice, 0)
-	result, findErr := col.Find(context.TODO(), filter)
+	result, findErr := d.collectionConnection.Find(context.TODO(), filter)
 	if tools.PrintError(findErr) {
 		return nil, false
 	}
@@ -37,16 +36,14 @@ func (d *Dao) GetNewAdvice(userID string) (*[]model.MigrationAdvice, bool) {
 }
 
 func (d *Dao) DeleteAdvice(userID string) (*mongo.DeleteResult, bool) {
-	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userID,
 	}
-	result, deleteErr := col.DeleteMany(context.TODO(), filter)
+	result, deleteErr := d.collectionConnection.DeleteMany(context.TODO(), filter)
 	return result, !tools.PrintError(deleteErr)
 }
 
 func (d *Dao) SetAdviceStatus(userID string, status string) (*mongo.UpdateResult, bool) {
-	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id": userID,
 		"status":  args.AdviceStatusPending,
@@ -56,6 +53,6 @@ func (d *Dao) SetAdviceStatus(userID string, status string) (*mongo.UpdateResult
 			{"status", status},
 		},
 	}}
-	result, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	result, changeErr := d.collectionConnection.UpdateMany(context.TODO(), filter, update)
 	return result, !tools.PrintError(changeErr)
 }

@@ -18,7 +18,7 @@ func GetAllClouds(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	_, userRole, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -48,7 +48,7 @@ func GetAllClouds(con *gin.Context) {
 	//	return
 	//}
 	// if user is not admin then cover clouds ak&sk
-	if userRole != args.UserAdminRole {
+	if user.Role != args.UserAdminRole {
 		for _, cloud := range *getCloudsResult {
 			cloud.SecretKey = ""
 			cloud.AccessKey = ""
@@ -62,6 +62,7 @@ func GetAllClouds(con *gin.Context) {
 			"Clouds": *getCloudsResult,
 		},
 	})
+	con.Next()
 }
 
 func GetThisCloudName(con *gin.Context) {
@@ -78,5 +79,5 @@ func GetThisCloudName(con *gin.Context) {
 			"ProviderName": cloud.ProviderName,
 		},
 	})
-	return
+	con.Next()
 }

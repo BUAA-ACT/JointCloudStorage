@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"go.mongodb.org/mongo-driver/x/bsonx"
 	"log"
 	"time"
 )
@@ -21,12 +22,15 @@ var (
 	VoteCloudDao       *Dao
 	TempCloudDao       *Dao
 	AccessKeyDao       *Dao
+	DataColMap         = make(map[string]map[string]*Dao)
 )
 
 type Dao struct {
-	client     *mongo.Client
-	database   string
-	collection string
+	client               *mongo.Client
+	databaseConnection   *mongo.Database
+	collectionConnection *mongo.Collection
+	database             string
+	collection           string
 }
 
 func ConnectDao(mongoURI string, database string, collection string) (*Dao, error) {
@@ -34,6 +38,12 @@ func ConnectDao(mongoURI string, database string, collection string) (*Dao, erro
 		database:   database,
 		collection: collection,
 	}
+	testMap := DataColMap[database]
+	if testMap == nil {
+		var newCollectionMap = make(map[string]*Dao)
+		DataColMap[database] = newCollectionMap
+	}
+	DataColMap[database][collection] = dao
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(mongoURI))
 	if err != nil {
@@ -46,6 +56,8 @@ func ConnectDao(mongoURI string, database string, collection string) (*Dao, erro
 		return nil, err
 	}
 	dao.client = client
+	dao.databaseConnection = client.Database(database)
+	dao.collectionConnection = client.Database(database).Collection(collection)
 	return dao, nil
 }
 
@@ -98,5 +110,32 @@ func ConnectInitDao() {
 	AccessKeyDao, err = ConnectDao(*args.MongoURL, *args.DataBase, *args.AccessKeyCollection)
 	if err != nil {
 		log.Println(err)
+	}
+}
+
+func AddIndex() {
+	modifyAccessTokenExpireIndex := mongo.IndexModel{
+		Keys:    bsonx.Doc{{"access_token_modify_time", bsonx.Int32(1)}},
+		Options: options.Index().SetExpireAfterSeconds(int32(args.AccessTokenTimeOut.Seconds())),
+	}
+	createAccessTokenExpireIndex := mongo.IndexModel{
+		Keys:    bsonx.Doc{{"access_token_create_time", bsonx.Int32(1)}},
+		Options: options.Index().SetExpireAfterSeconds(int32(args.AccessTokenDateOut.Seconds())),
+	}
+	_, modifyAccessTokenExpireIndexErr := AccessTokenDao.collectionConnection.Indexes().CreateOne(context.TODO(), modifyAccessTokenExpireIndex)
+	if modifyAccessTokenExpireIndexErr != nil {
+		log.Println(modifyAccessTokenExpireIndexErr)
+	}
+	_, createAccessTokenExpireIndexErr := AccessTokenDao.collectionConnection.Indexes().CreateOne(context.TODO(), createAccessTokenExpireIndex)
+	if createAccessTokenExpireIndexErr != nil {
+		log.Println(createAccessTokenExpireIndexErr)
+	}
+	createVerifyCodeExpireIndex := mongo.IndexModel{
+		Keys:    bsonx.Doc{{"verify_code_create_time", bsonx.Int32(1)}},
+		Options: options.Index().SetExpireAfterSeconds(int32(args.AccessTokenDateOut.Seconds())),
+	}
+	_, createVerifyCodeExpireIndexErr := VerifyCodeDao.collectionConnection.Indexes().CreateOne(context.TODO(), createVerifyCodeExpireIndex)
+	if createVerifyCodeExpireIndexErr != nil {
+		log.Println(createVerifyCodeExpireIndexErr)
 	}
 }

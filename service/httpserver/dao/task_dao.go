@@ -9,7 +9,6 @@ import (
 )
 
 func (d *Dao) GetTask(taskId string, userID string, isSingle bool) (*[]model.Task, bool) {
-	col := d.client.Database(d.database).Collection(d.collection)
 	var filter interface{}
 	filterSingle := bson.M{
 		"task_id": taskId,
@@ -23,7 +22,7 @@ func (d *Dao) GetTask(taskId string, userID string, isSingle bool) (*[]model.Tas
 		filter = filterAll
 	}
 	var tasks []model.Task = make([]model.Task, 0)
-	result, findErr := col.Find(context.TODO(), filter)
+	result, findErr := d.collectionConnection.Find(context.TODO(), filter)
 	if tools.PrintError(findErr) {
 		return nil, false
 	}
@@ -39,13 +38,12 @@ func (d *Dao) GetTask(taskId string, userID string, isSingle bool) (*[]model.Tas
 }
 
 func (d *Dao) GetUserMigrate(userID string) (*model.Task, bool) {
-	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id":   userID,
 		"task_type": args.TaskTypeMigrate,
 	}
 	var migrationTask model.Task
-	decodeErr := col.FindOne(context.TODO(), filter).Decode(&migrationTask)
+	decodeErr := d.collectionConnection.FindOne(context.TODO(), filter).Decode(&migrationTask)
 	if tools.PrintError(decodeErr) {
 		return nil, false
 	}
@@ -53,7 +51,6 @@ func (d *Dao) GetUserMigrate(userID string) (*model.Task, bool) {
 }
 
 func (d *Dao) SetUserTask(userID string, progress float64) bool {
-	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"user_id":   userID,
 		"task_type": args.TaskTypeMigrate,
@@ -63,6 +60,6 @@ func (d *Dao) SetUserTask(userID string, progress float64) bool {
 			{"progress", progress},
 		},
 	}}
-	_, changeErr := col.UpdateMany(context.TODO(), filter, update)
+	_, changeErr := d.collectionConnection.UpdateMany(context.TODO(), filter, update)
 	return !tools.PrintError(changeErr)
 }

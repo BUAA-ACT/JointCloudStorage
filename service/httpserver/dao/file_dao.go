@@ -9,10 +9,8 @@ import (
 )
 
 func (d *Dao) ListFiles(userID string, path string, isDir bool) (*[]model.File, bool) {
-	col := d.client.Database(d.database).Collection(d.collection)
 	var files []model.File = make([]model.File, 0)
 	var filter interface{}
-	// TODO time complex high !!!
 	filterDir := bson.M{
 		"owner": userID,
 		"file_name": bson.M{
@@ -28,7 +26,7 @@ func (d *Dao) ListFiles(userID string, path string, isDir bool) (*[]model.File, 
 	} else {
 		filter = filterFile
 	}
-	result, findErr := col.Find(context.TODO(), filter)
+	result, findErr := d.collectionConnection.Find(context.TODO(), filter)
 	if tools.PrintError(findErr) {
 		return nil, false
 	}
@@ -44,12 +42,11 @@ func (d *Dao) ListFiles(userID string, path string, isDir bool) (*[]model.File, 
 }
 
 func (d *Dao) CheckFileStatus(userID string, path string) (*[]model.File, bool) {
-	col := d.client.Database(d.database).Collection(d.collection)
 	filter := bson.M{
 		"file_id": userID + path,
 	}
 	files := make([]model.File, 0)
-	result, findErr := col.Find(context.TODO(), filter)
+	result, findErr := d.collectionConnection.Find(context.TODO(), filter)
 	if tools.PrintError(findErr) {
 		return nil, false
 	}

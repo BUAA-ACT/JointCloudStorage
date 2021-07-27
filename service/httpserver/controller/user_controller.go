@@ -9,6 +9,7 @@ import (
 	"cloud-storage-httpserver/service/tools"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -54,7 +55,9 @@ func UserRegister(con *gin.Context) {
 		CreateTime:   nowTime,
 		LastModified: nowTime,
 		Status:       args.UserNormalStatus,
+		MainPoint:    *args.CloudID,
 	}
+
 	// save user in db
 	userSuccess := dao.UserDao.CreateNewUser(*user)
 	if !checkDaoSuccess(con, userSuccess) {
@@ -71,6 +74,7 @@ func UserRegister(con *gin.Context) {
 		"msg":  "用户注册已记录",
 		"data": gin.H{},
 	})
+	con.Next()
 }
 
 func UserCheckVerifyCode(con *gin.Context) {
@@ -111,10 +115,11 @@ func UserCheckVerifyCode(con *gin.Context) {
 	} else {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeVerifyFail,
-			"msg":  "验证码错误",
+			"msg":  "验证码错误或已过期",
 			"data": gin.H{},
 		})
 	}
+	con.Next()
 }
 
 func UserLogin(con *gin.Context) {
@@ -160,6 +165,7 @@ func UserLogin(con *gin.Context) {
 	if !checkDaoSuccess(con, tokenSuccess) {
 		return
 	}
+	con.SetCookie("AccessToken", token, int(args.AccessTokenTimeOut.Seconds()), "/", strings.Split(con.Request.Host, ":")[0], false, false)
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
 		"msg":  "登录成功",
@@ -167,6 +173,7 @@ func UserLogin(con *gin.Context) {
 			"AccessToken": token,
 		},
 	})
+	con.Next()
 }
 
 func UserLogout(con *gin.Context) {
@@ -179,7 +186,7 @@ func UserLogout(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token is valid
-	_, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -202,6 +209,7 @@ func UserLogout(con *gin.Context) {
 		"msg":  "白白了您呐!",
 		"data": gin.H{},
 	})
+	con.Next()
 }
 
 func UserCheckValidity(con *gin.Context) {
@@ -214,7 +222,7 @@ func UserCheckValidity(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	//check token
-	_, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -226,6 +234,7 @@ func UserCheckValidity(con *gin.Context) {
 			"AccessToken": accessToken,
 		},
 	})
+	con.Next()
 }
 
 func UserChangePassword(con *gin.Context) {
@@ -242,27 +251,13 @@ func UserChangePassword(con *gin.Context) {
 	originPassword := (*valueMap)[args.FieldWordOriginPassword].(string)
 	newPassword := (*valueMap)[args.FieldWordNewPassword].(string)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole, args.UserHostRole, args.UserOrdinaryRole})
 	if !valid {
-		return
-	}
-	// verify role
-	user, infoSuccess := dao.UserDao.GetUserInfo(userID)
-	if !checkDaoSuccess(con, infoSuccess) {
-		return
-	}
-	// it can be modify into UserRoles ↓
-	if user.Role == args.UserAllRole {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodePasswordNotRight,
-			"msg":  "Guest禁止修改密码",
-			"data": gin.H{},
-		})
 		return
 	}
 
 	// verify origin password
-	loginSuccess := dao.UserDao.LoginWithId(userID, originPassword)
+	loginSuccess := dao.UserDao.LoginWithId(user.UserID, originPassword)
 	if !loginSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodePasswordNotRight,
@@ -272,13 +267,13 @@ func UserChangePassword(con *gin.Context) {
 		return
 	}
 	// dao change password
-	changePasswordSuccess := dao.UserDao.SetUserPassword(userID, newPassword)
+	changePasswordSuccess := dao.UserDao.SetUserPassword(user.UserID, newPassword)
 	if !checkDaoSuccess(con, changePasswordSuccess) {
 		return
 	}
 	// let scheduler change and sync password
 	storagePlan := &user.StoragePlan
-	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(userID, newPassword, storagePlan)
+	postPlanResponse, postPlanSuccess := scheduler.SetStoragePlanToScheduler(user.UserID, newPassword, storagePlan)
 	if !postPlanSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
@@ -301,6 +296,7 @@ func UserChangePassword(con *gin.Context) {
 		"msg":  "修改密码成功",
 		"data": gin.H{},
 	})
+	con.Next()
 }
 
 func UserChangeEmail(con *gin.Context) {
@@ -316,22 +312,9 @@ func UserChangeEmail(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	newEmail := (*valueMap)[args.FieldWordNewEmail].(string)
 	// check token
-	userID, userRole, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	//can't change email now!
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserNoRole})
 	if !valid {
-		return
-	}
-	// can't change email now!
-	//user, infoSuccess := dao.UserDao.GetUserInfo(userID)
-	//if !checkDaoSuccess(con, infoSuccess) {
-	//	return
-	//}
-	// it can be modify into roles
-	if userRole == args.UserHostRole || userRole == args.UserGuestRole {
-		con.JSON(http.StatusOK, gin.H{
-			"code": args.CodePasswordNotRight,
-			"msg":  "禁止修改邮箱",
-			"data": gin.H{},
-		})
 		return
 	}
 
@@ -345,11 +328,11 @@ func UserChangeEmail(con *gin.Context) {
 		return
 	}
 	// save with dao
-	emailSuccess := dao.UserDao.SetUserEmail(userID, newEmail)
+	emailSuccess := dao.UserDao.SetUserEmail(user.UserID, newEmail)
 	if !checkDaoSuccess(con, emailSuccess) {
 		return
 	}
-	statusSuccess := dao.UserDao.SetUserStatusWithId(userID, args.UserVerifyStatus)
+	statusSuccess := dao.UserDao.SetUserStatusWithId(user.UserID, args.UserVerifyStatus)
 	if !checkDaoSuccess(con, statusSuccess) {
 		return
 	}
@@ -364,6 +347,7 @@ func UserChangeEmail(con *gin.Context) {
 		"msg":  "用户更改邮箱已记录",
 		"data": gin.H{},
 	})
+	con.Next()
 }
 
 func UserChangeNickname(con *gin.Context) {
@@ -378,11 +362,11 @@ func UserChangeNickname(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	newNickname := (*valueMap)[args.FieldWordNickname].(string)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
-	nicknameSuccess := dao.UserDao.SetUserNickname(userID, newNickname)
+	nicknameSuccess := dao.UserDao.SetUserNickname(user.UserID, newNickname)
 	if !checkDaoSuccess(con, nicknameSuccess) {
 		return
 	}
@@ -391,6 +375,7 @@ func UserChangeNickname(con *gin.Context) {
 		"msg":  "修改昵称成功",
 		"data": gin.H{},
 	})
+	con.Next()
 }
 
 func UserGetInfo(con *gin.Context) {
@@ -403,11 +388,11 @@ func UserGetInfo(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
-	user, infoSuccess := dao.UserDao.GetUserInfo(userID)
+	user, infoSuccess := dao.UserDao.GetUserInfo(user.UserID)
 	if !checkDaoSuccess(con, infoSuccess) {
 		return
 	}
@@ -418,6 +403,7 @@ func UserGetInfo(con *gin.Context) {
 			"UserInfo": user,
 		},
 	})
+	con.Next()
 }
 
 func UserSetPreference(con *gin.Context) {
@@ -445,7 +431,7 @@ func UserSetPreference(con *gin.Context) {
 		latency = &map[string]uint64{}
 	}
 	//check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -457,7 +443,7 @@ func UserSetPreference(con *gin.Context) {
 		Latency:      *latency,
 	}
 	// set preference
-	preferenceSuccess := dao.UserDao.SetUserPreference(userID, preference)
+	preferenceSuccess := dao.UserDao.SetUserPreference(user.UserID, preference)
 	if !checkDaoSuccess(con, preferenceSuccess) {
 		return
 	}
@@ -466,6 +452,7 @@ func UserSetPreference(con *gin.Context) {
 		"msg":  "设置个人偏好成功",
 		"data": gin.H{},
 	})
+	con.Next()
 }
 
 func UserGetKeys(con *gin.Context) {
@@ -478,12 +465,12 @@ func UserGetKeys(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
 	// get all keys with userID
-	keys, getKeysSuccess := dao.AccessKeyDao.GetAllKeys(userID)
+	keys, getKeysSuccess := dao.AccessKeyDao.GetAllKeys(user.UserID)
 	if !checkDaoSuccess(con, getKeysSuccess) {
 		return
 	}
@@ -495,6 +482,7 @@ func UserGetKeys(con *gin.Context) {
 			"Keys": *keys,
 		},
 	})
+	con.Next()
 }
 
 func UserAddKey(con *gin.Context) {
@@ -514,7 +502,7 @@ func UserAddKey(con *gin.Context) {
 		comment = ""
 	}
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -531,7 +519,7 @@ func UserAddKey(con *gin.Context) {
 
 	//sync it with scheduler 由于 scheduler 尚未实现 key 的同步，先禁用该同步
 	key := model.AccessKey{
-		UserID:     userID,
+		UserID:     user.UserID,
 		AccessKey:  accessKey,
 		SecretKey:  secretKey,
 		Comment:    comment,
@@ -565,6 +553,7 @@ func UserAddKey(con *gin.Context) {
 			"SecretKey": secretKey,
 		},
 	})
+	con.Next()
 }
 
 func UserDeleteKey(con *gin.Context) {
@@ -579,7 +568,7 @@ func UserDeleteKey(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	accessKey := (*valueMap)[args.FieldWordAccessKey].(string)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -600,7 +589,7 @@ func UserDeleteKey(con *gin.Context) {
 	//}
 
 	// delete & sync with scheduler
-	deleteKeyResponse, deleteKeySuccess := scheduler.DeleteKeyToScheduler(userID, accessKey)
+	deleteKeyResponse, deleteKeySuccess := scheduler.DeleteKeyToScheduler(user.UserID, accessKey)
 	if !deleteKeySuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
@@ -624,6 +613,7 @@ func UserDeleteKey(con *gin.Context) {
 		"msg":  "用户删除密钥成功",
 		"data": gin.H{},
 	})
+	con.Next()
 }
 
 func UserChangeKeyStatus(con *gin.Context) {
@@ -640,7 +630,7 @@ func UserChangeKeyStatus(con *gin.Context) {
 	accessKey := (*valueMap)[args.FieldWordAccessKey].(string)
 	status := (*valueMap)[args.FieldWordStatus].(bool)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -661,7 +651,7 @@ func UserChangeKeyStatus(con *gin.Context) {
 	//}
 
 	// get origin key
-	getKeyResult, getKeySuccess := dao.AccessKeyDao.GetWithAccessKey(userID, accessKey)
+	getKeyResult, getKeySuccess := dao.AccessKeyDao.GetWithAccessKey(user.UserID, accessKey)
 	if !checkDaoSuccess(con, getKeySuccess) {
 		return
 	}
@@ -692,6 +682,7 @@ func UserChangeKeyStatus(con *gin.Context) {
 		"msg":  "用户修改密钥状态成功",
 		"data": gin.H{},
 	})
+	con.Next()
 }
 
 func UserChangeKeyComment(con *gin.Context) {
@@ -713,7 +704,7 @@ func UserChangeKeyComment(con *gin.Context) {
 		newComment = ""
 	}
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -734,7 +725,7 @@ func UserChangeKeyComment(con *gin.Context) {
 	//}
 
 	// get origin key
-	getKeyResult, getKeySuccess := dao.AccessKeyDao.GetWithAccessKey(userID, accessKey)
+	getKeyResult, getKeySuccess := dao.AccessKeyDao.GetWithAccessKey(user.UserID, accessKey)
 	if !checkDaoSuccess(con, getKeySuccess) {
 		return
 	}
@@ -765,6 +756,7 @@ func UserChangeKeyComment(con *gin.Context) {
 		"msg":  "用户修改密钥备注成功",
 		"data": gin.H{},
 	})
+	con.Next()
 }
 
 func UserRemakeKey(con *gin.Context) {
@@ -779,7 +771,7 @@ func UserRemakeKey(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	accessKey := (*valueMap)[args.FieldWordAccessKey].(string)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -803,7 +795,7 @@ func UserRemakeKey(con *gin.Context) {
 	//}
 
 	// get origin key
-	getKeyResult, getKeySuccess := dao.AccessKeyDao.GetWithAccessKey(userID, accessKey)
+	getKeyResult, getKeySuccess := dao.AccessKeyDao.GetWithAccessKey(user.UserID, accessKey)
 	if !checkDaoSuccess(con, getKeySuccess) {
 		return
 	}
@@ -834,6 +826,7 @@ func UserRemakeKey(con *gin.Context) {
 		"msg":  "用户重置密钥成功",
 		"data": gin.H{},
 	})
+	con.Next()
 }
 
 //func UserUploadAvatar(c *gin.Context) {
