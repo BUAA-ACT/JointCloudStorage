@@ -1,4 +1,4 @@
-package main
+package tools
 
 import (
 	"bytes"
@@ -11,38 +11,38 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func logError(err error, requestID string, msg string, params ...interface{}) {
+func LogError(err error, requestID string, msg string, params ...interface{}) {
 	log.WithError(err).Errorf("ErrorMessage: %s, RequestID: %s, Params: %v", msg, requestID, params)
 }
 
-func logInfo(msg string, requestID string, params ...interface{}) {
+func LogInfo(msg string, requestID string, params ...interface{}) {
 	log.Infof("Message: %s, RequestID: %s, Params: %v", msg, requestID, params)
 }
 
-func logTrace(msg string, requestID string, params ...interface{}) {
+func LogTrace(msg string, requestID string, params ...interface{}) {
 	log.Tracef("Message: %s, RequestID: %s, Params: %v", msg, requestID, params)
 }
 
-func minInt(a, b int) int {
+func MinInt(a, b int) int {
 	if a < b {
 		return a
 	}
 	return b
 }
 
-func maxInt(a, b int) int {
+func MaxInt(a, b int) int {
 	if a > b {
 		return a
 	}
 	return b
 }
 
-func toJson(v interface{}) string {
+func ToJson(v interface{}) string {
 	b, _ := json.Marshal(v)
 	return string(b)
 }
 
-func genPassword() string {
+func GenPassword() string {
 	res, _ := password.Generate(12, 2, 2, false, true)
 	return res
 }
@@ -99,4 +99,8 @@ func PKCS7UnPadding(origData []byte) []byte {
 	length := len(origData)
 	unpadding := int(origData[length-1])
 	return origData[:(length - unpadding)]
+}
+
+func Bool2Pointer(b bool) *bool {
+	return &b
 }

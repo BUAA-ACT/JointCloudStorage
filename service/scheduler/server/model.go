@@ -1,7 +1,10 @@
-package main
+package server
 
 import (
 	"math"
+	"shaoliyin.me/jcspan/config"
+	"shaoliyin.me/jcspan/entity"
+	"shaoliyin.me/jcspan/tools"
 	"sort"
 	"time"
 
@@ -10,7 +13,7 @@ import (
 	"shaoliyin.me/jcspan/dao"
 )
 
-func storagePlan(param GetStoragePlanParam, clouds []dao.Cloud) GetStoragePlanData {
+func storagePlan(param entity.GetStoragePlanParam, clouds []entity.Cloud) entity.GetStoragePlanData {
 	// 初始化参数
 	N := len(clouds)     // 可用云服务数量
 	nMin := param.Vendor // 存储方案所包含云服务的数量下界
@@ -20,19 +23,19 @@ func storagePlan(param GetStoragePlanParam, clouds []dao.Cloud) GetStoragePlanDa
 	sMin := 999.9 // 当前最小存储成本
 	tMin := 999.9 // 当前最小流量成本
 
-	var storageFirst dao.StoragePlan
-	var trafficFirst dao.StoragePlan
+	var storageFirst entity.StoragePlan
+	var trafficFirst entity.StoragePlan
 
 	self, others := splitClouds(clouds)
 
 	for n := nMin; n <= nMax; n++ {
 		for _, cb := range combin.Combinations(N-1, n-1) {
 			// 从其他云中选出n-1个云，再加上自己
-			cls := []dao.Cloud{self}
+			cls := []entity.Cloud{self}
 			for _, i := range cb {
 				cls = append(cls, others[i])
 			}
-			plan := dao.StoragePlan{
+			plan := entity.StoragePlan{
 				N:           n,
 				StorageMode: ECMode,
 				Clouds:      cls,
@@ -88,13 +91,13 @@ func storagePlan(param GetStoragePlanParam, clouds []dao.Cloud) GetStoragePlanDa
 		}
 	}
 
-	return GetStoragePlanData{
+	return entity.GetStoragePlanData{
 		StoragePriceFirst: storageFirst,
 		TrafficPriceFirst: trafficFirst,
 	}
 }
 
-func calStoragePrice(plan dao.StoragePlan) float64 {
+func calStoragePrice(plan entity.StoragePlan) float64 {
 	var price float64
 
 	for _, c := range plan.Clouds {
@@ -105,7 +108,7 @@ func calStoragePrice(plan dao.StoragePlan) float64 {
 	return price
 }
 
-func calTrafficPrice(plan dao.StoragePlan, resort bool) float64 {
+func calTrafficPrice(plan entity.StoragePlan, resort bool) float64 {
 	clouds := plan.Clouds
 	if resort {
 		sort.Slice(clouds, func(i, j int) bool {
@@ -131,7 +134,7 @@ func calTrafficPrice(plan dao.StoragePlan, resort bool) float64 {
 	}
 }
 
-func calAvailability(plan dao.StoragePlan) float64 {
+func calAvailability(plan entity.StoragePlan) float64 {
 	var res float64
 
 	if plan.K == 1 {
@@ -155,12 +158,12 @@ func calAvailability(plan dao.StoragePlan) float64 {
 	}
 }
 
-func downloadPlan(plan dao.StoragePlan, clouds []dao.Cloud) GetDownloadPlanData {
-	resp := GetDownloadPlanData{
+func downloadPlan(plan entity.StoragePlan, clouds []entity.Cloud) entity.GetDownloadPlanData {
+	resp := entity.GetDownloadPlanData{
 		StorageMode: plan.StorageMode,
 	}
 
-	cloudMap := make(map[string]dao.Cloud)
+	cloudMap := make(map[string]entity.Cloud)
 	for _, v := range clouds {
 		cloudMap[v.CloudID] = v
 	}
@@ -177,22 +180,22 @@ func downloadPlan(plan dao.StoragePlan, clouds []dao.Cloud) GetDownloadPlanData 
 	return resp
 }
 
-func reSchedule(interval time.Duration) {
+func ReSchedule(interval time.Duration) {
 	t := time.NewTicker(interval)
 	defer t.Stop()
 	for {
 		<-t.C
 		requestID := uuid.New().String()
-		logInfo("Starting to reschedule storage plans", requestID)
+		tools.LogInfo("Starting to reschedule storage plans", requestID)
 		users, err := db.GetAllUser()
 		if err != nil {
-			logError(err, requestID, "GetAllUser failed")
+			tools.LogError(err, requestID, "GetAllUser failed")
 			continue
 		}
 
 		clouds, err := db.GetAllClouds()
 		if err != nil {
-			logError(err, requestID, "GetAllClouds failed")
+			tools.LogError(err, requestID, "GetAllClouds failed")
 			continue
 		}
 
@@ -215,7 +218,7 @@ func reSchedule(interval time.Duration) {
 				continue
 			}
 			plan.Clouds = reordered
-			adv := dao.MigrationAdvice{
+			adv := entity.MigrationAdvice{
 				UserId:         u.UserId,
 				StoragePlanOld: u.StoragePlan,
 				StoragePlanNew: plan,
@@ -228,21 +231,21 @@ func reSchedule(interval time.Duration) {
 			// 写入数据库
 			err = db.InsertMigrationAdvice(adv)
 			if err != nil {
-				logError(err, requestID, "InsertMigrationAdvice failed", adv)
+				tools.LogError(err, requestID, "InsertMigrationAdvice failed", adv)
 				continue
 			}
-			logInfo("Created new migration advice", requestID, adv)
+			tools.LogInfo("Created new migration advice", requestID, adv)
 		}
-		logInfo("Finish reschedule storage plans", requestID)
+		tools.LogInfo("Finish reschedule storage plans", requestID)
 	}
 }
 
-func splitClouds(clouds []dao.Cloud) (dao.Cloud, []dao.Cloud) {
-	var self dao.Cloud
-	var others []dao.Cloud
+func splitClouds(clouds []entity.Cloud) (entity.Cloud, []entity.Cloud) {
+	var self entity.Cloud
+	var others []entity.Cloud
 
 	for _, v := range clouds {
-		if v.CloudID == *flagCloudID {
+		if v.CloudID == *config.agCloudID {
 			self = v
 		} else {
 			others = append(others, v)
@@ -252,7 +255,7 @@ func splitClouds(clouds []dao.Cloud) (dao.Cloud, []dao.Cloud) {
 	return self, others
 }
 
-func transform(old []dao.Cloud, new []dao.Cloud) (reordered, deleted, added []dao.Cloud) {
+func transform(old []entity.Cloud, new []entity.Cloud) (reordered, deleted, added []entity.Cloud) {
 	index := make([]int, len(old))
 	for i := range index {
 		index[i] = -1
@@ -267,7 +270,7 @@ func transform(old []dao.Cloud, new []dao.Cloud) (reordered, deleted, added []da
 		}
 	}
 
-	reordered = make([]dao.Cloud, len(old))
+	reordered = make([]entity.Cloud, len(old))
 	for i, v := range new {
 		if index[i] == -1 {
 			added = append(added, v)

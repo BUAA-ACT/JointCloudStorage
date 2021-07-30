@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"shaoliyin.me/jcspan/server"
 	"strings"
 	"time"
 
@@ -11,20 +12,20 @@ import (
 )
 
 type GetStatusResponse struct {
-	BaseResponse
+	server.BaseResponse
 	Data dao.Cloud
 }
 
 type PostStoragePlanResponse struct {
-	BaseResponse
+	server.BaseResponse
 	Data []dao.AccessCredential
 }
 
 type PostMetadataResponse struct {
-	BaseResponse
+	server.BaseResponse
 }
 
-func sendGetStatus(param GetStatusParam, cloud string) (*dao.Cloud, error) {
+func sendGetStatus(param server.GetStatusParam, cloud string) (*dao.Cloud, error) {
 	client := resty.New()
 	client.SetTimeout(10 * time.Second)
 	client.SetAllowGetMethodPayload(true)
@@ -44,7 +45,7 @@ func sendGetStatus(param GetStatusParam, cloud string) (*dao.Cloud, error) {
 	return &resp.Result().(*GetStatusResponse).Data, nil
 }
 
-func sendPostStoragePlan(param PostStoragePlanParam, cloud string) (*dao.AccessCredential, error) {
+func sendPostStoragePlan(param server.PostStoragePlanParam, cloud string) (*dao.AccessCredential, error) {
 	client := resty.New()
 	client.SetTimeout(10 * time.Second)
 
@@ -63,7 +64,7 @@ func sendPostStoragePlan(param PostStoragePlanParam, cloud string) (*dao.AccessC
 	return &resp.Result().(*PostStoragePlanResponse).Data[0], nil
 }
 
-func sendPostMetadata(param PostMetadataParam, cloud string) error {
+func sendPostMetadata(param server.PostMetadataParam, cloud string) error {
 	client := resty.New()
 	client.SetTimeout(10 * time.Second)
 

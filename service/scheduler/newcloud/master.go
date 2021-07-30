@@ -13,21 +13,10 @@ import (
 	"shaoliyin.me/jcspan/dao"
 )
 
-const (
-	CollectionCloud     = "Cloud"
-	CollectionTempCloud = "TempCloud"
-	CollectionVoteCloud = "VoteCloud"
-	CollectionUser      = "User"
-	CollectionFile      = "File"
-	MigrationAdvice     = "MigrationAdvice"
-	codeOK              = 200
-	codeBadRequest      = 400
-	codeUnauthorized    = 401
-	codeInternalError   = 500
-)
+
 
 var (
-	localid  string
+	localID  string
 	errorMsg = map[int]string{
 		codeOK:            "OK",
 		codeBadRequest:    "Bad Request",
@@ -48,27 +37,28 @@ var (
  * clouds：database名称
  * cid：本地云的cid
  */
-func NewCloudInit(mongo, databasename, cid, envMod string) error {
+func NewCloudInit(mongo, databaseName, cid string) error {
 	var err error
-	localMongo, err = dao.NewDao(mongo, databasename, CollectionCloud, CollectionUser, CollectionFile, MigrationAdvice, "")
+	localMongo, err = dao.NewDao(mongo, databaseName, {})
 	if err != nil {
 		return err
 	}
 
-	localMongoTempCloud, err = dao.NewDao(mongo, databasename, CollectionTempCloud, CollectionUser, CollectionFile, MigrationAdvice, "")
+	localMongoTempCloud, err = dao.NewDao(mongo, databaseName)
 	if err != nil {
 		return err
 	}
 
-	localMongoVoteRequest, err = dao.NewDao(mongo, databasename, CollectionVoteCloud, CollectionUser, CollectionFile, MigrationAdvice, "")
+	localMongoVoteRequest, err = dao.NewDao(mongo, databaseName)
 	if err != nil {
 		return err
 	}
 
-	localid = cid
+	localID = cid
 	tempNotFound = errors.New("TempCloud not Found.")
 	return nil
 }
+
 
 func PostNewCloud(c *gin.Context) {
 	requestID := uuid.New().String()
@@ -119,7 +109,7 @@ func PostNewCloud(c *gin.Context) {
 	}
 	//初始化tempCloud，将address设为本地的address
 	for _, cloud := range clouds {
-		if cloud.CloudID == localid {
+		if cloud.CloudID == localID {
 			temp.Address = cloud.Address
 		}
 	}
@@ -150,7 +140,7 @@ func PostNewCloud(c *gin.Context) {
 	//本地测试不测试本部分内容
 	if env != "localDebug" {
 		for _, cloud := range clouds {
-			if cloud.CloudID != localid {
+			if cloud.CloudID != localID {
 				body := bytes.NewBuffer(b)
 				addr := utils.GenAddress(cloud.CloudID, "/new_cloud_vote")
 				resp, err := http.Post(addr, "application/json", body)
@@ -492,7 +482,7 @@ func voteCheck(id string, vote int) error {
 		var body *bytes.Buffer
 		//同步云信息
 		for _, cloud := range clouds {
-			if cloud.CloudID != localid && env != "localDebug" {
+			if cloud.CloudID != localID && env != "localDebug" {
 				body = bytes.NewBuffer(b)
 				addr := utils.GenAddress(cloud.CloudID, "/cloud_syn")
 				_, err := http.Post(addr, "application/json", body)

@@ -1,6 +1,9 @@
 package dao
 
-import "testing"
+import (
+	"shaoliyin.me/jcspan/entity"
+	"testing"
+)
 
 const (
 	Version = "v0.2"
@@ -8,20 +11,20 @@ const (
 	CollectionCloud  = "Cloud"
 	CollectionUser   = "User"
 	CollectionFile   = "File"
-	MigrationAdvice2 = "MigrationAdvice"
+	MigrationAdvice2 = "CollectionMigrationAdvice"
 )
 
 func TestDao_InsertMigrationAdvice(t *testing.T) {
 	// Init DAO instance
 	var err error
 	db := GetDatabaseInstance()
-	m := MigrationAdvice{
+	m := entity.MigrationAdvice{
 		UserId: "zhangjh",
-		StoragePlanOld: StoragePlan{
+		StoragePlanOld: entity.StoragePlan{
 			N:           2,
 			K:           1,
 			StorageMode: "Replica",
-			Clouds: []Cloud{
+			Clouds: []entity.Cloud{
 				{
 					CloudID:      "aliyun-qingdao",
 					Endpoint:     "oss-cn-qingdao.aliyuncs.com",
@@ -52,11 +55,11 @@ func TestDao_InsertMigrationAdvice(t *testing.T) {
 				},
 			},
 		},
-		StoragePlanNew: StoragePlan{
+		StoragePlanNew: entity.StoragePlan{
 			N:           2,
 			K:           1,
 			StorageMode: "Replica",
-			Clouds: []Cloud{
+			Clouds: []entity.Cloud{
 				{
 					CloudID:      "aliyun-hangzhou",
 					Endpoint:     "oss-cn-hangzhou.aliyuncs.com",
@@ -87,7 +90,7 @@ func TestDao_InsertMigrationAdvice(t *testing.T) {
 				},
 			},
 		},
-		CloudsOld: []Cloud{
+		CloudsOld: []entity.Cloud{
 			{
 				CloudID:      "aliyun-qingdao",
 				Endpoint:     "oss-cn-qingdao.aliyuncs.com",
@@ -103,7 +106,7 @@ func TestDao_InsertMigrationAdvice(t *testing.T) {
 				ProviderName: "aliyun",
 			},
 		},
-		CloudsNew: []Cloud{
+		CloudsNew: []entity.Cloud{
 			{
 				CloudID:      "aliyun-hangzhou",
 				Endpoint:     "oss-cn-hangzhou.aliyuncs.com",
