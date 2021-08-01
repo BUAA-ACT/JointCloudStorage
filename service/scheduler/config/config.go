@@ -24,10 +24,10 @@ const (
 	MigrationAdviceCollectionName = "MigrationAdvice"
 	AccessKeyCollectionName       = "AccessKey"
 
-	codeOK            = 200
-	codeBadRequest    = 400
-	codeUnauthorized  = 401
-	codeInternalError = 500
+	CodeOK            = 200
+	CodeBadRequest    = 400
+	CodeUnauthorized  = 401
+	CodeInternalError = 500
 )
 
 /* user role constant */
@@ -57,13 +57,20 @@ var (
 
 var conf *Config
 var lock sync.Mutex
-var lock sync.RWMutex
+var registerLock sync.RWMutex
 
 func RegisterDao(URI string, client ClientConfig) {
-
+	registerLock.RLock()
+	if conf.Clients[URI]
 	for databaseName, database := range client.Databases {
+		conf := GetConfig()
+	}
+	if client.Client {
 
 	}
+
+
+
 }
 
 func SetGlobalConfig() {

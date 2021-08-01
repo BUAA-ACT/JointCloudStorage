@@ -83,7 +83,7 @@ func main() {
 	r := gin.Default()
 	server.NewRouter(r)
 	newcloud.PlugIn(r, *flagMongo, *flagEnv, *flagCloudID, "production")
-	keySyn.KeySynInit(*flagCloudID, r)
+	keySyn.KeySyncInit(*flagCloudID, r)
 	go server.ReSchedule(*config.FlagRescheduleInterval)
 	go server.Heartbeat(*config.FlagHeartbeatInterval)
 	//

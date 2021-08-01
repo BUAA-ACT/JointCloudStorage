@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"shaoliyin.me/jcspan/dao"
+	"shaoliyin.me/jcspan/entity"
 	"shaoliyin.me/jcspan/utils"
 )
 
@@ -30,7 +31,7 @@ func PostKeyUpsert(c *gin.Context) {
 	requestId := uuid.New().String()
 
 	//获取ak
-	var ak dao.AccessKey
+	var ak entity.AccessKey
 	err := c.ShouldBindJSON(&ak)
 	if err != nil {
 		log.Error("package:keySyn, func:PostKeyUpsert,获取accesskey失败:", err, "requestID:", requestId)
@@ -57,7 +58,7 @@ func PostKeyUpsert(c *gin.Context) {
 	})
 }
 
-func keySyn(ak dao.AccessKey, caller string, synType string) error {
+func keySyn(ak entity.AccessKey, caller string, synType string) error {
 	var err error
 	switch synType {
 	case SynTypeUpsert:
@@ -121,7 +122,7 @@ func PostKeyDelete(c *gin.Context) {
 	requestId := uuid.New().String()
 
 	//获取ak
-	var ak dao.AccessKey
+	var ak entity.AccessKey
 	err := c.ShouldBindJSON(&ak)
 	if err != nil {
 		log.Error("package:keySyn, func:PostDeleteKey,获取accesskey失败:", err, "requestID:", requestId)

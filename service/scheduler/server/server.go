@@ -45,6 +45,10 @@ func NewRouter(r *gin.Engine) {
 	r.POST("/update_clouds", PostUpdateClouds)
 }
 
+func ServerDaoInit() {
+
+}
+
 func GetStoragePlan(c *gin.Context) {
 	requestID := uuid.New().String()
 

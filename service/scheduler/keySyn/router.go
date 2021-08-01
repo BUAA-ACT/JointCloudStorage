@@ -5,15 +5,24 @@ import (
 	"shaoliyin.me/jcspan/dao"
 )
 
-
 var (
-	endPointAddKey		=	"/add_key"
-	endPointDeleteKey	=	"/delete_key"
+	endPointAddKey    = "/add_key"
+	endPointDeleteKey = "/delete_key"
 )
-func KeySynInit(cid string, r *gin.Engine) {
-	keyDao = dao.GetDatabaseInstance()
+
+func KeySyncInit(cid string, r *gin.Engine) {
 	localCid = cid
 
 	r.POST(endPointAddKey, PostKeyUpsert)
 	r.POST(endPointDeleteKey, PostKeyDelete)
+}
+
+func KeySyncDaoInit(map[string]dao.DatabaseConfig) {
+
+	dao.NewDao(mongoURI)
+	keyDao = dao.GetDatabaseInstance()
+}
+
+func KeySyncRouteInit() {
+
 }

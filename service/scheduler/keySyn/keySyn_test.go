@@ -14,7 +14,7 @@ var (
 
 func InitTest() error {
 	r = gin.Default()
-	KeySynInit("aliyun-beijing", r)
+	KeySyncInit("aliyun-beijing", r)
 	return nil
 }
 

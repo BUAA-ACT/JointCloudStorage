@@ -15,20 +15,6 @@ type collectionNames struct {
 	CollectionVoteCloud       string
 }
 
-type CollectionConfig struct {
-	CollectionHandler *mongo.Collection
-}
-
-type DatabaseConfig struct {
-	DatabaseHandler *mongo.Database
-	Collections     map[string]CollectionConfig
-}
-
-type ClientConfig struct {
-	Client    *mongo.Client
-	Databases map[string]DatabaseConfig
-}
-
 type Config struct {
 	FlagMongo              string
 	FlagAddress            string
@@ -37,7 +23,6 @@ type Config struct {
 	FlagAESKey             string
 	FlagRescheduleInterval time.Duration
 	FlagHeartbeatInterval  time.Duration
-	Clients                map[string]ClientConfig
 }
 
 func Factory() *Config {

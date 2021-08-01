@@ -6,6 +6,7 @@ import (
 	"errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"shaoliyin.me/jcspan/config"
 	"shaoliyin.me/jcspan/utils"
 
 	"github.com/gin-gonic/gin"
@@ -18,10 +19,10 @@ import (
 var (
 	localID  string
 	errorMsg = map[int]string{
-		codeOK:            "OK",
-		codeBadRequest:    "Bad Request",
-		codeUnauthorized:  "Unauthorized",
-		codeInternalError: "Internal Server Error",
+		config.CodeOK:            "OK",
+		config.CodeBadRequest:    "Bad Request",
+		config.CodeUnauthorized:  "Unauthorized",
+		config.CodeInternalError: "Internal Server Error",
 	}
 	localMongo            *dao.Dao
 	localMongoTempCloud   *dao.Dao
@@ -37,7 +38,7 @@ var (
  * clouds：database名称
  * cid：本地云的cid
  */
-func NewCloudInit(mongo, databaseName, cid string) error {
+func NewCloudDaoInit(mongo, databaseName, cid string) error {
 	var err error
 	localMongo, err = dao.NewDao(mongo, databaseName, {})
 	if err != nil {

@@ -15,11 +15,13 @@ func router(r *gin.Engine) {
 	r.POST("/cloud_syn", PostCloudSyn)
 }
 
-func PlugIn(mongo, databasename, cid, envMod string) error {
+func PlugIn(mongo string, databasename string, cid string, envMod string, options ...string) error {
 	dao.Dao{}
-	if err := NewCloudInit(mongo, databasename, cid, envMod); err != nil {
+	if err := NewCloudDaoInit(mongo, databasename, cid, envMod); err != nil {
 		return err
 	}
+	for a := range options {
 
+	}
 	return nil
 }

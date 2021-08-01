@@ -39,8 +39,15 @@ func test() {
 		DatabaseHandler: nil,
 		Collections: map[string]CollectionConfig{},
 	}
+	kk1 := a.Databases
+	fmt.Println(kk1)
+	hh1 := kk1["aaa"].Collections
+	fmt.Println(hh1)
+	cc := a.Databases["kjhdskfjhsd"]
 
-	a.Databases["aaa"].Collections["bbb"] = nil
+	fmt.Println(a.Databases["sdhajksd"])
+	fmt.Println(cc)
+	fmt.Println("---------------")
 	b:= ClientConfig{
 		Client:    nil,
 		Databases: nil,
@@ -49,7 +56,13 @@ func test() {
 		fmt.Println(databaseName)
 		fmt.Println(database)
 	}
-	fmt.Println()
+	kk := b.Databases
+	fmt.Println(kk)
+	fmt.Println(kk["aaa"])
+	kk["test"] = DatabaseConfig{
+		DatabaseHandler: nil,
+		Collections: map[string]CollectionConfig{},
+	}
 	for databaseName, database := range b.Databases {
 		fmt.Println(databaseName)
 		fmt.Println(database)
@@ -57,6 +70,6 @@ func test() {
 
 	ttt := config{aaa: 1}
 	pc := Config{config: &ttt}
-
+	fmt.Println(pc)
 	os.Exit(1)
 }

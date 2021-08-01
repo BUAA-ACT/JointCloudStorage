@@ -1,8 +1,12 @@
 package dao
 
 import (
+	"context"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"shaoliyin.me/jcspan/entity"
+	"shaoliyin.me/jcspan/tools"
 )
 
 /*******************************************************
@@ -10,8 +14,8 @@ import (
  ********************************************************/
 
 //更新,若不存在则将插入
-func (dao *Dao) KeyUpsert(ak AccessKey) error {
-	col := dao.client.Database(dao.database).Collection(dao.keyCollection)
+func (dao *Dao) KeyUpsert(col *mongo.Collection, ak entity.AccessKey) error {
+	//col := dao.client.Database(dao.database).Collection(dao.keyCollection)
 
 	filter := bson.M{
 		"access_key": ak.AccessKey,
@@ -21,7 +25,7 @@ func (dao *Dao) KeyUpsert(ak AccessKey) error {
 		"$set": ak,
 	}
 	option := options.UpdateOptions{
-		Upsert: bool2pointer(true),
+		Upsert: tools.Bool2Pointer(true),
 	}
 	_, err := col.UpdateOne(context.TODO(), filter, operation, &option)
 	if err != nil {
@@ -32,8 +36,8 @@ func (dao *Dao) KeyUpsert(ak AccessKey) error {
 }
 
 //删除key
-func (dao *Dao) DeleteKey(ak AccessKey) error {
-	col := dao.client.Database(dao.database).Collection(dao.keyCollection)
+func (dao *Dao) DeleteKey(col *mongo.Collection, ak entity.AccessKey) error {
+	//col := dao.client.Database(dao.database).Collection(dao.keyCollection)
 
 	filter := bson.M{
 		"access_key": ak.AccessKey,

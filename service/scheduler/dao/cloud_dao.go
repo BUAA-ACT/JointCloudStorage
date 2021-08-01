@@ -3,12 +3,13 @@ package dao
 import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"shaoliyin.me/jcspan/entity"
 )
 
 // UpdateCloud insert new cloud info to database.
-func (d *Dao) UpdateCloud(cloud entity.Cloud) error {
-	col := d.client.Database(d.database).Collection(d.cloudCollection)
+func UpdateCloud(col *mongo.Collection, cloud entity.Cloud) error {
+	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 	_, err := col.UpdateOne(
 		context.TODO(),
 		bson.M{
@@ -32,9 +33,8 @@ func (d *Dao) UpdateCloud(cloud entity.Cloud) error {
 }
 
 // GetAllClouds return the info of given bucket.
-func (d *Dao) GetAllClouds() ([]entity.Cloud, error) {
-	col := d.client.Database(d.database).Collection(d.cloudCollection)
-
+func (d *Dao) GetAllClouds(col *mongo.Collection) ([]entity.Cloud, error) {
+	//col := d.Client.Database(d.database).Collection(d.cloudCollection)
 	var clouds []entity.Cloud
 	cur, err := col.Find(context.TODO(), bson.D{})
 	if err != nil {
@@ -57,8 +57,8 @@ func (d *Dao) GetAllClouds() ([]entity.Cloud, error) {
 	return clouds, nil
 }
 
-func (d *Dao) GetOtherClouds(cid string) ([]entity.Cloud, error) {
-	col := d.client.Database(d.database).Collection(d.cloudCollection)
+func (d *Dao) GetOtherClouds(col *mongo.Collection, cid string) ([]entity.Cloud, error) {
+	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 
 	var clouds []entity.Cloud
 	cur, err := col.Find(context.TODO(), bson.M{"cloud_id": bson.M{"$ne": cid}})
@@ -82,8 +82,8 @@ func (d *Dao) GetOtherClouds(cid string) ([]entity.Cloud, error) {
 	return clouds, nil
 }
 
-func (d *Dao) GetCloud(cid string) (entity.Cloud, error) {
-	col := d.client.Database(d.database).Collection(d.cloudCollection)
+func (d *Dao) GetCloud(col *mongo.Collection, cid string) (entity.Cloud, error) {
+	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 
 	var cloud entity.Cloud
 	err := col.FindOne(context.TODO(), bson.M{"cloud_id": cid}).Decode(&cloud)
@@ -94,8 +94,8 @@ func (d *Dao) GetCloud(cid string) (entity.Cloud, error) {
 	return cloud, err
 }
 
-func (d *Dao) GetCloudNum() (int, error) {
-	col := d.client.Database(d.database).Collection(d.cloudCollection)
+func (d *Dao) GetCloudNum(col *mongo.Collection) (int, error) {
+	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 	num, err := col.CountDocuments(context.TODO(), bson.D{})
 	if err != nil {
 		return 0, err
@@ -104,8 +104,8 @@ func (d *Dao) GetCloudNum() (int, error) {
 	}
 }
 
-func (d *Dao) InsertCloud(cloud entity.Cloud) error {
-	col := d.client.Database(d.database).Collection(d.cloudCollection)
+func (d *Dao) InsertCloud(col *mongo.Collection, cloud entity.Cloud) error {
+	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 	_, err := col.InsertOne(
 		context.TODO(),
 		cloud,

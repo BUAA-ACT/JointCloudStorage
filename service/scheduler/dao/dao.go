@@ -2,8 +2,10 @@ package dao
 
 import (
 	"context"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"shaoliyin.me/jcspan/config"
+	"sync"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,22 +15,36 @@ import (
 )
 
 // Dao encapsulates database operations.
-type Dao = config.ClientConfig
+type Dao = ClientConfig
 
-var globalDao *Dao
+type CollectionConfig struct {
+	CollectionHandler *mongo.Collection
+}
+
+type DatabaseConfig struct {
+	DatabaseHandler *mongo.Database
+	Collections     map[string]*CollectionConfig
+}
+
+type ClientConfig struct {
+	Client    *mongo.Client
+	Databases map[string]*DatabaseConfig
+}
 
 type Database struct {
 	*Dao
 }
 
-func SetRealGlobalDao(realDao *Dao) {
-	globalDao = realDao
-}
+//func SetRealGlobalDao(realDao *Dao) {
+//	globalDao = realDao
+//}
 
-// NewDao constructs a data access object (Dao).
-func NewDao(mongoURI string, databases map[string]config.DatabaseConfig) (*Dao, error) {
+var (
+	Clients        map[string]*ClientConfig
+	DaoClientsLock sync.RWMutex
+)
 
-	dao := Dao{}
+func NewClient(mongoURI string) (*mongo.Client, error) {
 	// construct client
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(mongoURI))
 	if err != nil {
@@ -40,11 +56,56 @@ func NewDao(mongoURI string, databases map[string]config.DatabaseConfig) (*Dao, 
 	if err != nil {
 		return nil, err
 	}
-	// load client
-	dao.Client = client
-	// get databases
-	for databaseName, database := range databases {
+}
+
+// NewDao constructs a data access object (Dao).
+func NewDao(mongoURI string, databases map[string]*DatabaseConfig) (*Dao, error) {
+	config.GetConfig()
+
+	DaoClientsLock.Lock()
+	dao := Clients[mongoURI]
+	// get this client
+	if dao == nil {
+		dao = &Dao{
+			Client:    nil,
+			Databases: map[string]*DatabaseConfig{},
+		}
+		// load into whole dao
+		Clients[mongoURI] = dao
+	}
+	// complete client
+	if dao.Client == nil {
+		// connect with URI
+		client, err := NewClient(mongoURI)
+		if err != nil {
+			return nil, err
+		}
+		dao.Client = client
+	}
+	// handle with databases
+	if dao.Databases == nil {
+		dao.Databases = map[string]*DatabaseConfig{}
+	}
+	// get the databases need to be established
+	for registerDatabaseName, registerDatabase := range databases {
+		// get the database from whole dao
+		if dao.Databases[databaseName] == nil {
+			// new database pointer
+			database = &DatabaseConfig{
+				DatabaseHandler: nil,
+				Collections:     map[string]*CollectionConfig{},
+			}
+		}
+		if database.Collections == nil {
+			database.Collections = map[string]*CollectionConfig{}
+		}
+		// complete with the database
+		if database.DatabaseHandler == nil {
+
+		}
+		// add database handler into dao
 		database.DatabaseHandler = client.Database(databaseName)
+
 		collections := database.Collections
 		for collectionName, collection := range collections {
 			collection.CollectionHandler = database.DatabaseHandler.Collection(collectionName)
@@ -63,7 +124,7 @@ func NewDao(mongoURI string, databases map[string]config.DatabaseConfig) (*Dao, 
 	return &dao, nil
 }
 
-func ensureIndex(collection config.CollectionConfig, index string, unique bool) error {
+func ensureIndex(collection CollectionConfig, index string, unique bool) error {
 	idx := mongo.IndexModel{
 		Keys: bson.M{
 			index: 1,
