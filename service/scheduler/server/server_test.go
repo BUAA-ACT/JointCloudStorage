@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	_ "shaoliyin.me/jcspan/testinit"
+	_ "shaoliyin.me/jcspan/client"
 )
 
 func init() {
