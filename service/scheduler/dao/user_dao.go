@@ -9,7 +9,7 @@ import (
 	"shaoliyin.me/jcspan/tools"
 )
 
-func (d *Dao) GetUser(col *mongo.Collection, uid string) (entity.User, error) {
+func GetUser(col *mongo.Collection, uid string) (entity.User, error) {
 	//col := d.client.Database(d.database).Collection(d.userCollection)
 
 	var user entity.User
@@ -17,7 +17,7 @@ func (d *Dao) GetUser(col *mongo.Collection, uid string) (entity.User, error) {
 	return user, err
 }
 
-func (d *Dao) GetAllUser(col *mongo.Collection) ([]entity.User, error) {
+func GetAllUser(col *mongo.Collection) ([]entity.User, error) {
 	//col := d.client.Database(d.database).Collection(d.userCollection)
 
 	var users []entity.User
@@ -39,7 +39,7 @@ func (d *Dao) GetAllUser(col *mongo.Collection) ([]entity.User, error) {
 	return users, nil
 }
 
-func (d *Dao) InsertUser(col *mongo.Collection, user entity.User) error {
+func InsertUser(col *mongo.Collection, user entity.User) error {
 	//col := d.client.Database(d.database).Collection(d.userCollection)
 	_, err := col.UpdateOne(
 		context.TODO(),
@@ -60,7 +60,7 @@ func (d *Dao) InsertUser(col *mongo.Collection, user entity.User) error {
 	return nil
 }
 
-func (d *Dao) ChangeVolume(col *mongo.Collection, uid string, op string, files []entity.File) error {
+func ChangeVolume(col *mongo.Collection, uid string, op string, files []entity.File) error {
 	var sum int64
 	for _, v := range files {
 		sum += v.Size
@@ -85,7 +85,7 @@ func (d *Dao) ChangeVolume(col *mongo.Collection, uid string, op string, files [
 	return nil
 }
 
-func (d *Dao) DeleteUser(fileCol *mongo.Collection, userCol *mongo.Collection, uid string) error {
+func DeleteUser(fileCol *mongo.Collection, userCol *mongo.Collection, uid string) error {
 	// 删除该用户名下所有文件
 	//col := d.client.Database(d.database).Collection(d.fileCollection)
 	_, err := fileCol.DeleteMany(

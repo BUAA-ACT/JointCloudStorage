@@ -2,7 +2,7 @@ package dao
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"github.com/sirupsen/logrus"
 	"shaoliyin.me/jcspan/config"
 	"sync"
@@ -56,12 +56,11 @@ func NewClient(mongoURI string) (*mongo.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	return client, nil
 }
 
 // NewDao constructs a data access object (Dao).
-func NewDao(mongoURI string, databases map[string]*DatabaseConfig) (*Dao, error) {
-	config.GetConfig()
-
+func NewDao(mongoURI string, databases map[string]*DatabaseConfig) error {
 	DaoClientsLock.Lock()
 	dao := Clients[mongoURI]
 	// get this client
@@ -78,7 +77,7 @@ func NewDao(mongoURI string, databases map[string]*DatabaseConfig) (*Dao, error)
 		// connect with URI
 		client, err := NewClient(mongoURI)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		dao.Client = client
 	}
@@ -88,43 +87,60 @@ func NewDao(mongoURI string, databases map[string]*DatabaseConfig) (*Dao, error)
 	}
 	// get the databases need to be established
 	for registerDatabaseName, registerDatabase := range databases {
-		// get the database from whole dao
-		if dao.Databases[databaseName] == nil {
+		// get the database from whole dao config
+		database := dao.Databases[registerDatabaseName]
+		if database == nil {
 			// new database pointer
 			database = &DatabaseConfig{
 				DatabaseHandler: nil,
 				Collections:     map[string]*CollectionConfig{},
 			}
-		}
-		if database.Collections == nil {
-			database.Collections = map[string]*CollectionConfig{}
+			// load into database
+			dao.Databases[registerDatabaseName] = database
 		}
 		// complete with the database
 		if database.DatabaseHandler == nil {
-
+			// add database handler into databases
+			database.DatabaseHandler = dao.Client.Database(registerDatabaseName)
 		}
-		// add database handler into dao
-		database.DatabaseHandler = client.Database(databaseName)
-
-		collections := database.Collections
-		for collectionName, collection := range collections {
-			collection.CollectionHandler = database.DatabaseHandler.Collection(collectionName)
-			// TODO: ensure user and file
-			err = ensureIndex(collection, "cloud_id", true)
-			if err != nil {
-				logrus.Println(err)
+		// handle with collection
+		if database.Collections == nil {
+			database.Collections = map[string]*CollectionConfig{}
+		}
+		collections := registerDatabase.Collections
+		for registerCollectionName := range collections {
+			// get the collection from database config
+			collection := database.Collections[registerCollectionName]
+			if collection == nil {
+				// new collection pointer
+				collection = &CollectionConfig{CollectionHandler: nil}
+				database.Collections[registerCollectionName] = collection
 			}
-			// load collection
-			collections[collectionName] = collection
+			if collection.CollectionHandler == nil {
+				// add collection handler into collections
+				collection.CollectionHandler = database.DatabaseHandler.Collection(registerCollectionName)
+			}
+			// TODO: ensure user and file
+			if registerCollectionName == config.CloudCollectionName || registerCollectionName == config.TempCloudCollectionName || registerCollectionName == config.VoteCloudCollectionName {
+				err := ensureIndex(collection, "cloud_id", true)
+				if err != nil {
+					logrus.Println(err)
+				}
+				return err
+			}
+			// notify in collections map
+			collections[registerCollectionName] = collection
 		}
-		//load database
-		databases[databaseName] = database
+		// notify in databases map
+		databases[registerDatabaseName] = database
 	}
-	dao.Databases = databases
-	return &dao, nil
+	return nil
 }
 
-func ensureIndex(collection CollectionConfig, index string, unique bool) error {
+func ensureIndex(collection *CollectionConfig, index string, unique bool) error {
+	if collection == nil {
+		return errors.New("collection is nil")
+	}
 	idx := mongo.IndexModel{
 		Keys: bson.M{
 			index: 1,
@@ -133,7 +149,6 @@ func ensureIndex(collection CollectionConfig, index string, unique bool) error {
 			Unique: &unique,
 		},
 	}
-
 	_, err := collection.CollectionHandler.Indexes().CreateOne(context.TODO(), idx)
 	if err != nil {
 		return err
@@ -141,15 +156,21 @@ func ensureIndex(collection CollectionConfig, index string, unique bool) error {
 	return nil
 }
 
-func GetDatabaseInstance() Database {
-	if globalDao == nil {
-		conf := config.GetConfig()
-		dao, err := NewDao(conf.FlagMongo, conf.FlagEnv)
-		if err != nil {
-			logrus.Errorf("创建 Dao 失败： %v", err)
-		}
-		globalDao = dao
-		logrus.Infof("创建全局 Dao 实例成功")
+//func GetDatabaseInstance() Database {
+//	if globalDao == nil {
+//		conf := config.GetConfig()
+//		dao, err := NewDao(conf.FlagMongo, conf.FlagEnv)
+//		if err != nil {
+//			logrus.Errorf("创建 Dao 失败： %v", err)
+//		}
+//		globalDao = dao
+//		logrus.Infof("创建全局 Dao 实例成功")
+//	}
+//	return Database{globalDao}
+//}
+
+func VerifyCollection(collection *mongo.Collection) {
+	if collection == nil {
+
 	}
-	return Database{globalDao}
 }

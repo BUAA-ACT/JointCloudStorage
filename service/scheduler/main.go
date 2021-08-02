@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"shaoliyin.me/jcspan/config"
+	"shaoliyin.me/jcspan/dao"
 	"shaoliyin.me/jcspan/keySyn"
 	"shaoliyin.me/jcspan/newcloud"
 	"shaoliyin.me/jcspan/server"
@@ -30,48 +31,88 @@ func Init() {
 	})
 
 	// 初始化全局设置
-	config.SetGlobalConfig()
-	//
-	//// Init DAO instance
-	//var err error
-	//db = dao.GetDatabaseInstance()
-	//if err != nil {
-	//	panic(err)
+	config.GetConfig()
+
+	// Init DAO instance
+	var err error
+	db = dao.GetDatabaseInstance()
+	if err != nil {
+		panic(err)
+	}
+
+	// Init address map
+	clouds, err := db.GetAllClouds()
+	if err != nil {
+		panic(err)
+	}
+	for _, c := range clouds {
+		addrMap[c.CloudID] = c.Address
+	}
+
+	//Switch to release mode
+	//if *flagEnv == "prod" {
+	//	gin.SetMode(gin.ReleaseMode)
 	//}
-	//
-	//// Init address map
-	//clouds, err := db.GetAllClouds()
-	//if err != nil {
-	//	panic(err)
-	//}
-	//for _, c := range clouds {
-	//	addrMap[c.CloudID] = c.Address
-	//}
-	//
-	//// Switch to release mode
-	//// if *flagEnv == "prod" {
-	//// 	gin.SetMode(gin.ReleaseMode)
-	//// }
-	//
-	//
-	//
-	//localMongo, err := dao.NewDao(mongo, databasename, CollectionCloud, CollectionUser, CollectionFile, MigrationAdvice, "")
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//localMongoTempCloud, err = dao.NewDao(mongo, databasename, CollectionTempCloud, CollectionUser, CollectionFile, MigrationAdvice, "")
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//localMongoVoteRequest, err = dao.NewDao(mongo, databasename, CollectionVoteCloud, CollectionUser, CollectionFile, MigrationAdvice, "")
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//localid = cid
-	//tempNotFound = errors.New("TempCloud not Found.")
+
+}
+
+func serverPlugIn(r *gin.Engine) {
+	server.IDInit(*config.FlagCloudID)
+	// server module use the databases below
+	databaseMap := map[string]*dao.DatabaseConfig{
+		*config.FlagEnv: {
+			Collections: map[string]*dao.CollectionConfig{
+				config.CloudCollectionName: nil,
+				config.UserCollectionName:  nil,
+				config.FileCollectionName:  nil,
+			},
+		},
+	}
+
+	err := server.DaoInit(*config.FlagMongo, databaseMap)
+	if err != nil {
+		log.Errorf("server plug in failed with error : %s", err.Error())
+	}
+	server.RouteInit(r)
+}
+
+func newCloudPlugIn(r *gin.Engine) {
+	newcloud.IDInit(*config.FlagCloudID)
+	// new cloud module use the databases below
+	databaseMap := map[string]*dao.DatabaseConfig{
+		*config.FlagEnv: {
+			Collections: map[string]*dao.CollectionConfig{
+				config.CloudCollectionName: nil,
+				config.UserCollectionName:  nil,
+				config.FileCollectionName:  nil,
+			},
+		},
+	}
+	err := newcloud.DaoInit(*config.FlagMongo, databaseMap)
+	if err != nil {
+		log.Errorf("server plug in failed with error : %s", err.Error())
+	}
+	newcloud.RouteInit(r)
+}
+
+func keySynPlugIn(r *gin.Engine) {
+	keySyn.IDInit(*config.FlagCloudID)
+	// key synchronize module use the databases below
+	databaseMap := map[string]*dao.DatabaseConfig{
+		*config.FlagEnv: {
+			Collections: map[string]*dao.CollectionConfig{
+				config.CloudCollectionName: nil,
+				config.UserCollectionName:  nil,
+				config.FileCollectionName:  nil,
+			},
+		},
+	}
+	err := keySyn.DaoInit(*config.FlagMongo, databaseMap)
+	if err != nil {
+		log.Errorf("server plug in failed with error : %s", err.Error())
+	}
+	keySyn.RouteInit(r)
+
 }
 
 func main() {
@@ -81,9 +122,10 @@ func main() {
 	log.Infoln("Starting scheduler", config.Version)
 
 	r := gin.Default()
-	server.NewRouter(r)
-	newcloud.PlugIn(r, *flagMongo, *flagEnv, *flagCloudID, "production")
-	keySyn.KeySyncInit(*flagCloudID, r)
+	serverPlugIn(r)
+	keySynPlugIn(r)
+	newCloudPlugIn(r)
+
 	go server.ReSchedule(*config.FlagRescheduleInterval)
 	go server.Heartbeat(*config.FlagHeartbeatInterval)
 	//

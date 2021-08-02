@@ -14,8 +14,6 @@ import (
 	"shaoliyin.me/jcspan/dao"
 )
 
-
-
 var (
 	localID  string
 	errorMsg = map[int]string{
@@ -31,35 +29,6 @@ var (
 	env          string
 	tempNotFound error
 )
-
-/*
- * NewCloud 的初始化函数，用于初始化mongodb的链接和本地cid
- * mongo：本地mongo数据库地址
- * clouds：database名称
- * cid：本地云的cid
- */
-func NewCloudDaoInit(mongo, databaseName, cid string) error {
-	var err error
-	localMongo, err = dao.NewDao(mongo, databaseName, {})
-	if err != nil {
-		return err
-	}
-
-	localMongoTempCloud, err = dao.NewDao(mongo, databaseName)
-	if err != nil {
-		return err
-	}
-
-	localMongoVoteRequest, err = dao.NewDao(mongo, databaseName)
-	if err != nil {
-		return err
-	}
-
-	localID = cid
-	tempNotFound = errors.New("TempCloud not Found.")
-	return nil
-}
-
 
 func PostNewCloud(c *gin.Context) {
 	requestID := uuid.New().String()

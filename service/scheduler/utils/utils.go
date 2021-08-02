@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"go.mongodb.org/mongo-driver/mongo"
 	"shaoliyin.me/jcspan/dao"
 	"strings"
 )
@@ -9,11 +10,12 @@ var (
 	addrMap = make(map[string]string)
 )
 
-func GenAddress(cloudID, path string) string {
+func GenAddress(cloudCol *mongo.Collection, cloudID, path string) string {
 	if _, ok := addrMap[cloudID]; !ok { // 内存 map 中没有该云节点
-		db := dao.GetDatabaseInstance()
+		//db := dao.GetDatabaseInstance()
 		// Init address map
-		clouds, err := db.GetAllClouds()
+
+		clouds, err := dao.GetAllClouds(cloudCol)
 		if err != nil {
 			panic(err)
 		}

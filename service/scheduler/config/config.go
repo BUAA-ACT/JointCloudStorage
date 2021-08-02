@@ -59,22 +59,7 @@ var conf *Config
 var lock sync.Mutex
 var registerLock sync.RWMutex
 
-func RegisterDao(URI string, client ClientConfig) {
-	registerLock.RLock()
-	if conf.Clients[URI]
-	for databaseName, database := range client.Databases {
-		conf := GetConfig()
-	}
-	if client.Client {
-
-	}
-
-
-
-}
-
 func SetGlobalConfig() {
-	lock.Lock()
 	conf = Factory()
 	a := reflect.ValueOf(conf).Elem().String()
 	fmt.Println(a)
@@ -93,7 +78,6 @@ func GetConfig() *Config {
 			FlagAESKey:             *FlagAESKey,
 			FlagRescheduleInterval: *FlagRescheduleInterval,
 			FlagHeartbeatInterval:  *FlagHeartbeatInterval,
-			Clients:                map[string]ClientConfig{},
 		}
 	}
 	lock.Unlock()

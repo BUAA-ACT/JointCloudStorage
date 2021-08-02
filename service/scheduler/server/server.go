@@ -32,9 +32,10 @@ var (
 		codeUnauthorized:  "Unauthorized",
 		codeInternalError: "Internal Server Error",
 	}
+	localId string
 )
 
-func NewRouter(r *gin.Engine) {
+func RouteInit(r *gin.Engine) {
 	r.GET("/storage_plan", GetStoragePlan)
 	r.GET("/download_plan", GetDownloadPlan)
 	r.GET("/status", GetStatus)
@@ -45,8 +46,12 @@ func NewRouter(r *gin.Engine) {
 	r.POST("/update_clouds", PostUpdateClouds)
 }
 
-func ServerDaoInit() {
+func DaoInit(mongoURI string, databaseMap map[string]*dao.DatabaseConfig) error {
+	return dao.NewDao(mongoURI, databaseMap)
+}
 
+func IDInit(cid string) {
+	localId = cid
 }
 
 func GetStoragePlan(c *gin.Context) {

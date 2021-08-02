@@ -8,6 +8,8 @@ import (
 const (
 	Version = "v0.2"
 
+	MongoURI         = ""
+	DaoTestEnv       = "dao_test"
 	CollectionCloud  = "Cloud"
 	CollectionUser   = "User"
 	CollectionFile   = "File"
@@ -17,7 +19,24 @@ const (
 func TestDao_InsertMigrationAdvice(t *testing.T) {
 	// Init DAO instance
 	var err error
-	db := GetDatabaseInstance()
+	database := DatabaseConfig{
+		DatabaseHandler: nil,
+		Collections: map[string]*CollectionConfig{
+			MigrationAdvice2: nil,
+			CollectionFile:   nil,
+			CollectionUser:   nil,
+			CollectionCloud:  nil,
+		},
+	}
+	databases := map[string]*DatabaseConfig{
+		DaoTestEnv: &database,
+	}
+	db, err := NewDao(MongoURI, databases)
+	if err != nil {
+		t.Fatalf("failed when create dao")
+	}
+	DaoClientsLock.Lock()
+	adviceCol := db.Databases[DaoTestEnv].Collections[MigrationAdvice2].CollectionHandler
 	m := entity.MigrationAdvice{
 		UserId: "zhangjh",
 		StoragePlanOld: entity.StoragePlan{
@@ -124,7 +143,10 @@ func TestDao_InsertMigrationAdvice(t *testing.T) {
 		},
 		Cost: 0,
 	}
-	err = db.InsertMigrationAdvice(m)
-	t.Log(err.Error())
+
+	err = InsertMigrationAdvice(adviceCol, m)
+	if err != nil {
+		t.Log(err.Error())
+	}
 
 }

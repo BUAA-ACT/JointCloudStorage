@@ -12,7 +12,7 @@ import (
  */
 
 // InsertVoteCloud insert cloud into vote cloud collection
-func (d *Dao) InsertVoteCloud(col *mongo.Collection, cloud entity.VoteCloud) error {
+func InsertVoteCloud(col *mongo.Collection, cloud entity.VoteCloud) error {
 	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 	_, err := col.InsertOne(context.TODO(), cloud)
 	if err != nil {
@@ -22,7 +22,7 @@ func (d *Dao) InsertVoteCloud(col *mongo.Collection, cloud entity.VoteCloud) err
 }
 
 // CloudsCount get the number of clouds whose id is cid
-func (d *Dao) CloudsCount(col *mongo.Collection, cid string) (int64, error) {
+func CloudsCount(col *mongo.Collection, cid string) (int64, error) {
 	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 	count, err := col.CountDocuments(context.TODO(), bson.M{"cloud_id": cid})
 	if err != nil {
@@ -33,7 +33,7 @@ func (d *Dao) CloudsCount(col *mongo.Collection, cid string) (int64, error) {
 }
 
 // DeleteVoteCloud delete the cloud
-func (d *Dao) DeleteVoteCloud(col *mongo.Collection, id string) error {
+func DeleteVoteCloud(col *mongo.Collection, id string) error {
 	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 
 	_, err := col.DeleteOne(context.TODO(), bson.M{"cloud_id": id})
@@ -45,7 +45,7 @@ func (d *Dao) DeleteVoteCloud(col *mongo.Collection, id string) error {
 }
 
 // AddVoteNum add vote number
-func (d *Dao) AddVoteNum(col *mongo.Collection, vote int, id string) (int, error) {
+func AddVoteNum(col *mongo.Collection, vote int, id string) (int, error) {
 	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 
 	res, err := col.UpdateOne(
@@ -64,7 +64,7 @@ func (d *Dao) AddVoteNum(col *mongo.Collection, vote int, id string) (int, error
 }
 
 // GetVoteCloud Get struct voteCloud by id
-func (d *Dao) GetVoteCloud(col *mongo.Collection, id string) (entity.VoteCloud, error) {
+func GetVoteCloud(col *mongo.Collection, id string) (entity.VoteCloud, error) {
 	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 
 	var result entity.VoteCloud
@@ -77,7 +77,7 @@ func (d *Dao) GetVoteCloud(col *mongo.Collection, id string) (entity.VoteCloud, 
 }
 
 // GetAllVoteCloud Get all voteCloud in collection voteCloud
-func (d *Dao) GetAllVoteCloud(col *mongo.Collection) ([]entity.VoteCloud, error) {
+func GetAllVoteCloud(col *mongo.Collection) ([]entity.VoteCloud, error) {
 	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 
 	var result []entity.VoteCloud
@@ -98,7 +98,7 @@ func (d *Dao) GetAllVoteCloud(col *mongo.Collection) ([]entity.VoteCloud, error)
 }
 
 // GetVoteNumber : Get the vote number of the cloud with id
-func (d *Dao) GetVoteNumber(col *mongo.Collection, id string) (int, error) {
+func GetVoteNumber(col *mongo.Collection, id string) (int, error) {
 	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 	var result entity.VoteCloud
 	err := col.FindOne(context.TODO(), bson.M{"cloud_id": id}).Decode(&result)

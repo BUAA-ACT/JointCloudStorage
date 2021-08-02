@@ -14,7 +14,7 @@ import (
  ********************************************************/
 
 //更新,若不存在则将插入
-func (dao *Dao) KeyUpsert(col *mongo.Collection, ak entity.AccessKey) error {
+func KeyUpsert(col *mongo.Collection, ak entity.AccessKey) error {
 	//col := dao.client.Database(dao.database).Collection(dao.keyCollection)
 
 	filter := bson.M{
@@ -36,7 +36,7 @@ func (dao *Dao) KeyUpsert(col *mongo.Collection, ak entity.AccessKey) error {
 }
 
 //删除key
-func (dao *Dao) DeleteKey(col *mongo.Collection, ak entity.AccessKey) error {
+func DeleteKey(col *mongo.Collection, ak entity.AccessKey) error {
 	//col := dao.client.Database(dao.database).Collection(dao.keyCollection)
 
 	filter := bson.M{

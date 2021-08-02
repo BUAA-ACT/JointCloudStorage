@@ -9,7 +9,7 @@ import (
 	"shaoliyin.me/jcspan/tools"
 )
 
-func (d *Dao) GetFile(col *mongo.Collection, fid string) (entity.File, error) {
+func GetFile(col *mongo.Collection, fid string) (entity.File, error) {
 	//col := d.client.Database(d.database).Collection(d.fileCollection)
 
 	var file entity.File
@@ -17,7 +17,7 @@ func (d *Dao) GetFile(col *mongo.Collection, fid string) (entity.File, error) {
 	return file, err
 }
 
-func (d *Dao) InsertFiles(col *mongo.Collection, files []entity.File) error {
+func InsertFiles(col *mongo.Collection, files []entity.File) error {
 	fs := make([]interface{}, len(files))
 	for i := range files {
 		fs[i] = files[i]
@@ -44,7 +44,7 @@ func (d *Dao) InsertFiles(col *mongo.Collection, files []entity.File) error {
 	return nil
 }
 
-func (d *Dao) DeleteFiles(col *mongo.Collection, files []entity.File) error {
+func DeleteFiles(col *mongo.Collection, files []entity.File) error {
 	var fs []string
 	for _, v := range files {
 		fs = append(fs, v.FileID)

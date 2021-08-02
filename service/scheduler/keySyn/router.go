@@ -2,27 +2,39 @@ package keySyn
 
 import (
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/mongo"
 	"shaoliyin.me/jcspan/dao"
 )
 
-var (
+const (
 	endPointAddKey    = "/add_key"
 	endPointDeleteKey = "/delete_key"
 )
 
-func KeySyncInit(cid string, r *gin.Engine) {
-	localCid = cid
+const (
+	CallerHttpServer = "http-server"
+	CallerScheduler  = "scheduler"
+	CallerHeaderName = "Caller"
 
+	SynTypeUpsert = "upsert"
+	SynTypeDelete = "delete"
+)
+
+var (
+	keyCol   *mongo.Collection
+	cloudCol *mongo.Collection
+	localCid string
+)
+
+func IDInit(cid string) {
+	localCid = cid
+}
+
+func DaoInit(mongoURI string, databaseMap map[string]*dao.DatabaseConfig) error {
+	return dao.NewDao(mongoURI, databaseMap)
+}
+
+func RouteInit(r *gin.Engine) {
 	r.POST(endPointAddKey, PostKeyUpsert)
 	r.POST(endPointDeleteKey, PostKeyDelete)
-}
-
-func KeySyncDaoInit(map[string]dao.DatabaseConfig) {
-
-	dao.NewDao(mongoURI)
-	keyDao = dao.GetDatabaseInstance()
-}
-
-func KeySyncRouteInit() {
-
 }

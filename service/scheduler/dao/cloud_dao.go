@@ -33,7 +33,7 @@ func UpdateCloud(col *mongo.Collection, cloud entity.Cloud) error {
 }
 
 // GetAllClouds return the info of given bucket.
-func (d *Dao) GetAllClouds(col *mongo.Collection) ([]entity.Cloud, error) {
+func GetAllClouds(col *mongo.Collection) ([]entity.Cloud, error) {
 	//col := d.Client.Database(d.database).Collection(d.cloudCollection)
 	var clouds []entity.Cloud
 	cur, err := col.Find(context.TODO(), bson.D{})
@@ -57,7 +57,7 @@ func (d *Dao) GetAllClouds(col *mongo.Collection) ([]entity.Cloud, error) {
 	return clouds, nil
 }
 
-func (d *Dao) GetOtherClouds(col *mongo.Collection, cid string) ([]entity.Cloud, error) {
+func GetOtherClouds(col *mongo.Collection, cid string) ([]entity.Cloud, error) {
 	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 
 	var clouds []entity.Cloud
@@ -82,7 +82,7 @@ func (d *Dao) GetOtherClouds(col *mongo.Collection, cid string) ([]entity.Cloud,
 	return clouds, nil
 }
 
-func (d *Dao) GetCloud(col *mongo.Collection, cid string) (entity.Cloud, error) {
+func GetCloud(col *mongo.Collection, cid string) (entity.Cloud, error) {
 	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 
 	var cloud entity.Cloud
@@ -94,7 +94,7 @@ func (d *Dao) GetCloud(col *mongo.Collection, cid string) (entity.Cloud, error) 
 	return cloud, err
 }
 
-func (d *Dao) GetCloudNum(col *mongo.Collection) (int, error) {
+func GetCloudNum(col *mongo.Collection) (int, error) {
 	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 	num, err := col.CountDocuments(context.TODO(), bson.D{})
 	if err != nil {
@@ -104,7 +104,7 @@ func (d *Dao) GetCloudNum(col *mongo.Collection) (int, error) {
 	}
 }
 
-func (d *Dao) InsertCloud(col *mongo.Collection, cloud entity.Cloud) error {
+func InsertCloud(col *mongo.Collection, cloud entity.Cloud) error {
 	//col := d.client.Database(d.database).Collection(d.cloudCollection)
 	_, err := col.InsertOne(
 		context.TODO(),

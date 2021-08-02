@@ -1,7 +1,6 @@
 package config
 
 import (
-	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
 

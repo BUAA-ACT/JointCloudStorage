@@ -58,18 +58,31 @@ func test() {
 	}
 	kk := b.Databases
 	fmt.Println(kk)
-	fmt.Println(kk["aaa"])
-	kk["test"] = DatabaseConfig{
-		DatabaseHandler: nil,
-		Collections: map[string]CollectionConfig{},
+	for g1,g2 := range kk {
+		fmt.Println(g1)
+		fmt.Println(g2)
 	}
+
+
 	for databaseName, database := range b.Databases {
 		fmt.Println(databaseName)
 		fmt.Println(database)
 	}
 
-	ttt := config{aaa: 1}
-	pc := Config{config: &ttt}
-	fmt.Println(pc)
+	var ttt = map[string]*DatabaseConfig{}
+
+	ttt["aaa"] = &DatabaseConfig{
+		DatabaseHandler: nil,
+		Collections: map[string]CollectionConfig{},
+	}
+	push(ttt)
+
 	os.Exit(1)
+}
+
+func push(mm map[string]*DatabaseConfig) {
+	mm["abc"] = &DatabaseConfig{
+		DatabaseHandler: nil,
+		Collections: map[string]CollectionConfig{},
+	}
 }
