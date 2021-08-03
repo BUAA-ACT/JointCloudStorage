@@ -3,10 +3,9 @@ package newcloud
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"shaoliyin.me/jcspan/config"
+	"shaoliyin.me/jcspan/entity"
 	"shaoliyin.me/jcspan/utils"
 
 	"github.com/gin-gonic/gin"
@@ -14,27 +13,11 @@ import (
 	"shaoliyin.me/jcspan/dao"
 )
 
-var (
-	localID  string
-	errorMsg = map[int]string{
-		config.CodeOK:            "OK",
-		config.CodeBadRequest:    "Bad Request",
-		config.CodeUnauthorized:  "Unauthorized",
-		config.CodeInternalError: "Internal Server Error",
-	}
-	localMongo            *dao.Dao
-	localMongoTempCloud   *dao.Dao
-	localMongoVoteRequest *dao.Dao
-
-	env          string
-	tempNotFound error
-)
-
 func PostNewCloud(c *gin.Context) {
 	requestID := uuid.New().String()
 
 	//读取新的cloud
-	var tempCloud dao.Cloud
+	var tempCloud entity.Cloud
 	err := c.ShouldBindJSON(&tempCloud)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -47,13 +30,13 @@ func PostNewCloud(c *gin.Context) {
 	}
 
 	//2.将新的Cloud存入Mongo中的tempCloud和voteCLoud
-	temp := dao.VoteCloud{
+	temp := entity.VoteCloud{
 		Id:      tempCloud.CloudID,
 		Cloud:   tempCloud,
 		VoteNum: 0,
 		Address: tempCloud.Address,
 	}
-	err = localMongoTempCloud.InsertVoteCloud(temp)
+	err = dao.InsertVoteCloud(tempCloudCol, temp)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
@@ -66,7 +49,7 @@ func PostNewCloud(c *gin.Context) {
 
 	//3.将新cloud发送给其他的节点
 	//获取所有云信息
-	clouds, err := localMongo.GetAllClouds()
+	clouds, err := dao.GetAllClouds(cloudCol)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
@@ -84,7 +67,7 @@ func PostNewCloud(c *gin.Context) {
 		}
 	}
 	//插入到本地的VoteCLoud
-	err = localMongoVoteRequest.InsertVoteCloud(temp)
+	err = dao.InsertVoteCloud(voteCloudCol, temp)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
@@ -112,7 +95,7 @@ func PostNewCloud(c *gin.Context) {
 		for _, cloud := range clouds {
 			if cloud.CloudID != localID {
 				body := bytes.NewBuffer(b)
-				addr := utils.GenAddress(cloud.CloudID, "/new_cloud_vote")
+				addr := utils.GenAddress(cloudCol, cloud.CloudID, "/new_cloud_vote")
 				resp, err := http.Post(addr, "application/json", body)
 				if err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{
@@ -143,7 +126,7 @@ func PostNewCloud(c *gin.Context) {
 func PostNewCloudVote(c *gin.Context) {
 	requestID := uuid.New().String()
 
-	var tempCloud dao.VoteCloud
+	var tempCloud entity.VoteCloud
 	err := c.ShouldBindJSON(&tempCloud)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -158,7 +141,7 @@ func PostNewCloudVote(c *gin.Context) {
 	}
 
 	//2.将cloud存入到本地mongo中
-	err = localMongoVoteRequest.InsertVoteCloud(tempCloud)
+	err = dao.InsertVoteCloud(voteCloudCol, tempCloud)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
@@ -184,7 +167,7 @@ func GetVoteRequest(c *gin.Context) {
 	requestID := uuid.New().String()
 
 	//1.读取mongoDB
-	clouds, err := localMongoVoteRequest.GetAllVoteCloud()
+	clouds, err := dao.GetAllVoteCloud(voteCloudCol)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
@@ -197,7 +180,7 @@ func GetVoteRequest(c *gin.Context) {
 	}
 
 	//解析voteCloud，获取cloud信息
-	var cloudMsg []dao.Cloud
+	var cloudMsg []entity.Cloud
 	for _, cloud := range clouds {
 		cloudMsg = append(cloudMsg, cloud.Cloud)
 	}
@@ -242,7 +225,7 @@ func PostCloudVote(c *gin.Context) {
 	}
 
 	//查询自己的tempcloud，看是不是主节点
-	count, err := localMongoTempCloud.CloudsCount(id)
+	count, err := dao.CloudsCount(tempCloudCol, id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
@@ -269,7 +252,7 @@ func PostCloudVote(c *gin.Context) {
 	} else {
 		//若不是主节点，给其他云投票
 		//获取相关的votecloud信息
-		voteCloud, err := localMongoVoteRequest.GetVoteCloud(id)
+		voteCloud, err := dao.GetVoteCloud(voteCloudCol, id)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"RequestID": requestID,
@@ -297,7 +280,7 @@ func PostCloudVote(c *gin.Context) {
 		//发出投票请求
 		body := bytes.NewBuffer(b)
 		if env != "localDebug" {
-			addr := utils.GenAddress(voteCloud.Id, "/master_cloud_vote")
+			addr := utils.GenAddress(cloudCol, voteCloud.Id, "/master_cloud_vote")
 			resp, err := http.Post(addr, "application/json", body)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
@@ -324,7 +307,7 @@ func PostCloudVote(c *gin.Context) {
 
 	}
 	//删除voteCloud
-	err = localMongoVoteRequest.DeleteVoteCloud(id)
+	err = dao.DeleteVoteCloud(voteCloudCol, id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
@@ -401,7 +384,7 @@ func PostMasterCloudVote(c *gin.Context) {
 
 //获取投票新云的id和投票数，对新云进行投票并检查是否超过半数
 func voteCheck(id string, vote int) error {
-	modifyNum, err := localMongoTempCloud.AddVoteNum(vote, id)
+	modifyNum, err := dao.AddVoteNum(tempCloudCol, vote, id)
 	if err != nil {
 		log.Error("投票记录入库失败， package:NewCloud, func:voteCheck, message:", err)
 		return err
@@ -412,14 +395,14 @@ func voteCheck(id string, vote int) error {
 	}
 
 	//检查现有的投票数量和现有云数量
-	voteCloud, err := localMongoTempCloud.GetVoteCloud(id)
+	voteCloud, err := dao.GetVoteCloud(tempCloudCol, id)
 	if err != nil {
 		log.Error("获取现有投票数量失败，package:NewCloud, func:voteCheck, message:", err, " Can't get vote cloud. ")
 		return err
 	}
 
 	//获取所有云的数量
-	totalNum, err := localMongo.GetCloudNum()
+	totalNum, err := dao.GetCloudNum(cloudCol)
 	if err != nil {
 		log.Error("获取所有云信息失败，package:NewCloud, func:voteCheck, message:", err, " Can't get total number. ")
 		return err
@@ -428,21 +411,21 @@ func voteCheck(id string, vote int) error {
 	//检查是否已经达到多数同步,是则同步到所有的云
 	if voteCloud.VoteNum > totalNum/2 {
 		//获取所有云信息
-		clouds, err := localMongo.GetAllClouds()
+		clouds, err := dao.GetAllClouds(cloudCol)
 		if err != nil {
 			log.Error("获取所有云信息失败，package:NewCloud, func:voteCheck, message:", err, " Can't get all clouds. ")
 			return err
 		}
 
 		//写入本地Cloud表
-		err = localMongo.InsertCloud(voteCloud.Cloud)
+		err = dao.InsertCloud(cloudCol, voteCloud.Cloud)
 		if err != nil {
 			log.Error("写入本地 cloud 表失败，package:NewCloud, func:voteCheck, message:", err)
 			return err
 		}
 
 		//封装新云信息
-		var newclouds []dao.Cloud
+		var newclouds []entity.Cloud
 		newclouds = append(newclouds, voteCloud.Cloud)
 		b, err := json.Marshal(newclouds)
 		if err != nil {
@@ -454,7 +437,7 @@ func voteCheck(id string, vote int) error {
 		for _, cloud := range clouds {
 			if cloud.CloudID != localID && env != "localDebug" {
 				body = bytes.NewBuffer(b)
-				addr := utils.GenAddress(cloud.CloudID, "/cloud_syn")
+				addr := utils.GenAddress(cloudCol, cloud.CloudID, "/cloud_syn")
 				_, err := http.Post(addr, "application/json", body)
 				if err != nil {
 					log.Error("发送新云信息到其他节点失败，package:NewCloud, func:voteCheck, message:", err)
@@ -472,7 +455,7 @@ func voteCheck(id string, vote int) error {
 		}
 
 		body = bytes.NewBuffer(b)
-		addr := utils.GenAddress(voteCloud.Cloud.CloudID, "/cloud_syn")
+		addr := utils.GenAddress(cloudCol, voteCloud.Cloud.CloudID, "/cloud_syn")
 		_, err = http.Post(addr, "application/json", body)
 		if err != nil {
 			log.Error("向新云同步所有云节点信息失败，package:NewCloud, func:PostMasterCloudVote, message:", err, " Send to new cloud error! ", "voteNum:", voteCloud, "totalNum:", totalNum)
@@ -480,7 +463,7 @@ func voteCheck(id string, vote int) error {
 		}
 
 		//删除tempCloud
-		err = localMongoTempCloud.DeleteVoteCloud(id)
+		err = dao.DeleteVoteCloud(tempCloudCol, id)
 		if err != nil {
 			log.Error("删除临时云数据失败，package:NewCloud, func:PostMasterCloudVote, message:", err, " Delete cloud error. ")
 			return err
@@ -494,7 +477,7 @@ func voteCheck(id string, vote int) error {
 //若id不同，则将其存入collection Cloud里
 func PostCloudSyn(c *gin.Context) {
 	requestID := uuid.New().String()
-	var clouds []dao.Cloud
+	var clouds []entity.Cloud
 
 	//获取clouds
 	err := c.ShouldBindJSON(&clouds)
@@ -510,7 +493,7 @@ func PostCloudSyn(c *gin.Context) {
 	}
 
 	//获取现有clouds
-	localClouds, err := localMongo.GetAllClouds()
+	localClouds, err := dao.GetAllClouds(cloudCol)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
@@ -532,7 +515,7 @@ func PostCloudSyn(c *gin.Context) {
 		}
 
 		if flag {
-			err = localMongo.InsertCloud(cloud)
+			err = dao.InsertCloud(cloudCol, cloud)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"RequestID": requestID,
@@ -545,7 +528,7 @@ func PostCloudSyn(c *gin.Context) {
 			}
 		}
 
-		err = localMongoVoteRequest.DeleteVoteCloud(cloud.CloudID)
+		err = dao.DeleteVoteCloud(voteCloudCol, cloud.CloudID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"RequestID": requestID,

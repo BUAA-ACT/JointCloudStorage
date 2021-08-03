@@ -4,17 +4,34 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/http/httptest"
+	"shaoliyin.me/jcspan/dao"
 	"strings"
 	"testing"
 )
 
 var (
-	r *gin.Engine
+	r *gin.Engine = gin.Default()
 )
 
-func InitTest() error {
-	r = gin.Default()
-	KeySyncInit("aliyun-beijing", r)
+func keySynPlugIn(t *testing.T, mongoURI string, databaseName string) error {
+	IDInit("aliyun-beijing")
+
+	databaseMap := map[string]*dao.DatabaseConfig{
+		"aliyun-beijing": {
+			Collections: map[string]*dao.CollectionConfig{
+				CollectionCloud:     nil,
+				CollectionTempCloud: nil,
+				CollectionVoteCloud: nil,
+			},
+		},
+	}
+	err := DaoInit(mongoURI, databaseMap)
+	if err != nil {
+		return err
+	}
+	keyCol = databaseMap[databaseName].Collections[CollectionCloud].CollectionHandler
+
+	RouteInit(r)
 	return nil
 }
 
@@ -31,7 +48,7 @@ func TestPostKeyUpsert(t *testing.T) {
 	data1 := `{"user_id":"wanggj","access_key":"wanggj_ak1","secret_key":"wanggj_sk1","comment":"this is test data1"}`
 	data2 := `{"user_id":"wanggj2","access_key":"wanggj_ak2","secret_key":"wanggj_sk2","comment":"this is test data2"}`
 	t.Log("Start testing endpoint PostKeyUpsert.")
-	if err := InitTest(); err != nil {
+	if err := keySynPlugIn(t); err != nil {
 		t.Error("Init test failed! ", err.Error())
 	}
 
