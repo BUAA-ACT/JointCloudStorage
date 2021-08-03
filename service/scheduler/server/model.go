@@ -187,13 +187,13 @@ func ReSchedule(interval time.Duration) {
 		<-t.C
 		requestID := uuid.New().String()
 		tools.LogInfo("Starting to reschedule storage plans", requestID)
-		users, err := db.GetAllUser()
+		users, err := dao.GetAllUser(userCol)
 		if err != nil {
 			tools.LogError(err, requestID, "GetAllUser failed")
 			continue
 		}
 
-		clouds, err := db.GetAllClouds()
+		clouds, err := dao.GetAllClouds(cloudCol)
 		if err != nil {
 			tools.LogError(err, requestID, "GetAllClouds failed")
 			continue
@@ -201,12 +201,12 @@ func ReSchedule(interval time.Duration) {
 
 		for _, u := range users {
 			// 跳过新用户
-			if u.Preference.Vendor == 0 || u.Role == dao.RoleGuest {
+			if u.Preference.Vendor == 0 || u.Role == config.RoleGuest {
 				continue
 			}
 
 			// 计算新方案
-			plan := storagePlan(GetStoragePlanParam(u.Preference), clouds).StoragePriceFirst
+			plan := storagePlan(entity.GetStoragePlanParam(u.Preference), clouds).StoragePriceFirst
 
 			// 对比新旧方案
 			if plan.K != u.StoragePlan.K || plan.N != u.StoragePlan.N {
@@ -225,11 +225,11 @@ func ReSchedule(interval time.Duration) {
 				CloudsOld:      deleted,
 				CloudsNew:      added,
 				Cost:           42,
-				Status:         dao.AdviceStatusPending,
+				Status:         config.AdviceStatusPending,
 			}
 
 			// 写入数据库
-			err = db.InsertMigrationAdvice(adv)
+			err = dao.InsertMigrationAdvice(adviceCol, adv)
 			if err != nil {
 				tools.LogError(err, requestID, "InsertMigrationAdvice failed", adv)
 				continue
@@ -245,7 +245,7 @@ func splitClouds(clouds []entity.Cloud) (entity.Cloud, []entity.Cloud) {
 	var others []entity.Cloud
 
 	for _, v := range clouds {
-		if v.CloudID == *config.agCloudID {
+		if v.CloudID == *config.FlagCloudID {
 			self = v
 		} else {
 			others = append(others, v)

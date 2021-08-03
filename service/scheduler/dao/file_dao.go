@@ -11,13 +11,18 @@ import (
 
 func GetFile(col *mongo.Collection, fid string) (entity.File, error) {
 	//col := d.client.Database(d.database).Collection(d.fileCollection)
-
 	var file entity.File
+	if colErr := VerifyCollection(col); colErr != nil {
+		return file, colErr
+	}
 	err := col.FindOne(context.TODO(), bson.M{"file_id": fid}).Decode(&file)
 	return file, err
 }
 
 func InsertFiles(col *mongo.Collection, files []entity.File) error {
+	if colErr := VerifyCollection(col); colErr != nil {
+		return colErr
+	}
 	fs := make([]interface{}, len(files))
 	for i := range files {
 		fs[i] = files[i]
@@ -45,6 +50,9 @@ func InsertFiles(col *mongo.Collection, files []entity.File) error {
 }
 
 func DeleteFiles(col *mongo.Collection, files []entity.File) error {
+	if colErr := VerifyCollection(col); colErr != nil {
+		return colErr
+	}
 	var fs []string
 	for _, v := range files {
 		fs = append(fs, v.FileID)

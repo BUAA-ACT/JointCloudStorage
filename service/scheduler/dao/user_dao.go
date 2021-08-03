@@ -13,6 +13,9 @@ func GetUser(col *mongo.Collection, uid string) (entity.User, error) {
 	//col := d.client.Database(d.database).Collection(d.userCollection)
 
 	var user entity.User
+	if colErr := VerifyCollection(col); colErr != nil {
+		return user, colErr
+	}
 	err := col.FindOne(context.TODO(), bson.M{"user_id": uid}).Decode(&user)
 	return user, err
 }
@@ -21,6 +24,9 @@ func GetAllUser(col *mongo.Collection) ([]entity.User, error) {
 	//col := d.client.Database(d.database).Collection(d.userCollection)
 
 	var users []entity.User
+	if colErr := VerifyCollection(col); colErr != nil {
+		return users, colErr
+	}
 	cur, err := col.Find(context.TODO(), bson.D{})
 	if err != nil {
 		return nil, err
@@ -41,6 +47,9 @@ func GetAllUser(col *mongo.Collection) ([]entity.User, error) {
 
 func InsertUser(col *mongo.Collection, user entity.User) error {
 	//col := d.client.Database(d.database).Collection(d.userCollection)
+	if colErr := VerifyCollection(col); colErr != nil {
+		return colErr
+	}
 	_, err := col.UpdateOne(
 		context.TODO(),
 		bson.M{
@@ -61,6 +70,9 @@ func InsertUser(col *mongo.Collection, user entity.User) error {
 }
 
 func ChangeVolume(col *mongo.Collection, uid string, op string, files []entity.File) error {
+	if colErr := VerifyCollection(col); colErr != nil {
+		return colErr
+	}
 	var sum int64
 	for _, v := range files {
 		sum += v.Size
@@ -88,6 +100,10 @@ func ChangeVolume(col *mongo.Collection, uid string, op string, files []entity.F
 func DeleteUser(fileCol *mongo.Collection, userCol *mongo.Collection, uid string) error {
 	// 删除该用户名下所有文件
 	//col := d.client.Database(d.database).Collection(d.fileCollection)
+	if colErr := VerifyCollection(fileCol, userCol); colErr != nil {
+		return colErr
+	}
+
 	_, err := fileCol.DeleteMany(
 		context.TODO(),
 		bson.M{

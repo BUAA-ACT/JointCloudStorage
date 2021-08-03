@@ -52,7 +52,7 @@ func RouteInit(r *gin.Engine) {
  * clouds：database名称
  * cid：本地云的cid
  */
-func DaoInit(mongoURI string, databaseMap map[string]*dao.DatabaseConfig) error {
+func DaoInit(mongoURI string, databaseMap map[string]map[string]*dao.CollectionConfig) error {
 	return dao.NewDao(mongoURI, databaseMap)
 }
 

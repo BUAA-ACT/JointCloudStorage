@@ -16,7 +16,9 @@ import (
 //更新,若不存在则将插入
 func KeyUpsert(col *mongo.Collection, ak entity.AccessKey) error {
 	//col := dao.client.Database(dao.database).Collection(dao.keyCollection)
-
+	if colErr := VerifyCollection(col); colErr != nil {
+		return colErr
+	}
 	filter := bson.M{
 		"access_key": ak.AccessKey,
 	}
@@ -38,7 +40,9 @@ func KeyUpsert(col *mongo.Collection, ak entity.AccessKey) error {
 //删除key
 func DeleteKey(col *mongo.Collection, ak entity.AccessKey) error {
 	//col := dao.client.Database(dao.database).Collection(dao.keyCollection)
-
+	if colErr := VerifyCollection(col); colErr != nil {
+		return colErr
+	}
 	filter := bson.M{
 		"access_key": ak.AccessKey,
 	}

@@ -53,3 +53,17 @@ type PostMetadataParam struct {
 
 type PostMetadataData struct {
 }
+
+type GetStatusResponse struct {
+	BaseResponse
+	Data Cloud
+}
+
+type PostStoragePlanResponse struct {
+	BaseResponse
+	Data []AccessCredential
+}
+
+type PostMetadataResponse struct {
+	BaseResponse
+}

@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/http/httptest"
+	"shaoliyin.me/jcspan/config"
 	"shaoliyin.me/jcspan/dao"
 	"strings"
 	"testing"
@@ -13,42 +14,30 @@ var (
 	r *gin.Engine = gin.Default()
 )
 
-func keySynPlugIn(t *testing.T, mongoURI string, databaseName string) error {
+func keySynPlugIn() error {
 	IDInit("aliyun-beijing")
 
-	databaseMap := map[string]*dao.DatabaseConfig{
-		"aliyun-beijing": {
-			Collections: map[string]*dao.CollectionConfig{
-				CollectionCloud:     nil,
-				CollectionTempCloud: nil,
-				CollectionVoteCloud: nil,
-			},
+	databaseMap := map[string]map[string]*dao.CollectionConfig{
+		*config.FlagEnv: map[string]*dao.CollectionConfig{
+			config.AccessKeyCollectionName: nil,
+			config.CloudCollectionName:     nil,
 		},
 	}
-	err := DaoInit(mongoURI, databaseMap)
+	err := DaoInit(*config.FlagMongo, databaseMap)
 	if err != nil {
 		return err
 	}
-	keyCol = databaseMap[databaseName].Collections[CollectionCloud].CollectionHandler
-
+	keyCol = databaseMap[*config.FlagEnv][config.AccessKeyCollectionName].CollectionHandler
+	cloudCol = databaseMap[*config.FlagEnv][config.CloudCollectionName].CollectionHandler
 	RouteInit(r)
 	return nil
 }
-
-//type AccessKey struct {
-//	UserID     string    `json:"UserID" bson:"user_id"`
-//	AccessKey  string    `json:"AccessKey" bson:"access_key"`
-//	SecretKey  string    `json:"SecretKey" bson:"secret_key"`
-//	Comment    string    `json:"Comment" bson:"comment"`
-//	CreateTime time.Time `json:"CreateTime" bson:"create_time"`
-//	Available  bool      `json:"Available" bson:"available"`
-//}
 
 func TestPostKeyUpsert(t *testing.T) {
 	data1 := `{"user_id":"wanggj","access_key":"wanggj_ak1","secret_key":"wanggj_sk1","comment":"this is test data1"}`
 	data2 := `{"user_id":"wanggj2","access_key":"wanggj_ak2","secret_key":"wanggj_sk2","comment":"this is test data2"}`
 	t.Log("Start testing endpoint PostKeyUpsert.")
-	if err := keySynPlugIn(t); err != nil {
+	if err := keySynPlugIn(); err != nil {
 		t.Error("Init test failed! ", err.Error())
 	}
 
@@ -74,7 +63,7 @@ func TestPostKeyDelete(t *testing.T) {
 	data1 := `{"user_id":"wanggj","access_key":"wanggj_ak1","secret_key":"wanggj_sk1","comment":"this is test data1"}`
 	data2 := `{"user_id":"wanggj2","access_key":"wanggj_ak2","secret_key":"wanggj_sk2","comment":"this is test data2"}`
 	t.Log("Start testing endpoint PostKeyDelete.")
-	if err := InitTest(); err != nil {
+	if err := keySynPlugIn(); err != nil {
 		t.Error("Init test failed! ", err.Error())
 	}
 

@@ -122,7 +122,7 @@ func PostNewCloud(c *gin.Context) {
 
 }
 
-//接收主节点的投票请求推送，存入VoteRequest表，等待投票
+// PostNewCloudVote 接收主节点的投票请求推送，存入VoteRequest表，等待投票
 func PostNewCloudVote(c *gin.Context) {
 	requestID := uuid.New().String()
 
@@ -162,7 +162,7 @@ func PostNewCloudVote(c *gin.Context) {
 	log.Info("package:NewCloud, func:PostNewCloudRequest, RequestID:", requestID, "message:successed!")
 }
 
-//获取voteRequest中所有的等待投票的cloud信息
+// GetVoteRequest 获取voteRequest中所有的等待投票的cloud信息
 func GetVoteRequest(c *gin.Context) {
 	requestID := uuid.New().String()
 
@@ -195,7 +195,7 @@ func GetVoteRequest(c *gin.Context) {
 	log.Info("package:NewCloud, func:GetVoteRequest, message:successed!")
 }
 
-//对一个cloud投票
+// PostCloudVote 对一个cloud投票
 func PostCloudVote(c *gin.Context) {
 	requestID := uuid.New().String()
 	var id string
@@ -327,7 +327,7 @@ func PostCloudVote(c *gin.Context) {
 	log.Info("package:NewCloud, func:GetVoteRequest, message:successed!")
 }
 
-//master接收其他云的投票信息
+// PostMasterCloudVote master接收其他云的投票信息
 func PostMasterCloudVote(c *gin.Context) {
 	requestID := uuid.New().String()
 	var id string
@@ -472,7 +472,7 @@ func voteCheck(id string, vote int) error {
 	return nil
 }
 
-//向其他云同步信息
+// PostCloudSyn 向其他云同步信息
 //接收一个cloud的数组，并与已有的clouds进行对比
 //若id不同，则将其存入collection Cloud里
 func PostCloudSyn(c *gin.Context) {

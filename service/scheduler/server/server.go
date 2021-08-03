@@ -5,62 +5,24 @@ import (
 	"encoding/json"
 	"math"
 	"net/http"
-	"shaoliyin.me/jcspan"
-	"shaoliyin.me/jcspan/newcloud"
-	"shaoliyin.me/jcspan/tools"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"shaoliyin.me/jcspan/config"
 	"shaoliyin.me/jcspan/dao"
+	"shaoliyin.me/jcspan/entity"
+	"shaoliyin.me/jcspan/tools"
+	"shaoliyin.me/jcspan/utils"
+	"time"
 )
-
-const (
-	codeOK            = 200
-	codeBadRequest    = 400
-	codeUnauthorized  = 401
-	codeInternalError = 500
-
-	ReplicaMode = "Replica"
-	ECMode      = "EC"
-)
-
-var (
-	errorMsg = map[int]string{
-		codeOK:            "OK",
-		codeBadRequest:    "Bad Request",
-		codeUnauthorized:  "Unauthorized",
-		codeInternalError: "Internal Server Error",
-	}
-	localId string
-)
-
-func RouteInit(r *gin.Engine) {
-	r.GET("/storage_plan", GetStoragePlan)
-	r.GET("/download_plan", GetDownloadPlan)
-	r.GET("/status", GetStatus)
-	r.GET("/all_clouds_status", GetAllCloudsStatus)
-
-	r.POST("/storage_plan", PostStoragePlan)
-	r.POST("/metadata", PostMetadata)
-	r.POST("/update_clouds", PostUpdateClouds)
-}
-
-func DaoInit(mongoURI string, databaseMap map[string]*dao.DatabaseConfig) error {
-	return dao.NewDao(mongoURI, databaseMap)
-}
-
-func IDInit(cid string) {
-	localId = cid
-}
 
 func GetStoragePlan(c *gin.Context) {
 	requestID := uuid.New().String()
 
-	var param GetStoragePlanParam
+	var param entity.GetStoragePlanParam
 	err := c.BindJSON(&param)
 	if err != nil {
-		main.logError(err, requestID, errorMsg[codeBadRequest])
+		tools.LogError(err, requestID, errorMsg[codeBadRequest])
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
 			"Code":      codeBadRequest,
@@ -68,11 +30,11 @@ func GetStoragePlan(c *gin.Context) {
 		})
 		return
 	}
-	main.logInfo("Receive GetStoragePlan", requestID, param)
+	tools.LogInfo("Receive GetStoragePlan", requestID, param)
 
-	clouds, err := db.GetAllClouds()
+	clouds, err := dao.GetAllClouds(cloudCol)
 	if err != nil {
-		main.logError(err, requestID, "GetAllCloudInfo failed")
+		tools.LogError(err, requestID, "GetAllCloudInfo failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"RequestID": requestID,
 			"Code":      codeInternalError,
@@ -82,7 +44,7 @@ func GetStoragePlan(c *gin.Context) {
 	}
 
 	// 计算最佳方案
-	plan := main.storagePlan(param, clouds)
+	plan := storagePlan(param, clouds)
 
 	c.JSON(http.StatusOK, gin.H{
 		"RequestID": requestID,
@@ -91,16 +53,16 @@ func GetStoragePlan(c *gin.Context) {
 		"Data":      plan,
 	})
 
-	main.logInfo("Response GetStoragePlan", requestID, plan)
+	tools.LogInfo("Response GetStoragePlan", requestID, plan)
 }
 
 func GetDownloadPlan(c *gin.Context) {
 	requestID := uuid.New().String()
 
-	var param GetDownloadPlanParam
+	var param entity.GetDownloadPlanParam
 	err := c.BindJSON(&param)
 	if err != nil {
-		main.logError(err, requestID, errorMsg[codeBadRequest])
+		tools.LogError(err, requestID, errorMsg[codeBadRequest])
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
 			"Code":      codeBadRequest,
@@ -108,11 +70,11 @@ func GetDownloadPlan(c *gin.Context) {
 		})
 		return
 	}
-	main.logInfo("Receive GetDownloadPlan", requestID, param)
+	tools.LogInfo("Receive GetDownloadPlan", requestID, param)
 
-	user, err := db.GetUser(param.UserID)
+	user, err := dao.GetUser(userCol, param.UserID)
 	if err != nil {
-		main.logError(err, requestID, "GetUserInfo failed")
+		tools.LogError(err, requestID, "GetUserInfo failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"RequestID": requestID,
 			"Code":      codeInternalError,
@@ -121,9 +83,9 @@ func GetDownloadPlan(c *gin.Context) {
 		return
 	}
 
-	clouds, err := db.GetAllClouds()
+	clouds, err := dao.GetAllClouds(cloudCol)
 	if err != nil {
-		main.logError(err, requestID, "GetAllCloudInfo failed")
+		tools.LogError(err, requestID, "GetAllCloudInfo failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"RequestID": requestID,
 			"Code":      codeInternalError,
@@ -133,7 +95,7 @@ func GetDownloadPlan(c *gin.Context) {
 	}
 
 	// 计算最佳方案
-	plan := main.downloadPlan(user.StoragePlan, clouds)
+	plan := downloadPlan(user.StoragePlan, clouds)
 
 	c.JSON(http.StatusOK, gin.H{
 		"RequestID": requestID,
@@ -142,15 +104,15 @@ func GetDownloadPlan(c *gin.Context) {
 		"Data":      user.StoragePlan,
 	})
 
-	main.logInfo("Response GetDownloadPlan", requestID, plan)
+	tools.LogInfo("Response GetDownloadPlan", requestID, plan)
 }
 
 func GetStatus(c *gin.Context) {
 	requestID := uuid.New().String()
-	var param GetStatusParam
+	var param entity.GetStatusParam
 	err := c.BindJSON(&param)
 	if err != nil {
-		main.logError(err, requestID, errorMsg[codeBadRequest])
+		tools.LogError(err, requestID, errorMsg[codeBadRequest])
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
 			"Code":      codeBadRequest,
@@ -158,12 +120,12 @@ func GetStatus(c *gin.Context) {
 		})
 		return
 	}
-	main.logTrace("Receive GetStatus", requestID, param)
+	tools.LogTrace("Receive GetStatus", requestID, param)
 
 	// 验证请求来源是否合法
-	_, err = db.GetCloud(param.CloudID)
+	_, err = dao.GetCloud(cloudCol, param.CloudID)
 	if err != nil {
-		main.logError(err, requestID, "GetCloudInfo failed", param.CloudID)
+		tools.LogError(err, requestID, "GetCloudInfo failed", param.CloudID)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"RequestID": requestID,
 			"Code":      codeUnauthorized,
@@ -173,9 +135,9 @@ func GetStatus(c *gin.Context) {
 	}
 
 	// 获取本云信息
-	cloud, err := db.GetCloud(*flagCloudID)
+	cloud, err := dao.GetCloud(cloudCol, *config.FlagCloudID)
 	if err != nil {
-		main.logError(err, requestID, "GetCloudInfo failed", *flagCloudID)
+		tools.LogError(err, requestID, "GetCloudInfo failed", *config.FlagCloudID)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"RequestID": requestID,
 			"Code":      codeInternalError,
@@ -191,16 +153,16 @@ func GetStatus(c *gin.Context) {
 		"Data":      cloud,
 	})
 
-	main.logTrace("Response GetStatus", requestID, cloud)
+	tools.LogTrace("Response GetStatus", requestID, cloud)
 }
 
 func PostStoragePlan(c *gin.Context) {
 	requestID := uuid.New().String()
 
-	var param PostStoragePlanParam
+	var param entity.PostStoragePlanParam
 	err := c.BindJSON(&param)
 	if err != nil {
-		main.logError(err, requestID, errorMsg[codeBadRequest])
+		tools.LogError(err, requestID, errorMsg[codeBadRequest])
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
 			"Code":      codeBadRequest,
@@ -208,20 +170,20 @@ func PostStoragePlan(c *gin.Context) {
 		})
 		return
 	}
-	main.logInfo("Receive PostStoragePlan", requestID, param)
+	tools.LogInfo("Receive PostStoragePlan", requestID, param)
 
-	if param.CloudID == *flagCloudID {
+	if param.CloudID == *config.FlagCloudID {
 		// 来自本云httpserver的请求
 		plan := &param.StoragePlan
-		plan.StoragePrice = main.calStoragePrice(*plan)
-		plan.Availability = main.calAvailability(*plan)
-		plan.TrafficPrice = main.calTrafficPrice(*plan, false)
-		var users []dao.AccessCredential
-		ch := make(chan *dao.AccessCredential)
+		plan.StoragePrice = calStoragePrice(*plan)
+		plan.Availability = calAvailability(*plan)
+		plan.TrafficPrice = calTrafficPrice(*plan, false)
+		var users []entity.AccessCredential
+		ch := make(chan *entity.AccessCredential)
 
-		clouds, err := db.GetAllClouds()
+		clouds, err := dao.GetAllClouds(cloudCol)
 		if err != nil {
-			main.logError(err, requestID, "GetAllCloudInfo failed")
+			tools.LogError(err, requestID, "GetAllCloudInfo failed")
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"RequestID": requestID,
 				"Code":      codeInternalError,
@@ -235,10 +197,10 @@ func PostStoragePlan(c *gin.Context) {
 			if cloud.CloudID == param.CloudID {
 				continue
 			}
-			go func(cloud dao.Cloud) {
-				u, err := main.sendPostStoragePlan(param, cloud.CloudID)
+			go func(cloud entity.Cloud) {
+				u, err := utils.SendPostStoragePlan(cloudCol, param, cloud.CloudID)
 				if err != nil {
-					main.logError(err, requestID, "sendPostStoragePlan failed", param, cloud)
+					tools.LogError(err, requestID, "sendPostStoragePlan failed", param, cloud)
 				}
 				ch <- u
 			}(cloud)
@@ -252,7 +214,7 @@ func PostStoragePlan(c *gin.Context) {
 		}
 
 		if len(users) < len(clouds)-1 {
-			main.logError(nil, requestID, "Some sendPostStoragePlan failed", len(clouds)-1, len(users))
+			tools.LogError(nil, requestID, "Some sendPostStoragePlan failed", len(clouds)-1, len(users))
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"RequestID": requestID,
 				"Code":      codeInternalError,
@@ -261,19 +223,19 @@ func PostStoragePlan(c *gin.Context) {
 		}
 
 		// 更正成本计算
-		var user dao.User
-		user, err = db.GetUser(param.UserID)
+		var user entity.User
+		user, err = dao.GetUser(userCol, param.UserID)
 		if err != nil {
-			main.logError(err, requestID, "更新存储方案时获取用户信息失败")
+			tools.LogError(err, requestID, "更新存储方案时获取用户信息失败")
 		} else {
 			user.StoragePlan = param.StoragePlan
 			user.Preference.Vendor = param.StoragePlan.N // 存储偏好，副本数
 			user.Preference.StoragePrice = math.Max(user.Preference.StoragePrice, user.StoragePlan.StoragePrice)
 			user.Preference.TrafficPrice = math.Max(user.Preference.TrafficPrice, user.StoragePlan.TrafficPrice)
 			user.Preference.Availability = math.Min(user.Preference.Availability, user.StoragePlan.Availability)
-			err = db.InsertUser(user)
+			err = dao.InsertUser(userCol, user)
 			if err != nil {
-				main.logError(err, requestID, "更新用户存储方案失败")
+				tools.LogError(err, requestID, "更新用户存储方案失败")
 			}
 		}
 
@@ -283,12 +245,12 @@ func PostStoragePlan(c *gin.Context) {
 			"Msg":       errorMsg[codeOK],
 			"Data":      users,
 		})
-		main.logInfo("Response PostStoragePlan", requestID, users)
+		tools.LogInfo("Response PostStoragePlan", requestID, users)
 	} else {
 		// 来自其他云scheduler的请求
-		_, err = db.GetCloud(param.CloudID)
+		_, err = dao.GetCloud(cloudCol, param.CloudID)
 		if err != nil {
-			main.logError(err, requestID, "GetCloudInfo failed", param.CloudID)
+			tools.LogError(err, requestID, "GetCloudInfo failed", param.CloudID)
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"RequestID": requestID,
 				"Code":      codeUnauthorized,
@@ -300,11 +262,11 @@ func PostStoragePlan(c *gin.Context) {
 		// 新建用户
 		passwd := param.Password
 		// 密码为空时从数据库获取已有 User
-		var user dao.User
+		var user entity.User
 		if passwd == "" {
-			user, err = db.GetUser(param.UserID)
+			user, err = dao.GetUser(userCol, param.UserID)
 			if err != nil {
-				main.logError(err, requestID, "Get user failed", user)
+				tools.LogError(err, requestID, "Get user failed", user)
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"RequestID": requestID,
 					"Code":      codeInternalError,
@@ -315,19 +277,19 @@ func PostStoragePlan(c *gin.Context) {
 			user.StoragePlan = param.StoragePlan
 			user.LastModified = time.Now()
 		} else {
-			user = dao.User{
+			user = entity.User{
 				UserId:       param.UserID,
 				Email:        param.UserID,
 				Nickname:     param.UserID,
-				Password:     tools.AesEncrypt(passwd, *flagAESKey),
-				Role:         dao.RoleGuest,
+				Password:     tools.AesEncrypt(passwd, *config.FlagAESKey),
+				Role:         config.RoleGuest,
 				LastModified: time.Now(),
 				StoragePlan:  param.StoragePlan,
 			}
 		}
-		err = db.InsertUser(user)
+		err = dao.InsertUser(userCol, user)
 		if err != nil {
-			main.logError(err, requestID, "InsertUser failed", user)
+			tools.LogError(err, requestID, "InsertUser failed", user)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"RequestID": requestID,
 				"Code":      codeInternalError,
@@ -336,8 +298,8 @@ func PostStoragePlan(c *gin.Context) {
 			return
 		}
 
-		cred := dao.AccessCredential{
-			CloudID:  *flagCloudID,
+		cred := entity.AccessCredential{
+			CloudID:  *config.FlagCloudID,
 			UserID:   param.UserID,
 			Password: passwd,
 		}
@@ -345,19 +307,19 @@ func PostStoragePlan(c *gin.Context) {
 			"RequestID": requestID,
 			"Code":      codeOK,
 			"Msg":       errorMsg[codeOK],
-			"Data":      []dao.AccessCredential{cred},
+			"Data":      []entity.AccessCredential{cred},
 		})
-		main.logInfo("Response PostStoragePlan", requestID, []dao.User{user})
+		tools.LogInfo("Response PostStoragePlan", requestID, []entity.User{user})
 	}
 }
 
 func PostMetadata(c *gin.Context) {
 	requestID := uuid.New().String()
 
-	var param PostMetadataParam
+	var param entity.PostMetadataParam
 	err := c.BindJSON(&param)
 	if err != nil {
-		main.logError(err, requestID, errorMsg[codeBadRequest])
+		tools.LogError(err, requestID, errorMsg[codeBadRequest])
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
 			"Code":      codeBadRequest,
@@ -365,17 +327,17 @@ func PostMetadata(c *gin.Context) {
 		})
 		return
 	}
-	main.logInfo("Receive PostMetadata", requestID, param)
+	tools.LogInfo("Receive PostMetadata", requestID, param)
 
-	if param.CloudID == *flagCloudID {
+	if param.CloudID == *config.FlagCloudID {
 		// 来自本云httpserver的请求
 		var errs []error
 		var routine int
 		ch := make(chan error)
 
-		clouds, err := db.GetAllClouds()
+		clouds, err := dao.GetAllClouds(cloudCol)
 		if err != nil {
-			main.logError(err, requestID, "GetAllCloudInfo failed")
+			tools.LogError(err, requestID, "GetAllCloudInfo failed")
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"RequestID": requestID,
 				"Code":      codeInternalError,
@@ -390,10 +352,10 @@ func PostMetadata(c *gin.Context) {
 				continue
 			}
 			routine++
-			go func(cloud dao.Cloud) {
-				err := main.sendPostMetadata(param, cloud.CloudID)
+			go func(cloud entity.Cloud) {
+				err := utils.SendPostMetadata(cloudCol, param, cloud.CloudID)
 				if err != nil {
-					main.logError(err, requestID, "sendPostMetadata failed", param, cloud)
+					tools.LogError(err, requestID, "sendPostMetadata failed", param, cloud)
 				}
 				ch <- err
 			}(cloud)
@@ -407,7 +369,7 @@ func PostMetadata(c *gin.Context) {
 		}
 
 		if len(errs) < routine {
-			main.logError(nil, requestID, "Some sendPostMetadata failed", routine, len(errs))
+			tools.LogError(nil, requestID, "Some sendPostMetadata failed", routine, len(errs))
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"RequestID": requestID,
 				"Code":      codeInternalError,
@@ -420,14 +382,14 @@ func PostMetadata(c *gin.Context) {
 			"Code":      codeOK,
 			"Msg":       errorMsg[codeOK],
 		})
-		main.logInfo("Response PostMetadata", requestID, errorMsg[codeOK])
+		tools.LogInfo("Response PostMetadata", requestID, errorMsg[codeOK])
 	} else {
 		// 来自其他云scheduler的请求
 
 		// 校验请求合法性
-		_, err = db.GetCloud(param.CloudID)
+		_, err = dao.GetCloud(cloudCol, param.CloudID)
 		if err != nil {
-			main.logError(err, requestID, "GetCloudInfo failed", param.CloudID)
+			tools.LogError(err, requestID, "GetCloudInfo failed", param.CloudID)
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"RequestID": requestID,
 				"Code":      codeUnauthorized,
@@ -438,9 +400,9 @@ func PostMetadata(c *gin.Context) {
 
 		if param.Type == "Upload" {
 			// 写入文件元信息
-			err = db.InsertFiles(param.Files)
+			err = dao.InsertFiles(fileCol, param.Files)
 			if err != nil {
-				main.logError(err, requestID, "InsertFiles failed", param.Files)
+				tools.LogError(err, requestID, "InsertFiles failed", param.Files)
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"RequestID": requestID,
 					"Code":      codeInternalError,
@@ -450,9 +412,9 @@ func PostMetadata(c *gin.Context) {
 			}
 
 			// 修改用户存储量
-			err = db.ChangeVolume(param.UserID, "Upload", param.Files)
+			err = dao.ChangeVolume(userCol, param.UserID, "Upload", param.Files)
 			if err != nil {
-				main.logError(err, requestID, "ChangeVolume failed", param.UserID, "Upload", param.Files)
+				tools.LogError(err, requestID, "ChangeVolume failed", param.UserID, "Upload", param.Files)
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"RequestID": requestID,
 					"Code":      codeInternalError,
@@ -462,9 +424,9 @@ func PostMetadata(c *gin.Context) {
 			}
 		} else if param.Type == "Delete" {
 			// 删除文件元信息
-			err = db.DeleteFiles(param.Files)
+			err = dao.DeleteFiles(fileCol, param.Files)
 			if err != nil {
-				main.logError(err, requestID, "DeleteFiles failed", param.Files)
+				tools.LogError(err, requestID, "DeleteFiles failed", param.Files)
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"RequestID": requestID,
 					"Code":      codeInternalError,
@@ -474,9 +436,9 @@ func PostMetadata(c *gin.Context) {
 			}
 
 			// 修改用户存储量
-			err = db.ChangeVolume(param.UserID, "Delete", param.Files)
+			err = dao.ChangeVolume(userCol, param.UserID, "Delete", param.Files)
 			if err != nil {
-				main.logError(err, requestID, "ChangeVolume failed", param.UserID, "Upload", param.Files)
+				tools.LogError(err, requestID, "ChangeVolume failed", param.UserID, "Upload", param.Files)
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"RequestID": requestID,
 					"Code":      codeInternalError,
@@ -497,7 +459,7 @@ func PostMetadata(c *gin.Context) {
 			// 	return
 			// }
 		} else {
-			main.logError(err, requestID, errorMsg[codeBadRequest])
+			tools.LogError(err, requestID, errorMsg[codeBadRequest])
 			c.JSON(http.StatusBadRequest, gin.H{
 				"RequestID": requestID,
 				"Code":      codeBadRequest,
@@ -511,7 +473,7 @@ func PostMetadata(c *gin.Context) {
 			"Code":      codeOK,
 			"Msg":       errorMsg[codeOK],
 		})
-		main.logInfo("Response PostMetadata", requestID, errorMsg[codeOK])
+		tools.LogInfo("Response PostMetadata", requestID, errorMsg[codeOK])
 	}
 }
 
@@ -521,27 +483,27 @@ func Heartbeat(interval time.Duration) {
 	for {
 		<-t.C
 		requestID := uuid.New().String()
-		main.logTrace("Starting to send heartbeat packages", requestID)
+		tools.LogTrace("Starting to send heartbeat packages", requestID)
 
-		clouds, err := db.GetOtherClouds(*flagCloudID)
+		clouds, err := dao.GetOtherClouds(cloudCol, *config.FlagCloudID)
 		if err != nil {
-			main.logError(err, requestID, "GetOtherClouds failed", *flagCloudID)
+			tools.LogError(err, requestID, "GetOtherClouds failed", *config.FlagCloudID)
 			continue
 		}
 
 		ch := make(chan error)
-		param := GetStatusParam{CloudID: *flagCloudID}
+		param := entity.GetStatusParam{CloudID: *config.FlagCloudID}
 		for _, cloud := range clouds {
-			go func(cloud dao.Cloud) {
-				c, err := main.sendGetStatus(param, cloud.CloudID)
+			go func(cloud entity.Cloud) {
+				c, err := utils.SendGetStatus(cloudCol, param, cloud.CloudID)
 				if err != nil {
-					main.logError(err, requestID, "sendGetStatus failed", param, cloud)
+					tools.LogError(err, requestID, "sendGetStatus failed", param, cloud)
 					ch <- err
 					return
 				}
-				err = db.UpdateCloud(*c)
+				err = dao.UpdateCloud(cloudCol, *c)
 				if err != nil {
-					main.logError(err, requestID, "UpdateCloud failed", *c)
+					tools.LogError(err, requestID, "UpdateCloud failed", *c)
 					ch <- err
 					return
 				}
@@ -557,7 +519,7 @@ func Heartbeat(interval time.Duration) {
 			}
 		}
 
-		main.logTrace("Heartbeat finished", requestID, len(clouds), success)
+		tools.LogTrace("Heartbeat finished", requestID, len(clouds), success)
 	}
 }
 
@@ -565,11 +527,11 @@ func GetAllCloudsStatus(c *gin.Context) {
 	requestID := uuid.New().String()
 
 	//查询所有的clouds
-	clouds, err := db.GetAllClouds()
-	main.logInfo("clouds:", requestID, clouds)
+	clouds, err := dao.GetAllClouds(cloudCol)
+	tools.LogInfo("clouds:", requestID, clouds)
 	if err != nil {
 		//查询出错，报告错误
-		main.logError(err, requestID, "query for all clouds status failed")
+		tools.LogError(err, requestID, "query for all clouds status failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"RequestID": requestID,
 			"Code":      codeInternalError,
@@ -579,7 +541,7 @@ func GetAllCloudsStatus(c *gin.Context) {
 	}
 	//查询成功，返回数据
 	//隐藏accesskey和secretkey
-	for index, _ := range clouds {
+	for index := range clouds {
 		clouds[index].AccessKey = ""
 		clouds[index].SecretKey = ""
 	}
@@ -596,12 +558,12 @@ func GetAllCloudsStatus(c *gin.Context) {
 func PostUpdateClouds(c *gin.Context) {
 	requestID := uuid.New().String()
 	//get the clouds
-	main.logInfo("UpdateClouds:", requestID, c)
-	var cloud dao.Cloud
+	tools.LogInfo("UpdateClouds:", requestID, c)
+	var cloud entity.Cloud
 	if err := c.ShouldBindJSON(&cloud); err != nil {
 		//can't get the clouds
 		//return the error
-		main.logError(err, requestID, "can't get the clouds from paramators")
+		tools.LogError(err, requestID, "can't get the clouds from paramators")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
 			"Code":      codeBadRequest,
@@ -611,9 +573,9 @@ func PostUpdateClouds(c *gin.Context) {
 	}
 
 	//update the clouds
-	if err := db.UpdateCloud(cloud); err != nil {
+	if err := dao.UpdateCloud(cloudCol, cloud); err != nil {
 		//log the error
-		main.logError(err, requestID, "can't update the cloud")
+		tools.LogError(err, requestID, "can't update the cloud")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"RequestID": requestID,
 			"Code":      codeInternalError,
@@ -624,9 +586,9 @@ func PostUpdateClouds(c *gin.Context) {
 
 	//向其他云同步
 	if c.GetHeader("Caller") == "http-server" {
-		clouds, err := db.GetAllClouds()
+		clouds, err := dao.GetAllClouds(cloudCol)
 		if err != nil {
-			main.logError(err, requestID, "can't get other clouds")
+			tools.LogError(err, requestID, "can't get other clouds")
 			c.JSON(http.StatusBadRequest, gin.H{
 				"RequestID": requestID,
 				"Code":      codeInternalError,
@@ -637,7 +599,7 @@ func PostUpdateClouds(c *gin.Context) {
 
 		b, err := json.Marshal(cloud)
 		if err != nil {
-			main.logError(err, requestID, "can't Marshal the cloud")
+			tools.LogError(err, requestID, "can't Marshal the cloud")
 			c.JSON(http.StatusBadRequest, gin.H{
 				"RequestID": requestID,
 				"Code":      codeInternalError,
@@ -647,12 +609,12 @@ func PostUpdateClouds(c *gin.Context) {
 		}
 
 		for _, otherCLoud := range clouds {
-			if otherCLoud.CloudID != *flagCloudID {
+			if otherCLoud.CloudID != *config.FlagCloudID {
 				body := bytes.NewBuffer(b)
-				addr := main.genAddress(otherCLoud.CloudID, "/update_clouds")
+				addr := utils.GenAddress(cloudCol, otherCLoud.CloudID, "/update_clouds")
 				resp, err := http.Post(addr, "application/json", body)
 				if err != nil || resp.StatusCode != 200 {
-					main.logError(err, requestID, "can't syn to cloud: ", otherCLoud.CloudID)
+					tools.LogError(err, requestID, "can't syn to cloud: ", otherCLoud.CloudID)
 					c.JSON(http.StatusBadRequest, gin.H{
 						"RequestID": requestID,
 						"Code":      codeInternalError,
@@ -669,5 +631,5 @@ func PostUpdateClouds(c *gin.Context) {
 		"Code":      codeOK,
 		"Msg":       errorMsg[codeOK],
 	})
-	main.logInfo("update the clouds succeeded!", requestID, cloud)
+	tools.LogInfo("update the clouds succeeded!", requestID, cloud)
 }

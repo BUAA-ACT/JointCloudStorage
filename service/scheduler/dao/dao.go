@@ -40,8 +40,8 @@ type Database struct {
 //}
 
 var (
-	Clients        map[string]*ClientConfig
-	DaoClientsLock sync.RWMutex
+	Clients     map[string]*ClientConfig = make(map[string]*ClientConfig)
+	ClientsLock sync.RWMutex
 )
 
 func NewClient(mongoURI string) (*mongo.Client, error) {
@@ -50,8 +50,7 @@ func NewClient(mongoURI string) (*mongo.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
-	cancelFunc()
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	err = client.Ping(ctx, readpref.Primary())
 	if err != nil {
 		return nil, err
@@ -60,8 +59,8 @@ func NewClient(mongoURI string) (*mongo.Client, error) {
 }
 
 // NewDao constructs a data access object (Dao).
-func NewDao(mongoURI string, databases map[string]*DatabaseConfig) error {
-	DaoClientsLock.Lock()
+func NewDao(mongoURI string, databases map[string]map[string]*CollectionConfig) error {
+	ClientsLock.Lock()
 	dao := Clients[mongoURI]
 	// get this client
 	if dao == nil {
@@ -86,7 +85,7 @@ func NewDao(mongoURI string, databases map[string]*DatabaseConfig) error {
 		dao.Databases = map[string]*DatabaseConfig{}
 	}
 	// get the databases need to be established
-	for registerDatabaseName, registerDatabase := range databases {
+	for registerDatabaseName, registerCollections := range databases {
 		// get the database from whole dao config
 		database := dao.Databases[registerDatabaseName]
 		if database == nil {
@@ -107,8 +106,7 @@ func NewDao(mongoURI string, databases map[string]*DatabaseConfig) error {
 		if database.Collections == nil {
 			database.Collections = map[string]*CollectionConfig{}
 		}
-		collections := registerDatabase.Collections
-		for registerCollectionName := range collections {
+		for registerCollectionName := range registerCollections {
 			// get the collection from database config
 			collection := database.Collections[registerCollectionName]
 			if collection == nil {
@@ -125,14 +123,12 @@ func NewDao(mongoURI string, databases map[string]*DatabaseConfig) error {
 				err := ensureIndex(collection, "cloud_id", true)
 				if err != nil {
 					logrus.Println(err)
+					return err
 				}
-				return err
 			}
 			// notify in collections map
-			collections[registerCollectionName] = collection
+			registerCollections[registerCollectionName] = collection
 		}
-		// notify in databases map
-		databases[registerDatabaseName] = database
 	}
 	return nil
 }
@@ -169,8 +165,11 @@ func ensureIndex(collection *CollectionConfig, index string, unique bool) error 
 //	return Database{globalDao}
 //}
 
-func VerifyCollection(collection *mongo.Collection) {
-	if collection == nil {
-
+func VerifyCollection(collections ...*mongo.Collection) error {
+	for _, collection := range collections {
+		if collection == nil {
+			return errors.New("collection is nil, create col failed")
+		}
 	}
+	return nil
 }

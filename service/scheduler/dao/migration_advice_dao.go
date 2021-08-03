@@ -11,6 +11,9 @@ import (
 
 func InsertMigrationAdvice(col *mongo.Collection, adv entity.MigrationAdvice) error {
 	//col := d.client.Database(d.database).Collection(d.migrationAdvice)
+	if colErr := VerifyCollection(col); colErr != nil {
+		return colErr
+	}
 	_, err := col.ReplaceOne(
 		context.TODO(),
 		bson.M{

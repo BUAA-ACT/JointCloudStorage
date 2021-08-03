@@ -13,22 +13,20 @@ import (
 func newCloudPlugIn(t *testing.T, r *gin.Engine, mongoURI string, databaseName string, cid string, envMod string) {
 	IDInit(cid, envMod)
 
-	databaseMap := map[string]*dao.DatabaseConfig{
-		databaseName: {
-			Collections: map[string]*dao.CollectionConfig{
-				CollectionCloud:     nil,
-				CollectionTempCloud: nil,
-				CollectionVoteCloud: nil,
-			},
+	databaseMap := map[string]map[string]*dao.CollectionConfig{
+		databaseName: map[string]*dao.CollectionConfig{
+			CollectionCloud:     nil,
+			CollectionTempCloud: nil,
+			CollectionVoteCloud: nil,
 		},
 	}
 	err := DaoInit(mongoURI, databaseMap)
 	if err != nil {
 		t.Fatalf("dao init failed")
 	}
-	cloudCol = databaseMap[databaseName].Collections[CollectionCloud].CollectionHandler
-	tempCloudCol = databaseMap[databaseName].Collections[CollectionTempCloud].CollectionHandler
-	voteCloudCol = databaseMap[databaseName].Collections[CollectionVoteCloud].CollectionHandler
+	cloudCol = databaseMap[databaseName][CollectionCloud].CollectionHandler
+	tempCloudCol = databaseMap[databaseName][CollectionTempCloud].CollectionHandler
+	voteCloudCol = databaseMap[databaseName][CollectionVoteCloud].CollectionHandler
 	RouteInit(r)
 }
 
@@ -37,7 +35,7 @@ func TestPostNewCloudVote(t *testing.T) {
 
 	//初始化服务
 	r := gin.Default()
-	newCloudPlugIn(t, r, "mongodb://192.168.105.8:20100", "dev", "test-wanggj", "localDebug")
+	newCloudPlugIn(t, r, "mongodb://localhost:27017", "test", "test-wanggj", "localDebug")
 	data := `{"id":"test_cloud_id","vote_num":1,"address":"aliyun-beijing","cloud":{"CloudID":"test_cloud_id","Endpoint":"asdfasdasd",
 			"StoragePrice":0.5,"TrafficPrice":0.5,"Availability":0.9999,
 			"Status":"UP","Location":"116.381252,20.0","Address":""}}`
@@ -54,7 +52,7 @@ func TestPostNewCloud(t *testing.T) {
 
 	//初始化服务
 	r := gin.Default()
-	newCloudPlugIn(t, r, "mongodb://192.168.105.8:20100", "dev", "aliyun-beijing", "localDebug")
+	newCloudPlugIn(t, r, "mongodb://localhost:27017", "dev", "aliyun-beijing", "localDebug")
 	data := `{"CloudID":"test-wanggj","Endpoint":"asdfasdasd",
 			"StoragePrice":0.5,"TrafficPrice":0.5,"Availability":0.9999,
 			"Status":"UP","Location":"116.381252,20.0","Address":""}`
@@ -72,7 +70,7 @@ func TestGetVoteRequest(t *testing.T) {
 
 	//初始化服务
 	r := gin.Default()
-	newCloudPlugIn(t, r, "mongodb://192.168.105.8:20100", "dev", "test-wanggj", "localDebug")
+	newCloudPlugIn(t, r, "mongodb://localhost:27017", "dev", "test-wanggj", "localDebug")
 
 	req, _ := http.NewRequest("GET", "/vote_request", nil)
 	w := httptest.NewRecorder()
@@ -87,7 +85,7 @@ func TestPostCloudVote(t *testing.T) {
 
 	//初始化服务
 	r := gin.Default()
-	newCloudPlugIn(t, r, "mongodb://192.168.105.8:20100", "dev", "aliyun-beijing", "localDebug")
+	newCloudPlugIn(t, r, "mongodb://localhost:27017", "dev", "aliyun-beijing", "localDebug")
 	data := `{"CloudID":"test-wanggj"}`
 	data2 := `{"CloudID":"test_cloud_id"}`
 	//testCloud:=`{"id":"test_cloud_id","vote_num":1,"address":"aliyun-beijing","cloud":{"CloudID":"test_cloud_id","Endpoint":"asdfasdasd",
@@ -112,7 +110,7 @@ func TestPostMasterCloudVote(t *testing.T) {
 
 	//初始化服务
 	r := gin.Default()
-	newCloudPlugIn(t, r, "mongodb://192.168.105.8:20100", "dev", "aliyun-beijing", "localDebug")
+	newCloudPlugIn(t, r, "mongodb://localhost:27017", "dev", "aliyun-beijing", "localDebug")
 	data := `{"id":"test-wanggj","vote":1}`
 
 	req, _ := http.NewRequest("POST", "/master_cloud_vote", strings.NewReader(data))
@@ -128,7 +126,7 @@ func TestCloudSyn(t *testing.T) {
 
 	//初始化服务
 	r := gin.Default()
-	newCloudPlugIn(t, r, "mongodb://192.168.105.8:20100", "dev", "aliyun-beijing", "localDebug")
+	newCloudPlugIn(t, r, "mongodb://localhost:27017", "dev", "aliyun-beijing", "localDebug")
 	data := `[{"CloudID":"aliyun-beijing","Endpoint":"asdfasdasd",
 			"StoragePrice":0.5,"TrafficPrice":0.5,"Availability":0.9999,
 			"Status":"UP","Location":"116.381252,20.0","Address":""}]`
