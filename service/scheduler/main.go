@@ -33,22 +33,6 @@ func Init() {
 	// 初始化全局设置
 	config.GetConfig()
 
-	// Init DAO instance
-	var err error
-	db = dao.GetDatabaseInstance()
-	if err != nil {
-		panic(err)
-	}
-
-	// Init address map
-	clouds, err := db.GetAllClouds()
-	if err != nil {
-		panic(err)
-	}
-	for _, c := range clouds {
-		addrMap[c.CloudID] = c.Address
-	}
-
 	//Switch to release mode
 	//if *flagEnv == "prod" {
 	//	gin.SetMode(gin.ReleaseMode)
@@ -59,13 +43,12 @@ func Init() {
 func serverPlugIn(r *gin.Engine) {
 	server.IDInit(*config.FlagCloudID)
 	// server module use the databases below
-	databaseMap := map[string]*dao.DatabaseConfig{
+	databaseMap := map[string]map[string]*dao.CollectionConfig{
 		*config.FlagEnv: {
-			Collections: map[string]*dao.CollectionConfig{
-				config.CloudCollectionName: nil,
-				config.UserCollectionName:  nil,
-				config.FileCollectionName:  nil,
-			},
+			config.CloudCollectionName:           nil,
+			config.UserCollectionName:            nil,
+			config.FileCollectionName:            nil,
+			config.MigrationAdviceCollectionName: nil,
 		},
 	}
 
@@ -73,46 +56,49 @@ func serverPlugIn(r *gin.Engine) {
 	if err != nil {
 		log.Errorf("server plug in failed with error : %s", err.Error())
 	}
+	server.SetCloudCol(databaseMap[*config.FlagEnv][config.CloudCollectionName].CollectionHandler)
+	server.SetUserCol(databaseMap[*config.FlagEnv][config.UserCollectionName].CollectionHandler)
+	server.SetFileCol(databaseMap[*config.FlagEnv][config.FileCollectionName].CollectionHandler)
+	server.SetAdviceCol(databaseMap[*config.FlagEnv][config.MigrationAdviceCollectionName].CollectionHandler)
 	server.RouteInit(r)
 }
 
 func newCloudPlugIn(r *gin.Engine) {
-	newcloud.IDInit(*config.FlagCloudID)
+	newcloud.IDInit(*config.FlagCloudID, *config.FlagEnv)
 	// new cloud module use the databases below
-	databaseMap := map[string]*dao.DatabaseConfig{
+	databaseMap := map[string]map[string]*dao.CollectionConfig{
 		*config.FlagEnv: {
-			Collections: map[string]*dao.CollectionConfig{
-				config.CloudCollectionName: nil,
-				config.UserCollectionName:  nil,
-				config.FileCollectionName:  nil,
-			},
+			config.CloudCollectionName:     nil,
+			config.TempCloudCollectionName: nil,
+			config.VoteCloudCollectionName: nil,
 		},
 	}
 	err := newcloud.DaoInit(*config.FlagMongo, databaseMap)
 	if err != nil {
 		log.Errorf("server plug in failed with error : %s", err.Error())
 	}
+	newcloud.SetCloudCol(databaseMap[*config.FlagEnv][config.CloudCollectionName].CollectionHandler)
+	newcloud.SetTempCloudCol(databaseMap[*config.FlagEnv][config.TempCloudCollectionName].CollectionHandler)
+	newcloud.SetVoteCloudCol(databaseMap[*config.FlagEnv][config.VoteCloudCollectionName].CollectionHandler)
 	newcloud.RouteInit(r)
 }
 
 func keySynPlugIn(r *gin.Engine) {
 	keySyn.IDInit(*config.FlagCloudID)
 	// key synchronize module use the databases below
-	databaseMap := map[string]*dao.DatabaseConfig{
-		*config.FlagEnv: {
-			Collections: map[string]*dao.CollectionConfig{
-				config.CloudCollectionName: nil,
-				config.UserCollectionName:  nil,
-				config.FileCollectionName:  nil,
-			},
+	databaseMap := map[string]map[string]*dao.CollectionConfig{
+		*config.FlagEnv: map[string]*dao.CollectionConfig{
+			config.AccessKeyCollectionName: nil,
+			config.CloudCollectionName:     nil,
 		},
 	}
 	err := keySyn.DaoInit(*config.FlagMongo, databaseMap)
 	if err != nil {
 		log.Errorf("server plug in failed with error : %s", err.Error())
 	}
+	keySyn.SetKeyCol(databaseMap[*config.FlagEnv][config.AccessKeyCollectionName].CollectionHandler)
+	keySyn.SetCloudCol(databaseMap[*config.FlagEnv][config.CloudCollectionName].CollectionHandler)
 	keySyn.RouteInit(r)
-
 }
 
 func main() {
@@ -128,6 +114,6 @@ func main() {
 
 	go server.ReSchedule(*config.FlagRescheduleInterval)
 	go server.Heartbeat(*config.FlagHeartbeatInterval)
-	//
+
 	r.Run(*config.FlagAddress)
 }

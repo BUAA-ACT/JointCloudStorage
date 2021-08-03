@@ -23,10 +23,10 @@ func serverPlugIn(t *testing.T, r *gin.Engine) {
 	if err != nil {
 		t.Fatal("dao init failed")
 	}
-	cloudCol = databaseMap[*config.FlagEnv][config.CloudCollectionName].CollectionHandler
-	userCol = databaseMap[*config.FlagEnv][config.UserCollectionName].CollectionHandler
-	fileCol = databaseMap[*config.FlagEnv][config.FileCollectionName].CollectionHandler
-	adviceCol = databaseMap[*config.FlagEnv][config.MigrationAdviceCollectionName].CollectionHandler
+	SetCloudCol(databaseMap[*config.FlagEnv][config.CloudCollectionName].CollectionHandler)
+	SetUserCol(databaseMap[*config.FlagEnv][config.UserCollectionName].CollectionHandler)
+	SetFileCol(databaseMap[*config.FlagEnv][config.FileCollectionName].CollectionHandler)
+	SetAdviceCol(databaseMap[*config.FlagEnv][config.MigrationAdviceCollectionName].CollectionHandler)
 	RouteInit(r)
 	r.Run(":8082")
 }

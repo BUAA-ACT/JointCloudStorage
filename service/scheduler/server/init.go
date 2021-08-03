@@ -11,9 +11,8 @@ const (
 	codeBadRequest    = 400
 	codeUnauthorized  = 401
 	codeInternalError = 500
-
-	ReplicaMode = "Replica"
-	ECMode      = "EC"
+	ReplicaMode       = "Replica"
+	ECMode            = "EC"
 )
 
 var (
@@ -47,4 +46,20 @@ func DaoInit(mongoURI string, databaseMap map[string]map[string]*dao.CollectionC
 
 func IDInit(cid string) {
 	localId = cid
+}
+
+func SetCloudCol(thisCol *mongo.Collection) {
+	cloudCol = thisCol
+}
+
+func SetUserCol(thisCol *mongo.Collection) {
+	userCol = thisCol
+}
+
+func SetFileCol(thisCol *mongo.Collection) {
+	fileCol = thisCol
+}
+
+func SetAdviceCol(thisCol *mongo.Collection) {
+	adviceCol = thisCol
 }

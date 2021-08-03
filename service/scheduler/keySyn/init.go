@@ -38,3 +38,11 @@ func RouteInit(r *gin.Engine) {
 	r.POST(endPointAddKey, PostKeyUpsert)
 	r.POST(endPointDeleteKey, PostKeyDelete)
 }
+
+func SetKeyCol(thisCol *mongo.Collection) {
+	keyCol = thisCol
+}
+
+func SetCloudCol(thisCol *mongo.Collection) {
+	cloudCol = thisCol
+}

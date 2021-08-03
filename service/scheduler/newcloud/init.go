@@ -61,13 +61,14 @@ func IDInit(cid string, envMod string) {
 	env = envMod
 }
 
-//func PlugIn(mongo string, databasename string, cid string, envMod string, options ...string) error {
-//	dao.Dao{}
-//	if err := NewCloudDaoInit(mongo, databasename, cid, envMod); err != nil {
-//		return err
-//	}
-//	for a := range options {
-//
-//	}
-//	return nil
-//}
+func SetCloudCol(thisCol *mongo.Collection) {
+	cloudCol = thisCol
+}
+
+func SetTempCloudCol(thisCol *mongo.Collection) {
+	tempCloudCol = thisCol
+}
+
+func SetVoteCloudCol(thisCol *mongo.Collection) {
+	voteCloudCol = thisCol
+}

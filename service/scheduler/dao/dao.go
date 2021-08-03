@@ -62,6 +62,7 @@ func NewClient(mongoURI string) (*mongo.Client, error) {
 func NewDao(mongoURI string, databases map[string]map[string]*CollectionConfig) error {
 	ClientsLock.Lock()
 	dao := Clients[mongoURI]
+	defer ClientsLock.Unlock()
 	// get this client
 	if dao == nil {
 		dao = &Dao{
@@ -117,13 +118,13 @@ func NewDao(mongoURI string, databases map[string]map[string]*CollectionConfig) 
 			if collection.CollectionHandler == nil {
 				// add collection handler into collections
 				collection.CollectionHandler = database.DatabaseHandler.Collection(registerCollectionName)
-			}
-			// TODO: ensure user and file
-			if registerCollectionName == config.CloudCollectionName || registerCollectionName == config.TempCloudCollectionName || registerCollectionName == config.VoteCloudCollectionName {
-				err := ensureIndex(collection, "cloud_id", true)
-				if err != nil {
-					logrus.Println(err)
-					return err
+				// TODO: ensure user and file
+				if registerCollectionName == config.CloudCollectionName || registerCollectionName == config.TempCloudCollectionName || registerCollectionName == config.VoteCloudCollectionName {
+					err := ensureIndex(collection, "cloud_id", true)
+					if err != nil {
+						logrus.Println(err)
+						return err
+					}
 				}
 			}
 			// notify in collections map

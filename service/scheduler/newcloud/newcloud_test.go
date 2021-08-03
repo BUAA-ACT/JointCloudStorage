@@ -24,9 +24,9 @@ func newCloudPlugIn(t *testing.T, r *gin.Engine, mongoURI string, databaseName s
 	if err != nil {
 		t.Fatalf("dao init failed")
 	}
-	cloudCol = databaseMap[databaseName][CollectionCloud].CollectionHandler
-	tempCloudCol = databaseMap[databaseName][CollectionTempCloud].CollectionHandler
-	voteCloudCol = databaseMap[databaseName][CollectionVoteCloud].CollectionHandler
+	SetCloudCol(databaseMap[databaseName][CollectionCloud].CollectionHandler)
+	SetTempCloudCol(databaseMap[databaseName][CollectionTempCloud].CollectionHandler)
+	SetVoteCloudCol(databaseMap[databaseName][CollectionVoteCloud].CollectionHandler)
 	RouteInit(r)
 }
 

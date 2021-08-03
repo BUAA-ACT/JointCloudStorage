@@ -11,14 +11,14 @@ import (
 )
 
 var (
-	r *gin.Engine = gin.Default()
+	r = gin.Default()
 )
 
 func keySynPlugIn() error {
 	IDInit("aliyun-beijing")
 
 	databaseMap := map[string]map[string]*dao.CollectionConfig{
-		*config.FlagEnv: map[string]*dao.CollectionConfig{
+		*config.FlagEnv: {
 			config.AccessKeyCollectionName: nil,
 			config.CloudCollectionName:     nil,
 		},
@@ -27,8 +27,8 @@ func keySynPlugIn() error {
 	if err != nil {
 		return err
 	}
-	keyCol = databaseMap[*config.FlagEnv][config.AccessKeyCollectionName].CollectionHandler
-	cloudCol = databaseMap[*config.FlagEnv][config.CloudCollectionName].CollectionHandler
+	SetKeyCol(databaseMap[*config.FlagEnv][config.AccessKeyCollectionName].CollectionHandler)
+	SetCloudCol(databaseMap[*config.FlagEnv][config.CloudCollectionName].CollectionHandler)
 	RouteInit(r)
 	return nil
 }
