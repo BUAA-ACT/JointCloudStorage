@@ -21,9 +21,13 @@ func GenAddress(cloudID, path string) string {
 			addrMap[c.CloudID] = c.Address
 		}
 	}
-	addr := addrMap[cloudID]
-	if !strings.Contains(addr, ":") {
-		addr = addr + ":8082"
-	}
+	addr := CorrectAddress(addrMap[cloudID])
 	return "http://" + addr + path
+}
+
+func CorrectAddress(addr string)string{
+	if !strings.Contains(addr,":"){
+		addr=addr+":8082"
+	}
+	return addr
 }

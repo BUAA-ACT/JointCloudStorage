@@ -337,7 +337,8 @@ func PostCloudVote(c *gin.Context) {
 		//发出投票请求
 		body := bytes.NewBuffer(b)
 		if env != "localDebug" {
-			addr := utils.GenAddress(voteCloud.Id, "/master_cloud_vote")
+			//addr := utils.GenAddress(voteCloud.Id, "/master_cloud_vote")
+			addr:="http://"+utils.CorrectAddress(voteCloud.Address)+":8082/master_cloud_vote"
 			resp, err := http.Post(addr, "application/json", body)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
