@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math"
 	"net/http"
+	"shaoliyin.me/jcspan/utils"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -683,7 +684,7 @@ func PostUpdateClouds(c *gin.Context) {
 		for _, otherCLoud := range clouds {
 			if otherCLoud.CloudID != *flagCloudID {
 				body := bytes.NewBuffer(b)
-				addr := genAddress(otherCLoud.CloudID, "/update_clouds")
+				addr := utils.GenAddress(otherCLoud.CloudID, "/update_clouds")
 				resp, err := http.Post(addr, "application/json", body)
 				if err != nil || resp.StatusCode != 200 {
 					logError(err, requestID, "can't syn to cloud: ", otherCLoud.CloudID)

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"shaoliyin.me/jcspan/utils"
 	"strings"
 	"time"
 
@@ -32,7 +33,7 @@ func sendGetStatus(param GetStatusParam, cloud string) (*dao.Cloud, error) {
 	resp, err := client.R().
 		SetBody(param).
 		SetResult(&GetStatusResponse{}).
-		Get(genAddress(cloud, "/status"))
+		Get(utils.GenAddress(cloud, "/status"))
 
 	if err != nil {
 		return nil, err
@@ -51,7 +52,7 @@ func sendPostStoragePlan(param PostStoragePlanParam, cloud string) (*dao.AccessC
 	resp, err := client.R().
 		SetBody(param).
 		SetResult(&PostStoragePlanResponse{}).
-		Post(genAddress(cloud, "/storage_plan"))
+		Post(utils.GenAddress(cloud, "/storage_plan"))
 
 	if err != nil {
 		return nil, err
@@ -69,7 +70,7 @@ func sendPostMetadata(param PostMetadataParam, cloud string) error {
 
 	resp, err := client.R().
 		SetBody(param).
-		Post(genAddress(cloud, "/metadata"))
+		Post(utils.GenAddress(cloud, "/metadata"))
 
 	if err != nil {
 		return err
