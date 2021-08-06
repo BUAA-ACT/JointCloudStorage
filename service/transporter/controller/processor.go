@@ -292,11 +292,15 @@ func (processor *TaskProcessor) RebuildFileToDisk(t *model.Task) (path string, e
 		return rebuildPath, nil
 	case "Replica":
 		rebuildPath := util.Config.DownloadFileTempPath + util.GenRandomString(20)
-		err = storageClients[0].Download(t.SourcePath, rebuildPath, t.Uid)
-		if err != nil {
-			logrus.Errorf("Download Replica %v from %v fail: %v", t.SourcePath, storageClients[0], err)
+		for _, client := range storageClients {
+			err = client.Download(t.SourcePath, rebuildPath, t.Uid)
+			if err != nil {
+				logrus.Errorf("Download Replica %v from %v fail: %v", t.SourcePath, storageClients[0], err)
+			} else {
+				break
+			}
 		}
-		return rebuildPath, nil
+		return rebuildPath, err
 	default:
 		return "", errors.New("storageModel not support")
 	}
@@ -308,13 +312,18 @@ func (processor *TaskProcessor) ProcessGetTmpDownloadUrl(t *model.Task) (url str
 	if err != nil {
 		return "", err
 	}
-	storageClient, err := processor.CloudDatabase.GetStorageClientFromName(t.Uid, t.TaskOptions.SourceStoragePlan.Clouds[0])
-	if err != nil {
-		return "", err
-	}
-	url, err = storageClient.GetTmpDownloadUrl(t.GetSourcePath(), t.Uid, time.Minute*30)
-	if err != nil {
-		return "", err
+	var storageClient model.StorageClient
+	for _, cloud := range t.TaskOptions.SourceStoragePlan.Clouds {
+		storageClient, err = processor.CloudDatabase.GetStorageClientFromName(t.Uid, cloud)
+		if err != nil {
+			continue
+		}
+		url, err = storageClient.GetTmpDownloadUrl(t.GetSourcePath(), t.Uid, time.Minute*30)
+		if err != nil {
+			continue
+		}
+		err = nil
+		break
 	}
 	return url, err
 }
@@ -373,6 +382,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 				logrus.Debugf("多副本模式上传，云存储: %v", i)
 				_, err = processor.Monitor.AddUploadTraffic(t.Uid, fileInfo.Size, t.TaskOptions.DestinationStoragePlan.Clouds[i])
 				err = client.Upload(t.GetSourcePath(), t.GetDestinationPath(), t.Uid)
+				err = nil
 			}
 		case "EC": // 纠删码模式
 			N := t.TaskOptions.DestinationStoragePlan.N
@@ -398,6 +408,7 @@ func (processor *TaskProcessor) ProcessUpload(t *model.Task) (err error) {
 				if err != nil {
 					util.Log(logrus.ErrorLevel, "process upload EC",
 						"client upload fail", "", "", err.Error())
+					err = nil
 					continue
 				}
 				processor.Monitor.AddUploadTrafficFromFile(t.Uid, shards[i], t.TaskOptions.DestinationStoragePlan.Clouds[i])
