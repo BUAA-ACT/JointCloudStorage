@@ -190,6 +190,10 @@ func (d *Dao) UpdateCloud(cloud Cloud) error {
 				"availability":  cloud.Availability,
 				"status":        cloud.Status,
 				"location":      cloud.Location,
+				"access_key":    cloud.AccessKey,
+				"secret_key":    cloud.SecretKey,
+				"address":       cloud.Address,
+				"bucket":        cloud.Bucket,
 			},
 		},
 	)
