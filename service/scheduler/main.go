@@ -24,7 +24,7 @@ var (
 	flagCloudID            = flag.String("cid", "aliyun-beijing", "cloud id")
 	flagAESKey             = flag.String("aes", "1234567890123456", "aes key")
 	flagRescheduleInterval = flag.Duration("reschedule", time.Minute*1, "reschedule interval")
-	flagHeartbeatInterval  = flag.Duration("heartbeat", time.Second*30, "heartbeat interval")
+	flagHeartbeatInterval  = flag.Duration("heartbeat", time.Second*10, "heartbeat interval")
 
 	db      dao.Database
 	addrMap = make(map[string]string)
