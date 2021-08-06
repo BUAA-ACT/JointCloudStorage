@@ -568,7 +568,10 @@ func heartbeat(interval time.Duration) {
 				if err != nil {
 					logError(err, requestID, "sendGetStatus failed", param, cloud)
 					ch <- err
-					return
+					*c = cloud
+					c.Status = "DOWN"
+				} else {
+					c.Status = "UP"
 				}
 				err = db.UpdateCloud(*c)
 				if err != nil {
