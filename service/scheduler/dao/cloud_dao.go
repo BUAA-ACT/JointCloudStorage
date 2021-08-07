@@ -25,6 +25,10 @@ func UpdateCloud(col *mongo.Collection, cloud entity.Cloud) error {
 				"availability":  cloud.Availability,
 				"status":        cloud.Status,
 				"location":      cloud.Location,
+				"access_key":    cloud.AccessKey,
+				"secret_key":    cloud.SecretKey,
+				"address":       cloud.Address,
+				"bucket":        cloud.Bucket,
 			},
 		},
 	)
@@ -84,8 +88,8 @@ func GetOtherClouds(col *mongo.Collection, cid string) ([]entity.Cloud, error) {
 			return nil, err
 		}
 		// 隐藏访问凭证
-		elem.AccessKey = ""
-		elem.SecretKey = ""
+		//elem.AccessKey = ""
+		//elem.SecretKey = ""
 		clouds = append(clouds, elem)
 	}
 
@@ -102,8 +106,8 @@ func GetCloud(col *mongo.Collection, cid string) (entity.Cloud, error) {
 	err := col.FindOne(context.TODO(), bson.M{"cloud_id": cid}).Decode(&cloud)
 
 	// 隐藏访问凭证
-	cloud.AccessKey = ""
-	cloud.SecretKey = ""
+	//cloud.AccessKey = ""
+	//cloud.SecretKey = ""
 	return cloud, err
 }
 

@@ -98,14 +98,14 @@ func PostNewCloud(c *gin.Context) {
 				addr := utils.GenAddress(cloudCol, cloud.CloudID, "/new_cloud_vote")
 				resp, err := http.Post(addr, "application/json", body)
 				if err != nil {
-					c.JSON(http.StatusBadRequest, gin.H{
-						"RequestID": requestID,
-						"Code":      codeInternalError,
-						"Msg":       errorMsg[codeInternalError],
-						"Test":      "Send to other clouds error:" + err.Error(),
-					})
+					//c.JSON(http.StatusBadRequest, gin.H{
+					//	"RequestID": requestID,
+					//	"Code":      codeInternalError,
+					//	"Msg":       errorMsg[codeInternalError],
+					//	"Test":      "Send to other clouds error:" + err.Error(),
+					//})
 					log.Error("send to other clouds error, package:NewCloud, func:PostNewCloud, message:", err, " Send temp cloud error! ", "RequestID:", requestID)
-					return
+					//return
 				}
 				log.Info("package:NewCloud, func:PostNewCloud, code:", resp.StatusCode, " Code shoule be 200.", " RequestID:", requestID)
 			}
@@ -280,7 +280,7 @@ func PostCloudVote(c *gin.Context) {
 		//发出投票请求
 		body := bytes.NewBuffer(b)
 		if env != "localDebug" {
-			addr := utils.GenAddress(cloudCol, voteCloud.Id, "/master_cloud_vote")
+			addr := "http://" + utils.CorrectAddress(voteCloud.Address) + "/master_cloud_vote"
 			resp, err := http.Post(addr, "application/json", body)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{

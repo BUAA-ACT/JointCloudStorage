@@ -93,9 +93,10 @@ func keySyn(ak entity.AccessKey, caller string, synType string) error {
 				client := http.Client{}
 				resp, err := client.Do(req)
 				if err != nil {
-					return errors.New("发送http请求失败，" + err.Error())
+					log.Error("发送key同步http请求失败，错误详情：", err.Error())
+					continue
 				} else if resp.StatusCode != 200 {
-					return errors.New("同步操作失败")
+					log.Error("key同步操作失败，Code：", resp.StatusCode, ",错误详情：", resp.StatusCode)
 				}
 			}
 		}

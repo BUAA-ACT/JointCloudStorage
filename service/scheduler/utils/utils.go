@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"shaoliyin.me/jcspan/dao"
 	"shaoliyin.me/jcspan/entity"
@@ -91,21 +92,31 @@ func SendPostMetadata(cloudCol *mongo.Collection, param entity.PostMetadataParam
 //}
 
 func GenAddress(cloudCol *mongo.Collection, cloudID, path string) string {
-	if _, ok := addrMap[cloudID]; !ok { // 内存 map 中没有该云节点
-		//db := dao.GetDatabaseInstance()
-		// Init address map
-
-		clouds, err := dao.GetAllClouds(cloudCol)
-		if err != nil {
-			panic(err)
-		}
-		for _, c := range clouds {
-			addrMap[c.CloudID] = c.Address
+	//if _, ok := addrMap[cloudID]; !ok { // 内存 map 中没有该云节点
+	//	//db := dao.GetDatabaseInstance()
+	//}
+	// Init address map
+	clouds, err := dao.GetAllClouds(cloudCol)
+	if err != nil {
+		panic(err)
+	}
+	var addr string
+	for _, c := range clouds {
+		if c.CloudID == cloudID {
+			addr = CorrectAddress(c.Address)
+			break
 		}
 	}
-	addr := addrMap[cloudID]
+	if len(addr) == 0 {
+		logrus.Errorf("地址生成失败，云节点信息不存在：%v", cloudID)
+		return ""
+	}
+	return "http://" + addr + path
+}
+
+func CorrectAddress(addr string) string {
 	if !strings.Contains(addr, ":") {
 		addr = addr + ":8082"
 	}
-	return "http://" + addr + path
+	return addr
 }

@@ -51,7 +51,7 @@ var (
 	FlagCloudID            = flag.String("cid", "aliyun-beijing", "cloud id")
 	FlagAESKey             = flag.String("aes", "1234567890123456", "aes key")
 	FlagRescheduleInterval = flag.Duration("reschedule", time.Minute*1, "reschedule interval")
-	FlagHeartbeatInterval  = flag.Duration("heartbeat", time.Second*30, "heartbeat interval")
+	FlagHeartbeatInterval  = flag.Duration("heartbeat", time.Second*10, "heartbeat interval")
 	AddrMap                = make(map[string]string)
 )
 

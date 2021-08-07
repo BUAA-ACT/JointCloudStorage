@@ -215,11 +215,11 @@ func PostStoragePlan(c *gin.Context) {
 
 		if len(users) < len(clouds)-1 {
 			tools.LogError(nil, requestID, "Some sendPostStoragePlan failed", len(clouds)-1, len(users))
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"RequestID": requestID,
-				"Code":      codeInternalError,
-				"Msg":       errorMsg[codeInternalError],
-			})
+			//c.JSON(http.StatusInternalServerError, gin.H{
+			//	"RequestID": requestID,
+			//	"Code":      codeInternalError,
+			//	"Msg":       errorMsg[codeInternalError],
+			//})
 		}
 
 		// 更正成本计算
@@ -499,7 +499,10 @@ func Heartbeat(interval time.Duration) {
 				if err != nil {
 					tools.LogError(err, requestID, "sendGetStatus failed", param, cloud)
 					ch <- err
-					return
+					c = &cloud
+					c.Status = "DOWN"
+				} else {
+					c.Status = "UP"
 				}
 				err = dao.UpdateCloud(cloudCol, *c)
 				if err != nil {
