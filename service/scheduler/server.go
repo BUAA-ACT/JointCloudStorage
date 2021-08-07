@@ -285,11 +285,11 @@ func PostStoragePlan(c *gin.Context) {
 
 		if len(users) < len(clouds)-1 {
 			logError(nil, requestID, "Some sendPostStoragePlan failed", len(clouds)-1, len(users))
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"RequestID": requestID,
-				"Code":      codeInternalError,
-				"Msg":       errorMsg[codeInternalError],
-			})
+			//c.JSON(http.StatusInternalServerError, gin.H{
+			//	"RequestID": requestID,
+			//	"Code":      codeInternalError,
+			//	"Msg":       errorMsg[codeInternalError],
+			//})
 		}
 
 		// 更正成本计算

@@ -2,8 +2,8 @@ import os
 from JointCloudStorage import *
 
 if __name__ == '__main__':
-    ak = "b8dda4fa857544729aa87164ca7c5869"
-    sk = "884abbf78a9c4ea7b1ff73e3977b1d95"
+    ak = "7401854907af46d59c94f4a8995d77d1"
+    sk = "12c9fa926a864533aec4a824760e32ba"
     endpoint_hohhot = "http://jsi-aliyun-hohhot.jointcloudstorage.cn/"
     auth = Auth(ak, sk)
     bucket = Bucket(auth, endpoint_hohhot)
