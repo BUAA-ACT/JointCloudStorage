@@ -189,10 +189,12 @@ export default {
     },
     async submit() {
       this.submitLoading = true;
-      Plan.changeStoragePlan(this.candidates[this.storagePlanIndex])
+      const storagePlan = this.candidates[this.storagePlanIndex];
+      Plan.changeStoragePlan(storagePlan)
         .then(async resp => {
           if (resp) this.$message.success("更新存储方案成功！");
           this.submitLoading = false;
+          this.$store.commit("SET_STORAGE_PLAN", storagePlan);
           await this.$store.dispatch("updateInfo", "StoragePlan");
           this.reload();
         })

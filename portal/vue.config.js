@@ -6,7 +6,7 @@
 const TerserPlugin = require("terser-webpack-plugin");
 const FileManagerPlugin = require("filemanager-webpack-plugin");
 
-const serverIP = "127.0.0.1";
+const serverIP = "192.168.105.13";
 const transporterIP = "192.168.105.13";
 
 const path = require("path");

@@ -110,6 +110,7 @@ func Decode(filename string, fileSize int64, shards []string, n, k int) error {
 	if !ok {
 		log.Warnf("EC Reconstructing data")
 		// Create out destination writers
+		inputs, _, err = openInput(n, k, shards)
 		out := make([]io.Writer, len(shards))
 		for i := range out {
 			if inputs[i] == nil {

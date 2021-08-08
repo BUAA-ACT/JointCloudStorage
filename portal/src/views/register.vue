@@ -102,10 +102,7 @@
         <el-tooltip :value="!agreeCheck" content="您必须勾选此项才能继续注册" placement="left" manual>
           <el-checkbox class="margin-20" v-model="agreeCheck" tabindex="5"
             >我已阅读并同意
-            <el-popover placement="right" width="400px" trigger="hover">
-              <p>// TODO: 这里将会展示用户协议</p>
-              <el-link slot="reference" type="primary">《云际计算平台注册协议》</el-link>
-            </el-popover>
+            <el-link type="primary" href="/legal-agreement.html">《云际计算平台注册协议》</el-link>
           </el-checkbox>
         </el-tooltip>
 

@@ -23,7 +23,7 @@ func AdminAddCloud(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	cloud := (*valueMap)[args.FieldWordCloud].(*model.Cloud)
 	// check token
-	_, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
 	if !valid {
 		return
 	}
@@ -64,6 +64,7 @@ func AdminAddCloud(con *gin.Context) {
 		"msg":  "管理员新增云节点成功，等待投票",
 		"data": gin.H{},
 	})
+	con.Next()
 }
 
 func AdminChangeCloudInfo(con *gin.Context) {
@@ -78,7 +79,7 @@ func AdminChangeCloudInfo(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	cloud := (*valueMap)[args.FieldWordCloud].(*model.Cloud)
 	// check token
-	_, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
 	if !valid {
 		return
 	}
@@ -119,6 +120,7 @@ func AdminChangeCloudInfo(con *gin.Context) {
 		"msg":  "管理员修改云节点信息成功，等待投票",
 		"data": gin.H{},
 	})
+	con.Next()
 }
 
 func AdminVoteForCloud(con *gin.Context) {
@@ -135,7 +137,7 @@ func AdminVoteForCloud(con *gin.Context) {
 	cloudID := (*valueMap)[args.FieldWordCloudID].(string)
 	voteResult := (*valueMap)[args.FieldWordVoteResult].(bool)
 	// check token
-	_, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
 	if !valid {
 		return
 	}
@@ -168,6 +170,7 @@ func AdminVoteForCloud(con *gin.Context) {
 		"msg":  "管理员投票成功",
 		"data": gin.H{},
 	})
+	con.Next()
 }
 
 func AdminGetVoteRequests(con *gin.Context) {
@@ -180,7 +183,7 @@ func AdminGetVoteRequests(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	_, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
 	if !valid {
 		return
 	}
@@ -201,6 +204,7 @@ func AdminGetVoteRequests(con *gin.Context) {
 			"Clouds": clouds,
 		},
 	})
+	con.Next()
 }
 
 func AdminGetAddedClouds(con *gin.Context) {
@@ -213,7 +217,7 @@ func AdminGetAddedClouds(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	// check token
-	_, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
+	_, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAdminRole})
 	if !valid {
 		return
 	}
@@ -230,4 +234,5 @@ func AdminGetAddedClouds(con *gin.Context) {
 			"Clouds": *addedCloudsResult,
 		},
 	})
+	con.Next()
 }

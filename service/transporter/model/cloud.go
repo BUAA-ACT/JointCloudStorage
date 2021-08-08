@@ -155,7 +155,7 @@ func (m *MongoCloudDatabase) GetStorageClientFromName(sid string, name string) (
 		} else {
 			awsClient, err := GetAWSClient(endpoint, accessKeyId, secretAccessKey)
 			if err != nil {
-				log.Panicf("get minio client fail: %v", err)
+				log.Printf("get minio client fail: %v", err)
 				return nil, err
 			}
 			newClient := &AWSBucketStorageClient{

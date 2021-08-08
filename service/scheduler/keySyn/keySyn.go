@@ -106,10 +106,11 @@ func keySyn(ak dao.AccessKey, caller string, synType string) error {
 				client := http.Client{}
 				resp, err := client.Do(req)
 				if err != nil {
-					return errors.New("发送http请求失败，" + err.Error())
+					log.Error("发送key同步http请求失败，错误详情：", err.Error())
+					continue
 				}
 				if resp.StatusCode != 200 {
-					return errors.New("同步操作失败，" + err.Error())
+					log.Error("key同步操作失败，Code：", resp.StatusCode, ",错误详情：", resp.StatusCode)
 				}
 			}
 		}

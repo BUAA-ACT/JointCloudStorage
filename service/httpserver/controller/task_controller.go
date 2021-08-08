@@ -22,17 +22,26 @@ func UserGetTask(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	taskId := (*valueMap)[args.FieldWordTaskID].(string)
 	taskIdExist := (*existMap)[args.FieldWordTaskID]
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
 
-	tasks, getTaskSuccess := dao.TaskDao.GetTask(taskId, userID, taskIdExist)
+	tasks, getTaskSuccess := dao.TaskDao.GetTask(taskId, user.UserID, taskIdExist)
 	if checkDaoSuccess(con, getTaskSuccess) {
 		return
 	}
 	// check if it is correct user
-	// TODO
+	for _, task := range *tasks {
+		if task.UserID != user.UserID {
+			con.JSON(http.StatusOK, gin.H{
+				"code": args.CodeOK,
+				"msg":  "您好像获取了不是自己的task呢！强啊！",
+				"data": gin.H{},
+			})
+			return
+		}
+	}
 	con.JSON(http.StatusOK, gin.H{
 		"code": args.CodeOK,
 		"msg":  "获取任务成功",
@@ -40,6 +49,7 @@ func UserGetTask(con *gin.Context) {
 			"Tasks": *tasks,
 		},
 	})
+	con.Next()
 }
 
 func UserGetMigrationTask(con *gin.Context) {
@@ -55,7 +65,7 @@ func UserGetMigrationTask(con *gin.Context) {
 		return
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -65,7 +75,7 @@ func UserGetMigrationTask(con *gin.Context) {
 		var progressNow float64 = 0
 		for {
 			// get task with dao
-			task, ok := dao.TaskDao.GetUserMigrate(userID)
+			task, ok := dao.TaskDao.GetUserMigrate(user.UserID)
 			if !ok {
 				returnMap = gin.H{
 					"code": args.CodeDatabaseError,
@@ -117,4 +127,5 @@ func UserGetMigrationTask(con *gin.Context) {
 			log.Println(closeErr)
 		}
 	}()
+	con.Next()
 }

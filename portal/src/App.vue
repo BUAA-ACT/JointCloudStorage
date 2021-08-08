@@ -7,8 +7,8 @@
 <script>
 export default {
   name: "App",
-  mounted() {
-    this.$store.dispatch("getInfo");
+  async created() {
+    await this.$store.dispatch("getInfo");
   },
   data() {
     return {

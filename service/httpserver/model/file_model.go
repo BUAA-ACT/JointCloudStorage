@@ -12,6 +12,7 @@ type File struct {
 	LastReconstructed time.Time `json:"LastReconstructed" bson:"last_reconstructed"`
 	ReconstructStatus string    `json:"ReconstructStatus" bson:"reconstruct_status"`
 	DownloadUrl       string    `json:"DownloadUrl,omitempty" bson:"download_url"`
+	FailClouds        []Cloud   `json:"FailClouds" bson:"fail_clouds"`
 }
 
 type FileAndDir struct {

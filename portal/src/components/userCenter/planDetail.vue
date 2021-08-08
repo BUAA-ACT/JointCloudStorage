@@ -67,7 +67,7 @@ export default {
       this.storagePlan = this.$store.getters.storagePlan;
     }
   },
-  mounted() {
+  beforeMount() {
     this.getStoragePlan();
   },
   computed: {

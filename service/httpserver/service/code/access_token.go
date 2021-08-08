@@ -16,7 +16,6 @@ import (
 	//"github.com/dgrijalva/jwt-go"
 )
 
-
 //func genXid() {
 //	id := xid.New()
 //	fmt.Printf("github.com/rs/xid:           %s\n", id.String())
@@ -78,7 +77,6 @@ func GenToken() uuid.UUID {
 //}
 
 // ------------------------------------------------------------
-
 
 //type Claims struct {
 //	UserId uint
@@ -174,8 +172,6 @@ func GenToken() uuid.UUID {
 //	})
 //	return token,claims,err
 //}
-
-
 
 //--------------------------------------
 
@@ -285,5 +281,3 @@ func ExampleParse_errorChecking() {
 
 	// Output: Timing is everything
 }
-
-

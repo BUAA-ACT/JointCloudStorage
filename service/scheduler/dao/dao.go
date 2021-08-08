@@ -190,6 +190,10 @@ func (d *Dao) UpdateCloud(cloud Cloud) error {
 				"availability":  cloud.Availability,
 				"status":        cloud.Status,
 				"location":      cloud.Location,
+				"access_key":    cloud.AccessKey,
+				"secret_key":    cloud.SecretKey,
+				"address":       cloud.Address,
+				"bucket":        cloud.Bucket,
 			},
 		},
 	)
@@ -242,9 +246,9 @@ func (d *Dao) GetOtherClouds(cid string) ([]Cloud, error) {
 		if err != nil {
 			return nil, err
 		}
-		// 隐藏访问凭证
-		elem.AccessKey = ""
-		elem.SecretKey = ""
+		//// 隐藏访问凭证
+		//elem.AccessKey = ""
+		//elem.SecretKey = ""
 		clouds = append(clouds, elem)
 	}
 
@@ -257,9 +261,9 @@ func (d *Dao) GetCloud(cid string) (Cloud, error) {
 	var cloud Cloud
 	err := col.FindOne(context.TODO(), bson.M{"cloud_id": cid}).Decode(&cloud)
 
-	// 隐藏访问凭证
-	cloud.AccessKey = ""
-	cloud.SecretKey = ""
+	//// 隐藏访问凭证
+	//cloud.AccessKey = ""
+	//cloud.SecretKey = ""
 	return cloud, err
 }
 

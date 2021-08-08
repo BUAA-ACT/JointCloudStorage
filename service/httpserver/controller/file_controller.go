@@ -26,12 +26,12 @@ func UserGetFiles(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	//check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
 	// check it is file or dir and get files out
-	files, listFilesSuccess := dao.FileDao.ListFiles(userID, filePath, tools.IsDir(filePath))
+	files, listFilesSuccess := dao.FileDao.ListFiles(user.UserID, filePath, tools.IsDir(filePath))
 	if !checkDaoSuccess(con, listFilesSuccess) {
 		return
 	}
@@ -92,7 +92,7 @@ func UserGetFiles(con *gin.Context) {
 			"Files": integrateFiles,
 		},
 	})
-
+	con.Next()
 }
 
 func UserChangeFilePath(con *gin.Context) {
@@ -115,13 +115,8 @@ func UserPreUploadFile(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	//check access token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
-		return
-	}
-	user, infoSuccess := dao.UserDao.GetUserInfo(userID)
-	// database error
-	if !checkDaoSuccess(con, infoSuccess) {
 		return
 	}
 	// check have storage plan?
@@ -173,6 +168,7 @@ func UserPreUploadFile(con *gin.Context) {
 			"Token": preUploadToTransporterResponse.Data.Result,
 		},
 	})
+	con.Next()
 }
 
 func UserDownloadFile(con *gin.Context) {
@@ -186,7 +182,7 @@ func UserDownloadFile(con *gin.Context) {
 	}
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	filePath := (*valueMap)[args.FieldWordFilePath].(string)
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
 		return
 	}
@@ -199,11 +195,7 @@ func UserDownloadFile(con *gin.Context) {
 	//		"data": gin.H{},
 	//	})
 	//}
-	// check user
-	user, infoSuccess := dao.UserDao.GetUserInfo(userID)
-	if !checkDaoSuccess(con, infoSuccess) {
-		return
-	}
+	// check user storage plan
 	if !user.UserHaveStoragePlan() {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeStoragePlanNotExist,
@@ -220,7 +212,7 @@ func UserDownloadFile(con *gin.Context) {
 		return
 	}
 	// check file status if done -> return url
-	files, checkFileSuccess := dao.FileDao.CheckFileStatus(userID, filePath)
+	files, checkFileSuccess := dao.FileDao.CheckFileStatus(user.UserID, filePath)
 	if !checkDaoSuccess(con, checkFileSuccess) {
 		return
 	}
@@ -244,7 +236,7 @@ func UserDownloadFile(con *gin.Context) {
 		return
 	}
 	// else -> use scheduler's download plan to download file with transporter
-	getDownloadPlanResponse, getDownloadPlanSuccess := scheduler.GetDownloadPlanFromScheduler(userID, filePath)
+	getDownloadPlanResponse, getDownloadPlanSuccess := scheduler.GetDownloadPlanFromScheduler(user.UserID, filePath)
 	if !getDownloadPlanSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
@@ -253,7 +245,7 @@ func UserDownloadFile(con *gin.Context) {
 		})
 	}
 
-	downloadResponse, downloadSuccess := transporter.DownLoadFile(filePath, userID, getDownloadPlanResponse.Data)
+	downloadResponse, downloadSuccess := transporter.DownLoadFile(filePath, user.UserID, getDownloadPlanResponse.Data)
 	if !downloadSuccess {
 		con.JSON(http.StatusOK, gin.H{
 			"code": args.CodeJsonError,
@@ -280,6 +272,7 @@ func UserDownloadFile(con *gin.Context) {
 		"msg":  "下载请求已送达",
 		"data": downloadResponse.Data,
 	})
+	con.Next()
 }
 
 func UserDeleteFile(con *gin.Context) {
@@ -294,13 +287,8 @@ func UserDeleteFile(con *gin.Context) {
 	accessToken := (*valueMap)[args.FieldWordAccessToken].(string)
 	filePath := (*valueMap)[args.FieldWordFilePath].(string)
 	// check token
-	userID, _, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
+	user, valid := UserCheckAccessToken(con, accessToken, &[]string{args.UserAllRole})
 	if !valid {
-		return
-	}
-	user, infoSuccess := dao.UserDao.GetUserInfo(userID)
-	// database error
-	if !checkDaoSuccess(con, infoSuccess) {
 		return
 	}
 	// check have storage plan?
@@ -335,5 +323,5 @@ func UserDeleteFile(con *gin.Context) {
 		"msg":  "删除文件成功",
 		"data": gin.H{},
 	})
-
+	con.Next()
 }

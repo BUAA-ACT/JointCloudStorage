@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math"
 	"net/http"
+	"shaoliyin.me/jcspan/utils"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -284,11 +285,11 @@ func PostStoragePlan(c *gin.Context) {
 
 		if len(users) < len(clouds)-1 {
 			logError(nil, requestID, "Some sendPostStoragePlan failed", len(clouds)-1, len(users))
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"RequestID": requestID,
-				"Code":      codeInternalError,
-				"Msg":       errorMsg[codeInternalError],
-			})
+			//c.JSON(http.StatusInternalServerError, gin.H{
+			//	"RequestID": requestID,
+			//	"Code":      codeInternalError,
+			//	"Msg":       errorMsg[codeInternalError],
+			//})
 		}
 
 		// 更正成本计算
@@ -568,7 +569,10 @@ func heartbeat(interval time.Duration) {
 				if err != nil {
 					logError(err, requestID, "sendGetStatus failed", param, cloud)
 					ch <- err
-					return
+					c = &cloud
+					c.Status = "DOWN"
+				} else {
+					c.Status = "UP"
 				}
 				err = db.UpdateCloud(*c)
 				if err != nil {
@@ -680,7 +684,7 @@ func PostUpdateClouds(c *gin.Context) {
 		for _, otherCLoud := range clouds {
 			if otherCLoud.CloudID != *flagCloudID {
 				body := bytes.NewBuffer(b)
-				addr := genAddress(otherCLoud.CloudID, "/update_clouds")
+				addr := utils.GenAddress(otherCLoud.CloudID, "/update_clouds")
 				resp, err := http.Post(addr, "application/json", body)
 				if err != nil || resp.StatusCode != 200 {
 					logError(err, requestID, "can't syn to cloud: ", otherCLoud.CloudID)

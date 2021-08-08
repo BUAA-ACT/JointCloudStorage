@@ -58,20 +58,22 @@ export default {
     prevStep() {
       this.curStep -= 1;
     },
-    nextStep() {
+    async nextStep() {
       if (this.curStep === this.finishStep) {
         if (this.curPlan.StorageMode === "Replica") {
-          Plan.changeStoragePlan({
+          const storagePlan = {
             ...this.curPlan,
             N: this.ReplicaClouds.length,
             K: 1,
             Clouds: this.ReplicaClouds.map(val => this.allClouds[val])
-          })
-            .then(resp => {
+          };
+          await Plan.changeStoragePlan(storagePlan)
+            .then(async resp => {
               if (resp) {
                 this.$message.success("自定义存储方案成功！");
                 this.curStep = 0;
-                this.$store.dispatch("updateInfo", "StoragePlan");
+                this.$store.commit("SET_STORAGE_PLAN", storagePlan);
+                await this.$store.dispatch("updateInfo", "StoragePlan");
                 this.$emit("success");
               }
             })
@@ -79,19 +81,21 @@ export default {
               this.$emit("failed");
             });
         } else if (this.curPlan.StorageMode === "EC") {
-          Plan.changeStoragePlan({
+          const storagePlan = {
             ...this.curPlan,
             N: this.ReplicaClouds.length,
             K: this.ReplicaClouds.length - this.ECNKClouds.length,
             Clouds: this.ReplicaClouds.filter(value => !this.ECNKClouds.includes(value))
               .map(val => this.allClouds[val])
               .concat(this.ECNKClouds.map(value => this.allClouds[value]))
-          })
-            .then(resp => {
+          };
+          Plan.changeStoragePlan(storagePlan)
+            .then(async resp => {
               if (resp) {
                 this.$message.success("自定义存储方案成功！");
                 this.curStep = 0;
-                this.$store.dispatch("updateInfo", "StoragePlan");
+                this.$store.commit("SET_STORAGE_PLAN", storagePlan);
+                await this.$store.dispatch("updateInfo", "StoragePlan");
                 this.$emit("success");
               }
             })

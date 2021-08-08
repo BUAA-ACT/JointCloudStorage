@@ -155,14 +155,14 @@ func PostNewCloud(c *gin.Context) {
 				addr := utils.GenAddress(cloud.CloudID, "/new_cloud_vote")
 				resp, err := http.Post(addr, "application/json", body)
 				if err != nil {
-					c.JSON(http.StatusBadRequest, gin.H{
-						"RequestID": requestID,
-						"Code":      codeInternalError,
-						"Msg":       errorMsg[codeInternalError],
-						"Test":      "Send to other clouds error:" + err.Error(),
-					})
+					//c.JSON(http.StatusBadRequest, gin.H{
+					//	"RequestID": requestID,
+					//	"Code":      codeInternalError,
+					//	"Msg":       errorMsg[codeInternalError],
+					//	"Test":      "Send to other clouds error:" + err.Error(),
+					//})
 					log.Error("send to other clouds error, package:NewCloud, func:PostNewCloud, message:", err, " Send temp cloud error! ", "RequestID:", requestID)
-					return
+					//return
 				}
 				log.Info("package:NewCloud, func:PostNewCloud, code:", resp.StatusCode, " Code shoule be 200.", " RequestID:", requestID)
 			}
@@ -337,28 +337,32 @@ func PostCloudVote(c *gin.Context) {
 		//发出投票请求
 		body := bytes.NewBuffer(b)
 		if env != "localDebug" {
-			addr := utils.GenAddress(voteCloud.Id, "/master_cloud_vote")
+			//addr := utils.GenAddress(voteCloud.Id, "/master_cloud_vote")
+			addr:="http://"+utils.CorrectAddress(voteCloud.Address)+"/master_cloud_vote"
 			resp, err := http.Post(addr, "application/json", body)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"RequestID": requestID,
-					"Code":      codeInternalError,
-					"Msg":       errorMsg[codeInternalError],
-				})
+				//c.JSON(http.StatusBadRequest, gin.H{
+				//	"RequestID": requestID,
+				//	"Code":      codeInternalError,
+				//	"Msg":       errorMsg[codeInternalError],
+				//})
 				log.Error("post vote msg err, package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
-				return
+				//return
 			}
 			//处理返回结果
-			if resp.StatusCode == 510 {
-				c.JSON(510, nil)
-			} else if resp.StatusCode != 200 {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"RequestID": requestID,
-					"Code":      codeBadRequest,
-					"Msg":       errorMsg[codeBadRequest],
-				})
+			//if resp.StatusCode == 510 {
+			//	c.JSON(510, nil)
+			//} else if resp.StatusCode != 200 {
+			//	c.JSON(http.StatusBadRequest, gin.H{
+			//		"RequestID": requestID,
+			//		"Code":      codeBadRequest,
+			//		"Msg":       errorMsg[codeBadRequest],
+			//	})
+			//	log.Error("vote msg statusCode err, package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
+			//	return
+			//}
+			if resp.StatusCode != 200 {
 				log.Error("vote msg statusCode err, package:NewCloud, func:PostCloudVote, message:", err, " Vote to the master error!", " RequestID:", requestID)
-				return
 			}
 		}
 
@@ -498,7 +502,7 @@ func voteCheck(id string, vote int) error {
 				_, err := http.Post(addr, "application/json", body)
 				if err != nil {
 					log.Error("发送新云信息到其他节点失败，package:NewCloud, func:voteCheck, message:", err)
-					return err
+					//return err
 				}
 			}
 
@@ -513,18 +517,21 @@ func voteCheck(id string, vote int) error {
 
 		body = bytes.NewBuffer(b)
 		addr := utils.GenAddress(voteCloud.Cloud.CloudID, "/cloud_syn")
-		_, err = http.Post(addr, "application/json", body)
+		resp, err := http.Post(addr, "application/json", body)
 		if err != nil {
 			log.Error("向新云同步所有云节点信息失败，package:NewCloud, func:PostMasterCloudVote, message:", err, " Send to new cloud error! ", "voteNum:", voteCloud, "totalNum:", totalNum)
-			return err
+			//return err
 		}
-
+		if resp.StatusCode!=200{
+			log.Error("向新云同步所有云节点信息失败，code:",resp.StatusCode,"package:NewCloud, func:PostMasterCloudVote, message:", err, " Send to new cloud error! ", "voteNum:", voteCloud, "totalNum:", totalNum)
+		}
 		//删除tempCloud
 		err = localMongoTempCloud.DeleteVoteCloud(id)
 		if err != nil {
 			log.Error("删除临时云数据失败，package:NewCloud, func:PostMasterCloudVote, message:", err, " Delete cloud error. ")
 			return err
 		}
+		return nil
 	}
 	return nil
 }

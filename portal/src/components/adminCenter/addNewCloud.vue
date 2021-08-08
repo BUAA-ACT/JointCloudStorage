@@ -96,7 +96,7 @@ export default {
         StoragePrice: 0.12,
         TrafficPrice: 0.4,
         Availability: 0.9995,
-        Status: "DOWN",
+        Status: "UP",
         Location: "116.411087,39.912695",
         Address: "ksyun-beijing.jointcloudstorage.cn",
         CloudName: "金山云-北京",
