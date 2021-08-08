@@ -318,6 +318,19 @@ func (processor *TaskProcessor) ProcessGetTmpDownloadUrl(t *model.Task) (url str
 		if err != nil {
 			continue
 		}
+		c := storageClient.Index(t.GetSourcePath(), t.Uid)
+		count := 0
+		for {
+			if _, ok := <-c; ok == true {
+				count += 1
+			} else {
+				break
+			}
+		}
+		if count == 0 {
+			err = errors.New("storage client unavailable")
+			continue
+		}
 		url, err = storageClient.GetTmpDownloadUrl(t.GetSourcePath(), t.Uid, time.Minute*30)
 		if err != nil {
 			continue
