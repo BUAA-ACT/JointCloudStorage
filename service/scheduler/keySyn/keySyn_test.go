@@ -4,34 +4,40 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/http/httptest"
+	"shaoliyin.me/jcspan/config"
+	"shaoliyin.me/jcspan/dao"
 	"strings"
 	"testing"
 )
 
 var (
-	r *gin.Engine
+	r = gin.Default()
 )
 
-func InitTest() error {
-	r = gin.Default()
-	KeySynInit("aliyun-beijing", r)
+func keySynPlugIn() error {
+	IDInit("aliyun-beijing")
+
+	databaseMap := map[string]map[string]*dao.CollectionConfig{
+		*config.FlagEnv: {
+			config.AccessKeyCollectionName: nil,
+			config.CloudCollectionName:     nil,
+		},
+	}
+	err := DaoInit(*config.FlagMongo, databaseMap)
+	if err != nil {
+		return err
+	}
+	SetKeyCol(databaseMap[*config.FlagEnv][config.AccessKeyCollectionName].CollectionHandler)
+	SetCloudCol(databaseMap[*config.FlagEnv][config.CloudCollectionName].CollectionHandler)
+	RouteInit(r)
 	return nil
 }
-
-//type AccessKey struct {
-//	UserID     string    `json:"UserID" bson:"user_id"`
-//	AccessKey  string    `json:"AccessKey" bson:"access_key"`
-//	SecretKey  string    `json:"SecretKey" bson:"secret_key"`
-//	Comment    string    `json:"Comment" bson:"comment"`
-//	CreateTime time.Time `json:"CreateTime" bson:"create_time"`
-//	Available  bool      `json:"Available" bson:"available"`
-//}
 
 func TestPostKeyUpsert(t *testing.T) {
 	data1 := `{"user_id":"wanggj","access_key":"wanggj_ak1","secret_key":"wanggj_sk1","comment":"this is test data1"}`
 	data2 := `{"user_id":"wanggj2","access_key":"wanggj_ak2","secret_key":"wanggj_sk2","comment":"this is test data2"}`
 	t.Log("Start testing endpoint PostKeyUpsert.")
-	if err := InitTest(); err != nil {
+	if err := keySynPlugIn(); err != nil {
 		t.Error("Init test failed! ", err.Error())
 	}
 
@@ -57,7 +63,7 @@ func TestPostKeyDelete(t *testing.T) {
 	data1 := `{"user_id":"wanggj","access_key":"wanggj_ak1","secret_key":"wanggj_sk1","comment":"this is test data1"}`
 	data2 := `{"user_id":"wanggj2","access_key":"wanggj_ak2","secret_key":"wanggj_sk2","comment":"this is test data2"}`
 	t.Log("Start testing endpoint PostKeyDelete.")
-	if err := InitTest(); err != nil {
+	if err := keySynPlugIn(); err != nil {
 		t.Error("Init test failed! ", err.Error())
 	}
 
