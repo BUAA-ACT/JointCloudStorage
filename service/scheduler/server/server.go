@@ -618,12 +618,12 @@ func PostUpdateClouds(c *gin.Context) {
 				resp, err := http.Post(addr, "application/json", body)
 				if err != nil || resp.StatusCode != 200 {
 					tools.LogError(err, requestID, "can't syn to cloud: ", otherCLoud.CloudID)
-					c.JSON(http.StatusBadRequest, gin.H{
-						"RequestID": requestID,
-						"Code":      codeInternalError,
-						"Msg":       errorMsg[codeInternalError],
-					})
-					return
+					//c.JSON(http.StatusBadRequest, gin.H{
+					//	"RequestID": requestID,
+					//	"Code":      codeInternalError,
+					//	"Msg":       errorMsg[codeInternalError],
+					//})
+					//return
 				}
 			}
 		}
