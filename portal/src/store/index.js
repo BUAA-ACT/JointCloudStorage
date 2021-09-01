@@ -8,6 +8,7 @@ import Other from "@/utils/other";
 Vue.use(Vuex);
 
 const ROLE_ADMIN = "ADMIN";
+const ROLE_GUEST = "GUEST";
 
 // const store = new Vuex.Store({
 export default new Vuex.Store({
@@ -60,7 +61,8 @@ export default new Vuex.Store({
     storagePlan: state => state.storagePlan,
     ready: state => state.ready,
     role: state => state.role,
-    isAdmin: state => state.role === ROLE_ADMIN
+    isAdmin: state => state.role === ROLE_ADMIN,
+    isGuest: state => state.role === ROLE_GUEST
   },
   mutations: {
     SET_TOKEN: (state, token) => {
