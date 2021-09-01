@@ -400,7 +400,7 @@ vueRouter.beforeEach(async (to, from, next) => {
       await Other.sleep(50);
     }
   }
-  const { isAdmin } = store.getters;
+  const { isAdmin, isGuest } = store.getters;
   if (hasToken) {
     if (to.path === "/login") {
       next({ path: to.query.redirect || "/" });
@@ -410,6 +410,8 @@ vueRouter.beforeEach(async (to, from, next) => {
       } else {
         next({ path: "/401" });
       }
+    } else if (to.path.includes("userPreference") && isGuest) {
+      next({ path: "/404" });
     } else {
       next();
     }
