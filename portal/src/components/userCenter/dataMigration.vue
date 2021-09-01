@@ -53,7 +53,7 @@ import PlanDetail from "@/components/userCenter/planDetail.vue";
 export default {
   name: "dataMigration",
   components: { PlanDetail, locationViewer },
-  inject: ["formatPrice"],
+  inject: ["formatPrice", "reload"],
   data() {
     return {
       intervalId: null,
@@ -88,6 +88,7 @@ export default {
       this.curPercent = Number(data.Progress.toFixed(2));
       if (data.TaskState === "FINISH") {
         this.status = "success";
+        setTimeout(this.reload, 100);
       }
     },
     closeConnection() {
