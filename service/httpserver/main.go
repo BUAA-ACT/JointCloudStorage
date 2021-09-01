@@ -93,6 +93,7 @@ func StartServe(configFilePath string) {
 }
 
 func main() {
+	//test()
 	flags := []cli.Flag{
 		&cli.PathFlag{
 			Name:    "config",

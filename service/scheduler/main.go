@@ -4,36 +4,20 @@ import (
 	"flag"
 	"fmt"
 	"shaoliyin.me/jcspan/config"
+	"shaoliyin.me/jcspan/dao"
 	"shaoliyin.me/jcspan/keySyn"
+	"shaoliyin.me/jcspan/newcloud"
+	"shaoliyin.me/jcspan/server"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	"shaoliyin.me/jcspan/dao"
-	"shaoliyin.me/jcspan/newcloud"
-)
-
-const (
-	Version = "v0.2"
-)
-
-var (
-	flagMongo              = flag.String("mongo", "mongodb://localhost:27017", "mongodb address")
-	flagAddress            = flag.String("addr", ":8082", "scheduler address")
-	flagEnv                = flag.String("env", "test", "dev|test|prod")
-	flagCloudID            = flag.String("cid", "aliyun-beijing", "cloud id")
-	flagAESKey             = flag.String("aes", "1234567890123456", "aes key")
-	flagRescheduleInterval = flag.Duration("reschedule", time.Minute*1, "reschedule interval")
-	flagHeartbeatInterval  = flag.Duration("heartbeat", time.Second*10, "heartbeat interval")
-
-	db      dao.Database
-	addrMap = make(map[string]string)
 )
 
 func FlagParse(env string) {
 	if env == "debug" {
-		flagMongo = flag.String("mongo", "mongodb://192.168.105.8:20100", "mongodb address")
-		flagEnv = flag.String("env", "dev", "Database name used for Clouds storage.")
+		config.FlagMongo = flag.String("mongo", "mongodb://192.168.105.8:20100", "mongodb address")
+		config.FlagEnv = flag.String("env", "dev", "Database name used for Clouds storage.")
 	}
 	flag.Parse()
 }
@@ -47,53 +31,89 @@ func Init() {
 	})
 
 	// 初始化全局设置
-	config.SetGlobalConfig(*flagMongo, *flagAddress, *flagEnv, *flagCloudID, *flagAESKey, *flagRescheduleInterval, *flagHeartbeatInterval)
+	config.GetConfig()
 
-	// Init DAO instance
-	var err error
-	db = dao.GetDatabaseInstance()
-	if err != nil {
-		panic(err)
-	}
+	//Switch to release mode
+	//if *flagEnv == "prod" {
+	//	gin.SetMode(gin.ReleaseMode)
+	//}
 
-	// Init address map
-	clouds, err := db.GetAllClouds()
-	if err != nil {
-		panic(err)
-	}
-	for _, c := range clouds {
-		addrMap[c.CloudID] = c.Address
-	}
-
-	// Switch to release mode
-	// if *flagEnv == "prod" {
-	// 	gin.SetMode(gin.ReleaseMode)
-	// }
 }
 
-func NewRouter(r *gin.Engine) {
-	r.GET("/storage_plan", GetStoragePlan)
-	r.GET("/download_plan", GetDownloadPlan)
-	r.GET("/status", GetStatus)
-	r.GET("/all_clouds_status", GetAllCloudsStatus)
+func serverPlugIn(r *gin.Engine) {
+	server.IDInit(*config.FlagCloudID)
+	// server module use the databases below
+	databaseMap := map[string]map[string]*dao.CollectionConfig{
+		*config.FlagEnv: {
+			config.CloudCollectionName:           nil,
+			config.UserCollectionName:            nil,
+			config.FileCollectionName:            nil,
+			config.MigrationAdviceCollectionName: nil,
+		},
+	}
 
-	r.POST("/storage_plan", PostStoragePlan)
-	r.POST("/metadata", PostMetadata)
-	r.POST("/update_clouds", PostUpdateClouds)
+	err := server.DaoInit(*config.FlagMongo, databaseMap)
+	if err != nil {
+		log.Errorf("server plug in failed with error : %s", err.Error())
+	}
+	server.SetCloudCol(databaseMap[*config.FlagEnv][config.CloudCollectionName].CollectionHandler)
+	server.SetUserCol(databaseMap[*config.FlagEnv][config.UserCollectionName].CollectionHandler)
+	server.SetFileCol(databaseMap[*config.FlagEnv][config.FileCollectionName].CollectionHandler)
+	server.SetAdviceCol(databaseMap[*config.FlagEnv][config.MigrationAdviceCollectionName].CollectionHandler)
+	server.RouteInit(r)
+}
+
+func newCloudPlugIn(r *gin.Engine) {
+	newcloud.IDInit(*config.FlagCloudID, *config.FlagEnv)
+	// new cloud module use the databases below
+	databaseMap := map[string]map[string]*dao.CollectionConfig{
+		*config.FlagEnv: {
+			config.CloudCollectionName:     nil,
+			config.TempCloudCollectionName: nil,
+			config.VoteCloudCollectionName: nil,
+		},
+	}
+	err := newcloud.DaoInit(*config.FlagMongo, databaseMap)
+	if err != nil {
+		log.Errorf("server plug in failed with error : %s", err.Error())
+	}
+	newcloud.SetCloudCol(databaseMap[*config.FlagEnv][config.CloudCollectionName].CollectionHandler)
+	newcloud.SetTempCloudCol(databaseMap[*config.FlagEnv][config.TempCloudCollectionName].CollectionHandler)
+	newcloud.SetVoteCloudCol(databaseMap[*config.FlagEnv][config.VoteCloudCollectionName].CollectionHandler)
+	newcloud.RouteInit(r)
+}
+
+func keySynPlugIn(r *gin.Engine) {
+	keySyn.IDInit(*config.FlagCloudID)
+	// key synchronize module use the databases below
+	databaseMap := map[string]map[string]*dao.CollectionConfig{
+		*config.FlagEnv: map[string]*dao.CollectionConfig{
+			config.AccessKeyCollectionName: nil,
+			config.CloudCollectionName:     nil,
+		},
+	}
+	err := keySyn.DaoInit(*config.FlagMongo, databaseMap)
+	if err != nil {
+		log.Errorf("server plug in failed with error : %s", err.Error())
+	}
+	keySyn.SetKeyCol(databaseMap[*config.FlagEnv][config.AccessKeyCollectionName].CollectionHandler)
+	keySyn.SetCloudCol(databaseMap[*config.FlagEnv][config.CloudCollectionName].CollectionHandler)
+	keySyn.RouteInit(r)
 }
 
 func main() {
 	fmt.Println("this is main func")
 	FlagParse("")
 	Init()
-	log.Infoln("Starting scheduler", Version)
+	log.Infoln("Starting scheduler", config.Version)
 
 	r := gin.Default()
-	NewRouter(r)
-	newcloud.Router(r, *flagMongo, *flagEnv, *flagCloudID, "production")
-	keySyn.KeySynInit(*flagCloudID, r)
-	go reSchedule(*flagRescheduleInterval)
-	go heartbeat(*flagHeartbeatInterval)
+	serverPlugIn(r)
+	keySynPlugIn(r)
+	newCloudPlugIn(r)
 
-	r.Run(*flagAddress)
+	go server.ReSchedule(*config.FlagRescheduleInterval)
+	go server.Heartbeat(*config.FlagHeartbeatInterval)
+
+	r.Run(*config.FlagAddress)
 }

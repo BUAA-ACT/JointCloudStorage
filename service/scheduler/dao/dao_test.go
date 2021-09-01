@@ -1,27 +1,45 @@
 package dao
 
-import "testing"
+import (
+	"shaoliyin.me/jcspan/entity"
+	"testing"
+)
 
 const (
 	Version = "v0.2"
 
+	MongoURI         = "mongodb://localhost:27017"
+	DaoTestEnv       = "dao_test"
 	CollectionCloud  = "Cloud"
 	CollectionUser   = "User"
 	CollectionFile   = "File"
-	MigrationAdvice2 = "MigrationAdvice"
+	MigrationAdvice2 = "CollectionMigrationAdvice"
 )
 
 func TestDao_InsertMigrationAdvice(t *testing.T) {
 	// Init DAO instance
 	var err error
-	db := GetDatabaseInstance()
-	m := MigrationAdvice{
+
+	databases := map[string]map[string]*CollectionConfig{
+		DaoTestEnv: {
+			MigrationAdvice2: nil,
+			CollectionFile:   nil,
+			CollectionUser:   nil,
+			CollectionCloud:  nil,
+		},
+	}
+	err = NewDao(MongoURI, databases)
+	if err != nil {
+		t.Fatalf("failed when create dao")
+	}
+	adviceCol := databases[DaoTestEnv][MigrationAdvice2].CollectionHandler
+	m := entity.MigrationAdvice{
 		UserId: "zhangjh",
-		StoragePlanOld: StoragePlan{
+		StoragePlanOld: entity.StoragePlan{
 			N:           2,
 			K:           1,
 			StorageMode: "Replica",
-			Clouds: []Cloud{
+			Clouds: []entity.Cloud{
 				{
 					CloudID:      "aliyun-qingdao",
 					Endpoint:     "oss-cn-qingdao.aliyuncs.com",
@@ -52,11 +70,11 @@ func TestDao_InsertMigrationAdvice(t *testing.T) {
 				},
 			},
 		},
-		StoragePlanNew: StoragePlan{
+		StoragePlanNew: entity.StoragePlan{
 			N:           2,
 			K:           1,
 			StorageMode: "Replica",
-			Clouds: []Cloud{
+			Clouds: []entity.Cloud{
 				{
 					CloudID:      "aliyun-hangzhou",
 					Endpoint:     "oss-cn-hangzhou.aliyuncs.com",
@@ -87,7 +105,7 @@ func TestDao_InsertMigrationAdvice(t *testing.T) {
 				},
 			},
 		},
-		CloudsOld: []Cloud{
+		CloudsOld: []entity.Cloud{
 			{
 				CloudID:      "aliyun-qingdao",
 				Endpoint:     "oss-cn-qingdao.aliyuncs.com",
@@ -103,7 +121,7 @@ func TestDao_InsertMigrationAdvice(t *testing.T) {
 				ProviderName: "aliyun",
 			},
 		},
-		CloudsNew: []Cloud{
+		CloudsNew: []entity.Cloud{
 			{
 				CloudID:      "aliyun-hangzhou",
 				Endpoint:     "oss-cn-hangzhou.aliyuncs.com",
@@ -121,7 +139,10 @@ func TestDao_InsertMigrationAdvice(t *testing.T) {
 		},
 		Cost: 0,
 	}
-	err = db.InsertMigrationAdvice(m)
-	t.Log(err.Error())
+
+	err = InsertMigrationAdvice(adviceCol, m)
+	if err != nil {
+		t.Log(err.Error())
+	}
 
 }

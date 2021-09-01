@@ -9,28 +9,15 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"shaoliyin.me/jcspan/dao"
+	"shaoliyin.me/jcspan/entity"
 	"shaoliyin.me/jcspan/utils"
-)
-
-const (
-	CallerHttpServer = "http-server"
-	CallerScheduler  = "scheduler"
-	CallerHeaderName = "Caller"
-
-	SynTypeUpsert = "upsert"
-	SynTypeDelete = "delete"
-)
-
-var (
-	keyDao   dao.Database
-	localCid string
 )
 
 func PostKeyUpsert(c *gin.Context) {
 	requestId := uuid.New().String()
 
 	//获取ak
-	var ak dao.AccessKey
+	var ak entity.AccessKey
 	err := c.ShouldBindJSON(&ak)
 	if err != nil {
 		log.Error("package:keySyn, func:PostKeyUpsert,获取accesskey失败:", err, "requestID:", requestId)
@@ -57,13 +44,13 @@ func PostKeyUpsert(c *gin.Context) {
 	})
 }
 
-func keySyn(ak dao.AccessKey, caller string, synType string) error {
+func keySyn(ak entity.AccessKey, caller string, synType string) error {
 	var err error
 	switch synType {
 	case SynTypeUpsert:
-		err = keyDao.KeyUpsert(ak)
+		err = dao.KeyUpsert(keyCol, ak)
 	case SynTypeDelete:
-		err = keyDao.DeleteKey(ak)
+		err = dao.DeleteKey(keyCol, ak)
 	}
 
 	if err != nil {
@@ -73,7 +60,7 @@ func keySyn(ak dao.AccessKey, caller string, synType string) error {
 	if caller == CallerHttpServer {
 		//若调用者是http-server,向其他节点同步
 		//获取其他clouds
-		clouds, err := keyDao.GetAllClouds()
+		clouds, err := dao.GetAllClouds(cloudCol)
 		if err != nil {
 			return errors.New("获取clouds失败，" + err.Error())
 		}
@@ -90,10 +77,10 @@ func keySyn(ak dao.AccessKey, caller string, synType string) error {
 				var req *http.Request
 				switch synType {
 				case SynTypeUpsert:
-					addr := utils.GenAddress(cloud.CloudID, endPointAddKey)
+					addr := utils.GenAddress(cloudCol, cloud.CloudID, endPointAddKey)
 					req, err = http.NewRequest("POST", addr, body)
 				case SynTypeDelete:
-					addr := utils.GenAddress(cloud.CloudID, endPointDeleteKey)
+					addr := utils.GenAddress(cloudCol, cloud.CloudID, endPointDeleteKey)
 					req, err = http.NewRequest("POST", addr, body)
 				}
 
@@ -108,8 +95,7 @@ func keySyn(ak dao.AccessKey, caller string, synType string) error {
 				if err != nil {
 					log.Error("发送key同步http请求失败，错误详情：", err.Error())
 					continue
-				}
-				if resp.StatusCode != 200 {
+				} else if resp.StatusCode != 200 {
 					log.Error("key同步操作失败，Code：", resp.StatusCode, ",错误详情：", resp.StatusCode)
 				}
 			}
@@ -122,7 +108,7 @@ func PostKeyDelete(c *gin.Context) {
 	requestId := uuid.New().String()
 
 	//获取ak
-	var ak dao.AccessKey
+	var ak entity.AccessKey
 	err := c.ShouldBindJSON(&ak)
 	if err != nil {
 		log.Error("package:keySyn, func:PostDeleteKey,获取accesskey失败:", err, "requestID:", requestId)

@@ -1,57 +1,85 @@
 package config
 
 import (
+	"flag"
+	"fmt"
 	"github.com/sirupsen/logrus"
+	"reflect"
+	"sync"
 	"time"
 )
 
-var conf *config
+// Version constant */
+const (
+	Version = "v0.2"
+)
 
-type collectionNames struct {
-	CollectionCloud string
-	CollectionUser  string
-	CollectionFile  string
-	MigrationAdvice string
-	CollectionAK    string
+/* http constant */
+const (
+	CloudCollectionName           = "Cloud"
+	TempCloudCollectionName       = "TempCloud"
+	VoteCloudCollectionName       = "VoteCloud"
+	UserCollectionName            = "User"
+	FileCollectionName            = "File"
+	MigrationAdviceCollectionName = "MigrationAdvice"
+	AccessKeyCollectionName       = "AccessKey"
+
+	CodeOK            = 200
+	CodeBadRequest    = 400
+	CodeUnauthorized  = 401
+	CodeInternalError = 500
+)
+
+/* user role constant */
+const (
+	RoleHost  = "HOST"
+	RoleGuest = "GUEST"
+)
+
+/* Advice status */
+const (
+	AdviceStatusPending = "PENDING"
+
+	AdviceStatus = "TODO"
+)
+
+/* */
+var (
+	FlagMongo              = flag.String("mongo", "mongodb://localhost:27017", "mongodb address")
+	FlagAddress            = flag.String("addr", ":8082", "scheduler address")
+	FlagEnv                = flag.String("env", "test", "dev|test|prod")
+	FlagCloudID            = flag.String("cid", "aliyun-beijing", "cloud id")
+	FlagAESKey             = flag.String("aes", "1234567890123456", "aes key")
+	FlagRescheduleInterval = flag.Duration("reschedule", time.Minute*1, "reschedule interval")
+	FlagHeartbeatInterval  = flag.Duration("heartbeat", time.Second*10, "heartbeat interval")
+	AddrMap                = make(map[string]string)
+)
+
+var conf *Config
+var lock sync.Mutex
+var registerLock sync.RWMutex
+
+func SetGlobalConfig() {
+	conf = Factory()
+	a := reflect.ValueOf(conf).Elem().String()
+	fmt.Println(a)
+
 }
 
-type config struct {
-	FlagMongo              string
-	FlagAddress            string
-	FlagEnv                string
-	FlagCloudID            string
-	FlagAESKey             string
-	FlagRescheduleInterval time.Duration
-	FlagHeartbeatInterval  time.Duration
-	CollectionNames        collectionNames
-}
-
-type Config struct {
-	*config
-}
-
-func SetGlobalConfig(mongo, address, env, cloudID, aesKey string, rescheduleInterval, heartbeatInterval time.Duration) {
-	conf = &config{
-		FlagMongo:              mongo,
-		FlagAddress:            address,
-		FlagEnv:                env,
-		FlagCloudID:            cloudID,
-		FlagAESKey:             aesKey,
-		FlagRescheduleInterval: rescheduleInterval,
-		FlagHeartbeatInterval:  heartbeatInterval,
-		CollectionNames: collectionNames{
-			CollectionCloud: "Cloud",
-			CollectionUser:  "User",
-			CollectionFile:  "File",
-			MigrationAdvice: "MigrationAdvice",
-			CollectionAK:    "AccessKey",
-		},
-	}
-}
-
-func GetConfig() Config {
+func GetConfig() *Config {
+	lock.Lock()
 	if conf == nil {
-		logrus.Errorf("读取配置文件时，config 尚未设置！！")
+		logrus.Errorf("读取配置文件时，config 尚未设置！！正在自动配置中")
+		conf = &Config{
+			FlagMongo:              *FlagMongo,
+			FlagAddress:            *FlagAddress,
+			FlagEnv:                *FlagEnv,
+			FlagCloudID:            *FlagCloudID,
+			FlagAESKey:             *FlagAESKey,
+			FlagRescheduleInterval: *FlagRescheduleInterval,
+			FlagHeartbeatInterval:  *FlagHeartbeatInterval,
+		}
 	}
-	return Config{conf}
+	lock.Unlock()
+	return conf
 }
