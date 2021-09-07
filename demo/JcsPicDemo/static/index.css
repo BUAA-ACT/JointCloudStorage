@@ -1,0 +1,25 @@
+.card {
+    margin-top: 20px;
+}
+
+.detail-table {
+    text-align: center;
+    font-size: 48px;
+}
+
+.detail-table th {
+    font-size: 24px;
+}
+
+.detail-table .success {
+    color: var(--bs-success)
+}
+
+.detail-table .fail {
+    color: var(--bs-danger)
+}
+
+.grey-link {
+    color: #ccc;
+    unde
+}
