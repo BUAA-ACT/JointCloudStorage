@@ -1,3 +1,4 @@
+import multiprocessing
 import threading
 
 from node import Node
@@ -61,10 +62,14 @@ class NodesRunner(threading.Thread):
             contrast_node = Node("lar_en", ak, sk, endpoint_hangzhou, 1.0, dict2, dict3, fallback_endpoint, endpoint_name_dict)
         # large_node = Node("lar_en", ak, sk, endpoint, 1.0)
         # large_node.start()
-        self.nodes = [upload_node, colorize_node, contrast_node]
+        self.nodes = multiprocessing.Manager().list()
+        self.nodes.append(upload_node)
+        self.nodes.append(colorize_node)
+        self.nodes.append(contrast_node)
         self.nodes_num = 3
 
         upload_node.clear_all()
+
         upload_node.start()
         colorize_node.start()
         contrast_node.start()
