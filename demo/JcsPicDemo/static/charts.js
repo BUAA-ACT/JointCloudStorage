@@ -1,43 +1,51 @@
-var myChart = echarts.init(document.getElementById('main'));
+var chart1 = echarts.init(document.getElementById('graph1'));
+var chart2 = echarts.init(document.getElementById('graph2'));
 
 // 指定图表的配置项和数据
-var base = +new Date(2014, 9, 3);
-var oneDay = 24 * 3600 * 1000;
-var date = [];
+var now = new Date();
+var data = [[[now, 0]], [[now, 0]], [[now, 0]]];
 
-var data = [Math.random() * 150];
-var now = new Date(base);
 
-function addData(shift) {
-    now = [now.getFullYear(), now.getMonth() + 1, now.getDate()].join('/');
-    date.push(now);
-    data.push((Math.random() - 0.4) * 10 + data[data.length - 1]);
-
-    if (shift) {
-        date.shift();
-        data.shift();
+function getInfo() {
+    return {
+        "node_states": [
+            {
+                "finish_num": data[0][data[0].length - 1][1] + 1
+            },
+            {
+                "finish_num": data[1][data[1].length - 1][1] + 1
+            },
+            {
+                "finish_num": data[2][data[2].length - 1][1] + 1
+            },
+        ]
     }
-
-    now = new Date(+new Date(now) + oneDay);
 }
 
-for (var i = 1; i < 100; i++) {
-    addData();
-}
+
+// for (var i = 1; i < 30; i++) {
+//     addData();
+// }
 
 option = {
     xAxis: {
-        type: 'category',
+        type: 'time',
         boundaryGap: false,
-        data: date
+        minInterval: 2,
+        min: 'dataMin',
+        axisLabel: {
+            interval: 2
+        }
+        //data: date
     },
     yAxis: {
         boundaryGap: [0, '50%'],
-        type: 'value'
+        type: 'value',
+        min: 'dataMin',
     },
     series: [
         {
-            name: '成交',
+            name: '成功',
             type: 'line',
             smooth: true,
             symbol: 'none',
@@ -51,16 +59,40 @@ option = {
 };
 
 setInterval(function () {
-    addData(true);
-    myChart.setOption({
-        xAxis: {
-            data: date
-        },
-        series: [{
-            name: '成交',
-            data: data
-        }]
-    });
+    axios.get("/info").then(
+        resp => {
+            for (let i = 0; i < 3; i++) {
+                now = new Date()
+                console.log(data[i])
+                data[i].push([now, resp.data.node_states[i].finish_num]);
+                if (data[i].length > 30) {
+                    data[i].shift();
+                }
+            }
+            chart1.setOption({
+                xAxis: {
+                    //data: date
+                },
+                series: [{
+                    name: '成功',
+                    data: data[0]
+                }]
+            });
+            chart2.setOption({
+                xAxis: {
+                    //data: date
+                },
+                series: [{
+                    name: '成功',
+                    data: data[1]
+                }]
+            });
+        }
+    ).catch(e =>
+        console.log(e)
+    )
 }, 500);
 
-option && myChart.setOption(option);
+
+option && chart1.setOption(option);
+option && chart2.setOption(option);
