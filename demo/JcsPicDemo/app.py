@@ -1,5 +1,5 @@
 import jsonpickle
-from flask import Flask, jsonify, Response, send_file
+from flask import Flask, jsonify, Response, send_file, render_template
 from node import Node
 import logging
 from startNode import NodesRunner
@@ -27,7 +27,7 @@ class Info(object):
 
 @app.route('/')
 def hello_world():
-    return 'Hello World!'
+    return render_template("index.html")
 
 
 @app.route("/start")
