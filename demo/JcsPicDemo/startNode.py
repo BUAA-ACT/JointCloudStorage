@@ -4,8 +4,11 @@ class NodesRunner(object):
 
     def __init__(self):
         self.nodes = []
+        self.nodes_num = 0
+        self.state = "ready"
 
     def start_nodes(self, is_test=False):
+        self.state = "running"
         ak = "c4470e6c2b28433f88cff9642429684e"
         sk = "adc52bedd6824fad83b9e8235b867b37"
         endpoint_hohhot = "http://jsi-aliyun-hohhot.jointcloudstorage.cn/"
@@ -45,5 +48,6 @@ class NodesRunner(object):
         # large_node = Node("lar_en", ak, sk, endpoint, 1.0)
         # large_node.start()
         self.nodes = [upload_node, colorize_node, contrast_node]
+        self.nodes_num = 3
 
 

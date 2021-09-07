@@ -33,6 +33,16 @@ sk = "CczWdEiQs2gFd8w0cHn1EYeI1G4zCorL"
 aip_client = AipImageProcess(app_id, ak, sk)
 
 
+class NodeState(object):
+    def __init__(self, finish_num, fail_num, endpoint_name, endpoint_address, state):
+        self.finish_num = finish_num
+        self.fail_num = fail_num
+        self.endpoint_name = endpoint_name
+        self.endpoint_address = endpoint_address
+        self.state = state
+        self.file_processing = ""
+
+
 class Node(threading.Thread):
     def __init__(self, task_type, ak, sk, endpoint, interval, upstream_dict, output_dict, fallback_endpoint):
         threading.Thread.__init__(self)
@@ -46,20 +56,23 @@ class Node(threading.Thread):
         self.output_dict = output_dict
         self.fallback_endpoint = fallback_endpoint
         self.fallback_index = -1
+        self.node_state = NodeState(0, 0, "", endpoint, "ok")
+
         try:
             info = self.state.get_server_info()
             logger.warning(f"计算节点 {task_type} 初始化成功，存储接入点：{endpoint}, 节点信息：{info}")
         except Exception as e:
             logger.error(f"计算节点 {task_type} 初始化失败，存储接入点：{endpoint}, ")
 
+    def get_state(self) -> NodeState:
+        return self.node_state
+
     def run(self):
         logger.info("开始执行工作线程："+self.task_type)
         times = 0
         while True:
-            #self.switch[self.task_type](self, self.bucket)
             self.work()
             times += 1
-            # logger.info(f"{self.task_type} 成功执行 第 {times} 次")
             time.sleep(self.interval)
 
     def send(self):
@@ -95,6 +108,7 @@ class Node(threading.Thread):
                 logger.info(f"{self.task_type} 节点检测到 {len(difference)} 张待处理图片")
                 for filename in difference:
                     c = self.bucket.get_object(self.upstream_dict + filename)
+                    self.node_state.file_processing = filename
                     try:
                         if self.task_type == "colorize":
                             res = aip_client.colourize(c)
@@ -105,18 +119,23 @@ class Node(threading.Thread):
                         else:
                             res = {"image": str(base64.b64encode(c), "utf-8")}
                     except Exception as e:
+                        res = {"image": str(base64.b64encode(c), "utf-8")}
                         logger.error(f"图像处理时错误，Error: {e}")
                     self.sendBytes(res, self.output_dict + filename)
                     logger.info(f"{self.task_type} 节点处理 {filename} 结果上传成功")
+                    self.node_state.finish_num += 1
+                    self.node_state.state = "OK"
+
         except Exception as e:
             logger.error(f"云际存储连接出错 Error:{e}, 错误次数 {self.fail_times}")
             self.fail_times += 1
             if self.fail_times % 3 == 0:
                 self.fallback_index += 1
+                self.node_state.fail_num += 1
+                self.state = "ERROR"
                 self.bucket = Bucket(self.auth, self.fallback_endpoint[self.fallback_index])
                 self.state = State(self.auth, self.fallback_endpoint[self.fallback_index])
                 logger.error(f"切换到备份节点：{self.fallback_endpoint[self.fallback_index]}")
-
 
 
     def sendBytes(self, res, path):
