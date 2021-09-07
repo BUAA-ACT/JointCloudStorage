@@ -17,7 +17,7 @@ def hello_world():
 @app.route("/start")
 def start_run():
     runner = NodesRunner()
-    background_process = multiprocessing.Process(name="nodes", target=runner.start_nodes)
+    background_process = multiprocessing.Process(name="nodes", target=runner.start_nodes, args=(False, ))
     background_process.daemon = True
     background_process.start()
     return hello_world()
