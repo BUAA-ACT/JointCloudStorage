@@ -1,2 +1,0 @@
-from aip import AipImageProcess
-
