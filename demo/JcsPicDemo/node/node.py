@@ -14,6 +14,7 @@ from aip import AipImageProcess
 
 from JointCloudStorage import Auth, Bucket, State
 from logzero import logger
+from node_client import NodeClient
 
 parser = argparse.ArgumentParser(description=__doc__)
 add_arg = functools.partial(add_arguments, argparser=parser)
@@ -24,11 +25,6 @@ add_arg('sk', str, None, "secret key")
 add_arg('endpoint', str, None, "service address,ip:port")
 
 send_index = 0
-
-app_id = "24595163"
-ak = "e3mXihhfyQPjY0gNoK97fj6v"
-sk = "CczWdEiQs2gFd8w0cHn1EYeI1G4zCorL"
-aip_client = AipImageProcess(app_id, ak, sk)
 
 
 class NodeState(object):
@@ -41,7 +37,8 @@ class NodeState(object):
 
 
 class Node(threading.Thread):
-    def __init__(self, task_type, ak, sk, endpoint, interval, upstream_dict, output_dict, fallback_endpoint, endpoint_name_dict):
+    def __init__(self, task_type, ak, sk, endpoint, interval, upstream_dict, output_dict, fallback_endpoint,
+                 endpoint_name_dict):
         threading.Thread.__init__(self)
         self.auth = Auth(ak, sk)
         self.bucket = Bucket(self.auth, endpoint)
@@ -66,7 +63,7 @@ class Node(threading.Thread):
         return self.node_state
 
     def run(self):
-        logger.info("开始执行工作线程："+self.task_type)
+        logger.info("开始执行工作线程：" + self.task_type)
         times = 0
         while True:
             self.work()
@@ -117,25 +114,14 @@ class Node(threading.Thread):
             if difference:
                 logger.info(f"{self.task_type} 节点检测到 {len(difference)} 张待处理图片")
                 for filename in difference:
-                    c = self.bucket.get_object(self.upstream_dict + filename)
-                    self.node_state.file_processing = filename
-                    try:
-                        if self.task_type == "colorize":
-                            res = aip_client.colourize(c)
-                        elif self.task_type == "lar_en":
-                            res = aip_client.imageQualityEnhance(c)
-                        elif self.task_type == "con_en":
-                            res = aip_client.contrastEnhance(c)
-                        else:
-                            res = {"image": str(base64.b64encode(c), "utf-8")}
-                    except Exception as e:
-                        res = {"image": str(base64.b64encode(c), "utf-8")}
-                        logger.error(f"图像处理时错误，Error: {e}")
-                    self.sendBytes(res, self.output_dict + filename)
-                    logger.info(f"{self.task_type} 节点处理 {filename} 结果上传成功")
-                    self.node_state.finish_num += 1
-                    self.node_state.state = "OK"
-
+                    file_lock = threading.Lock()
+                    num_lock = threading.Lock()
+                    state_lock = threading.Lock()
+                    client = NodeClient(bucket=self.bucket, task_type=self.task_type, up_dict=self.upstream_dict,
+                                        out_dict=self.output_dict, file_name=filename, state=self.state,
+                                        file_lock=file_lock, num_lock=num_lock, state_lock=state_lock)
+                    client.run()
+                    client.join()
         except Exception as e:
             logger.error(f"云际存储连接出错 Error:{e}, 错误次数 {self.fail_times}")
             self.fail_times += 1
@@ -146,15 +132,6 @@ class Node(threading.Thread):
                 self.bucket = Bucket(self.auth, self.fallback_endpoint[self.fallback_index])
                 self.state = State(self.auth, self.fallback_endpoint[self.fallback_index])
                 logger.error(f"切换到备份节点：{self.fallback_endpoint[self.fallback_index]}")
-
-
-    def sendBytes(self, res, path):
-        if "image" in res:
-            img = base64.b64decode(res['image'].encode())
-            self.bucket.put_object(path, img)
-        else:
-            logger.warning(res['error_code'] + ":" + res['error_msg'] + " path: " + path)
-        pass
 
     def getFileNames(self, fileList):
         names = []
