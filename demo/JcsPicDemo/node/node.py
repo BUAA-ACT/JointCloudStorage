@@ -45,10 +45,11 @@ def send(bucket):
         file_list = os.listdir("picture")
         with open("picture/" + file_list[send_index], 'rb') as f:
             dt = datetime.datetime.now()
-            if buck.put_object(dict1 + "pic" + dt.strftime("%Y-%m-%d-%H-%M-%S") + ".jpg", f):
-                logger.warning(f" STEP 1 : 文件上传成功 file upload OK!")
-            else:
-                print("upload Fail!")
+            if f.name.endswith(".jpg"):
+                if buck.put_object(dict1 + "pic" + dt.strftime("%Y-%m-%d-%H-%M-%S") + ".jpg", f):
+                    logger.warning(f" STEP 1 : 文件上传成功 file upload OK!")
+                else:
+                    print("upload Fail!")
         send_index = (send_index + 1) % len(file_list)
     except Exception as e:
         logger.warning("step1:" + str(e))
@@ -112,7 +113,7 @@ def contrast_enhance(bucket):
 def large_enhance(bucket):
     buck = bucket
     try:
-        fileList1 = bucket.get_object_list(dict3)
+        fileList1 = bucket.get_object_list(dict2)
         fileList2 = bucket.get_object_list(dict4)
         set1=set()
         set2=set()
@@ -126,7 +127,7 @@ def large_enhance(bucket):
         if difference:
             logger.info(f"large 节点检测到 {len(difference)} 张待处理图片")
             for filename in difference:
-                c = buck.get_object(dict3 + filename)
+                c = buck.get_object(dict2 + filename)
                 res = aip_client.imageQualityEnhance(c)
                 # 发送文件
                 sendBytes(res, dict4 + filename, bucket)
@@ -146,7 +147,7 @@ def sendBytes(res, path, bucket):
         dt = datetime.datetime.now()
         bucket.put_object(path, img)
     else:
-        logger.warning(res['error_code'] + ":" + res['error_msg'])
+        logger.warning(res['error_code'] + ":" + res['error_msg'] + " path: " + path)
     pass
 
 def getFileNames(fileList):

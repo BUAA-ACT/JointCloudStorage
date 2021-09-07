@@ -1,8 +1,8 @@
 from node import Node, clear_all
 
 if __name__ == '__main__':
-    ak = "3318a46183cf4ecba7e385d6bb2c9abf"
-    sk = "e207ca89ca5442ac9c05fd33c434d219"
+    ak = "c4470e6c2b28433f88cff9642429684e"
+    sk = "adc52bedd6824fad83b9e8235b867b37"
     endpoint_hohhot = "http://jsi-aliyun-hohhot.jointcloudstorage.cn/"
     endpoint_qingdao = "http://jsi-aliyun-qingdao.jointcloudstorage.cn/"
     endpoint_hangzhou = "http://jsi-aliyun-hangzhou.jointcloudstorage.cn/"
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     colorize_node.start()
 
     # 初始化 杭州 节点，图像增强
-    contrast_node = Node("con_en", ak, sk, endpoint_hangzhou, 1.0)
+    contrast_node = Node("lar_en", ak, sk, endpoint_hangzhou, 1.0)
     contrast_node.start()
     # large_node = Node("lar_en", ak, sk, endpoint, 1.0)
     # large_node.start()
