@@ -1,1 +1,1 @@
-from .node import Node, clear_all
+from .node import Node

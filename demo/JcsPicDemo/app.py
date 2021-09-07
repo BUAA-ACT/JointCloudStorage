@@ -1,6 +1,9 @@
 from flask import Flask
 from node import Node
 import logging
+from startNode import NodesRunner
+import multiprocessing
+
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
@@ -11,10 +14,14 @@ def hello_world():
     return 'Hello World!'
 
 
+@app.route("/start")
+def start_run():
+    runner = NodesRunner()
+    background_process = multiprocessing.Process(name="nodes", target=runner.start_nodes)
+    background_process.daemon = True
+    background_process.start()
+    return hello_world()
+
+
 if __name__ == '__main__':
-    ak = "bd05544ea474472c9deeffe1f917f239"
-    sk = "b4d5a58c7a454c4f852667bafd6a4eac"
-    endpoint = "http://192.168.105.13:8085"
-    upload_node = Node("send", ak, sk, endpoint)
-    upload_node.start()
-    upload_node.join()
+    pass
