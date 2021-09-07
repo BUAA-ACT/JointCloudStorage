@@ -14,7 +14,7 @@ from aip import AipImageProcess
 
 from JointCloudStorage import Auth, Bucket, State
 from logzero import logger
-from node_client import NodeClient
+from .node_client import NodeClient
 
 parser = argparse.ArgumentParser(description=__doc__)
 add_arg = functools.partial(add_arguments, argparser=parser)
@@ -45,7 +45,6 @@ class Node(threading.Thread):
         self.state = State(self.auth, endpoint)
         self.task_type = task_type
         self.interval = interval
-        self.fail_times = 0
         self.upstream_dict = upstream_dict
         self.output_dict = output_dict
         self.fallback_endpoint = fallback_endpoint
@@ -86,11 +85,10 @@ class Node(threading.Thread):
             send_index = (send_index + 1) % len(file_list)
             self.node_state.finish_num += 1
         except Exception as e:
-            logger.error(f"云际存储连接出错 Error:{e}, 错误次数 {self.fail_times}")
-            self.fail_times += 1
-            if self.fail_times % 3 == 0:
+            logger.error(f"云际存储连接出错 Error:{e}, 错误次数 {self.node_state.fail_num}")
+            self.node_state.fail_num += 1
+            if self.node_state.fail_num % 3 == 0:
                 self.fallback_index += 1
-                self.node_state.fail_num += 1
                 self.state = "ERROR"
                 self.bucket = Bucket(self.auth, self.fallback_endpoint[self.fallback_index])
                 self.state = State(self.auth, self.fallback_endpoint[self.fallback_index])
@@ -118,19 +116,20 @@ class Node(threading.Thread):
                     num_lock = threading.Lock()
                     state_lock = threading.Lock()
                     client = NodeClient(bucket=self.bucket, task_type=self.task_type, up_dict=self.upstream_dict,
-                                        out_dict=self.output_dict, file_name=filename, state=self.state,
+                                        out_dict=self.output_dict, file_name=filename, state=self.node_state,
                                         file_lock=file_lock, num_lock=num_lock, state_lock=state_lock)
-                    client.run()
+                    client.start()
                     client.join()
         except Exception as e:
-            logger.error(f"云际存储连接出错 Error:{e}, 错误次数 {self.fail_times}")
-            self.fail_times += 1
-            if self.fail_times % 3 == 0:
+            logger.error(f"云际存储连接出错 Error:{e}, 错误次数 {self.node_state.fail_num}")
+            self.node_state.fail_num += 1
+            if self.node_state.fail_num % 3 == 0:
                 self.fallback_index += 1
-                self.node_state.fail_num += 1
                 self.state = "ERROR"
                 self.bucket = Bucket(self.auth, self.fallback_endpoint[self.fallback_index])
                 self.state = State(self.auth, self.fallback_endpoint[self.fallback_index])
+                self.node_state.endpoint_address = self.fallback_endpoint[self.fallback_index]
+                self.node_state.endpoint_name = self.endpoint_name_dict[self.node_state.endpoint_address]
                 logger.error(f"切换到备份节点：{self.fallback_endpoint[self.fallback_index]}")
 
     def getFileNames(self, fileList):

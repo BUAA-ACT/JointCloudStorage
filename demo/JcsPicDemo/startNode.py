@@ -55,7 +55,7 @@ class NodesRunner(threading.Thread):
 
         # 初始化 杭州 节点，图像增强
         if is_test:
-            contrast_node = Node("test", ak, sk, endpoint_qingdao, 1.0, dict2, dict3, fallback_endpoint,
+            contrast_node = Node("test", ak, sk, endpoint_hangzhou, 1.0, dict2, dict3, fallback_endpoint,
                                  endpoint_name_dict)
         else:
             contrast_node = Node("lar_en", ak, sk, endpoint_hangzhou, 1.0, dict2, dict3, fallback_endpoint, endpoint_name_dict)
