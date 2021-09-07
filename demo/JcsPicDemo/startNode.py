@@ -2,9 +2,10 @@ import threading
 
 from node import Node
 
+
 class NodesRunner(threading.Thread):
 
-    def __init__(self, is_test = False):
+    def __init__(self, is_test=False):
         threading.Thread.__init__(self)
         self.nodes = []
         self.nodes_num = 0
@@ -25,6 +26,13 @@ class NodesRunner(threading.Thread):
         endpoint_guangzhou = "http://jsi-bdyun-guangzhou.jointcloudstorage.cn/"
 
         fallback_endpoint = [endpoint_chengdu, endpoint_guangzhou, endpoint_hohhot, endpoint_qingdao]
+        endpoint_name_dict = {
+            endpoint_hohhot: "呼和浩特",
+            endpoint_qingdao: "青岛",
+            endpoint_hangzhou: "杭州",
+            endpoint_chengdu: "成都",
+            endpoint_guangzhou: "广州",
+        }
 
         dict1 = "/step1/"
         dict2 = "/step2/"
@@ -32,22 +40,25 @@ class NodesRunner(threading.Thread):
         dict4 = "/step4/"
 
         # 初始化 呼和浩特 节点，用于文件上传
-        upload_node = Node("send", ak, sk, endpoint_hohhot, 1.0, "local", dict1, fallback_endpoint)
+        upload_node = Node("send", ak, sk, endpoint_hohhot, 1.0, "local", dict1, fallback_endpoint, endpoint_name_dict)
 
         if is_test:
             print("测试环境运行")
 
         # 初始化 青岛 节点，图片彩色化
         if is_test:
-            colorize_node = Node("test", ak, sk, endpoint_qingdao, 1.0, dict1, dict2, fallback_endpoint)
+            colorize_node = Node("test", ak, sk, endpoint_qingdao, 1.0, dict1, dict2, fallback_endpoint,
+                                 endpoint_name_dict)
         else:
-            colorize_node = Node("colorize", ak, sk, endpoint_qingdao, 1.0, dict1, dict2, fallback_endpoint)
+            colorize_node = Node("colorize", ak, sk, endpoint_qingdao, 1.0, dict1, dict2, fallback_endpoint,
+                                 endpoint_name_dict)
 
         # 初始化 杭州 节点，图像增强
         if is_test:
-            contrast_node = Node("test", ak, sk, endpoint_qingdao, 1.0, dict2, dict3, fallback_endpoint)
+            contrast_node = Node("test", ak, sk, endpoint_qingdao, 1.0, dict2, dict3, fallback_endpoint,
+                                 endpoint_name_dict)
         else:
-            contrast_node = Node("lar_en", ak, sk, endpoint_hangzhou, 1.0, dict2, dict3, fallback_endpoint)
+            contrast_node = Node("lar_en", ak, sk, endpoint_hangzhou, 1.0, dict2, dict3, fallback_endpoint, endpoint_name_dict)
         # large_node = Node("lar_en", ak, sk, endpoint, 1.0)
         # large_node.start()
         self.nodes = [upload_node, colorize_node, contrast_node]
@@ -57,5 +68,3 @@ class NodesRunner(threading.Thread):
         upload_node.start()
         colorize_node.start()
         contrast_node.start()
-
-

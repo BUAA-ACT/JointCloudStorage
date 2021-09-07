@@ -23,8 +23,6 @@ add_arg('ak', str, None, "access key")
 add_arg('sk', str, None, "secret key")
 add_arg('endpoint', str, None, "service address,ip:port")
 
-
-
 send_index = 0
 
 app_id = "24595163"
@@ -39,12 +37,11 @@ class NodeState(object):
         self.fail_num = fail_num
         self.endpoint_name = endpoint_name
         self.endpoint_address = endpoint_address
-        self.state = state
         self.file_processing = ""
 
 
 class Node(threading.Thread):
-    def __init__(self, task_type, ak, sk, endpoint, interval, upstream_dict, output_dict, fallback_endpoint):
+    def __init__(self, task_type, ak, sk, endpoint, interval, upstream_dict, output_dict, fallback_endpoint, endpoint_name_dict):
         threading.Thread.__init__(self)
         self.auth = Auth(ak, sk)
         self.bucket = Bucket(self.auth, endpoint)
@@ -56,7 +53,8 @@ class Node(threading.Thread):
         self.output_dict = output_dict
         self.fallback_endpoint = fallback_endpoint
         self.fallback_index = -1
-        self.node_state = NodeState(0, 0, "", endpoint, "ok")
+        self.endpoint_name_dict = endpoint_name_dict
+        self.node_state = NodeState(0, 0, endpoint_name_dict[endpoint], endpoint, "init")
 
         try:
             info = self.state.get_server_info()
@@ -82,14 +80,26 @@ class Node(threading.Thread):
             with open("picture/" + file_list[send_index], 'rb') as f:
                 dt = datetime.datetime.now()
                 if f.name.endswith(".jpg"):
+                    self.node_state.file_processing = f.name
                     if self.bucket.put_object(self.output_dict + "pic" + dt.strftime("%Y-%m-%d-%H-%M-%S") + ".jpg", f):
                         logger.warning(f" STEP 1 : 文件上传成功 file upload OK!")
                     else:
                         print("upload Fail!")
+                        self.node_state.fail_num += 1
             send_index = (send_index + 1) % len(file_list)
+            self.node_state.finish_num += 1
         except Exception as e:
-            logger.warning("step1:" + str(e))
-        pass
+            logger.error(f"云际存储连接出错 Error:{e}, 错误次数 {self.fail_times}")
+            self.fail_times += 1
+            if self.fail_times % 3 == 0:
+                self.fallback_index += 1
+                self.node_state.fail_num += 1
+                self.state = "ERROR"
+                self.bucket = Bucket(self.auth, self.fallback_endpoint[self.fallback_index])
+                self.state = State(self.auth, self.fallback_endpoint[self.fallback_index])
+                self.node_state.endpoint_address = self.fallback_endpoint[self.fallback_index]
+                self.node_state.endpoint_name = self.endpoint_name_dict[self.node_state.endpoint_address]
+                logger.error(f"切换到备份节点：{self.fallback_endpoint[self.fallback_index]}")
 
     def work(self):
         if self.task_type == "send":
@@ -141,12 +151,6 @@ class Node(threading.Thread):
     def sendBytes(self, res, path):
         if "image" in res:
             img = base64.b64decode(res['image'].encode())
-            # 写入step2
-            # with open("tmp/tmp.jpg",'rwb') as tmp:
-            #     tmp.write(img)
-            #     dt=datetime.datetime.now()
-            #     bucket.put_object(dict2+"pic"+dt.strftime("%Y-%m-%d-%H-%M-%S"),tmp)
-            dt = datetime.datetime.now()
             self.bucket.put_object(path, img)
         else:
             logger.warning(res['error_code'] + ":" + res['error_msg'] + " path: " + path)
