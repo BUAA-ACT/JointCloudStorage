@@ -1,4 +1,3 @@
-import multiprocessing
 import threading
 
 from node import Node
@@ -41,7 +40,7 @@ class NodesRunner(threading.Thread):
         dict4 = "/step4/"
 
         # 初始化 呼和浩特 节点，用于文件上传
-        upload_node = Node("send", ak, sk, endpoint_hohhot, 1.0, "local", dict1, fallback_endpoint, endpoint_name_dict)
+        upload_node = Node("send", ak, sk, endpoint_hohhot, 10.0, "local", dict1, fallback_endpoint, endpoint_name_dict)
 
         if is_test:
             print("测试环境运行")
@@ -62,14 +61,10 @@ class NodesRunner(threading.Thread):
             contrast_node = Node("lar_en", ak, sk, endpoint_hangzhou, 1.0, dict2, dict3, fallback_endpoint, endpoint_name_dict)
         # large_node = Node("lar_en", ak, sk, endpoint, 1.0)
         # large_node.start()
-        self.nodes = multiprocessing.Manager().list()
-        self.nodes.append(upload_node)
-        self.nodes.append(colorize_node)
-        self.nodes.append(contrast_node)
+        self.nodes = [upload_node, colorize_node, contrast_node]
         self.nodes_num = 3
 
         upload_node.clear_all()
-
         upload_node.start()
         colorize_node.start()
         contrast_node.start()
