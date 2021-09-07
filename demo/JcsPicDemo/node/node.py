@@ -1,5 +1,6 @@
 import argparse
 import functools
+import multiprocessing
 import os
 import datetime
 import threading
@@ -36,10 +37,10 @@ class NodeState(object):
         self.file_processing = ""
 
 
-class Node(threading.Thread):
+class Node(multiprocessing.Process):
     def __init__(self, task_type, ak, sk, endpoint, interval, upstream_dict, output_dict, fallback_endpoint,
                  endpoint_name_dict):
-        threading.Thread.__init__(self)
+        multiprocessing.Process.__init__(self)
         self.auth = Auth(ak, sk)
         self.bucket = Bucket(self.auth, endpoint)
         self.state = State(self.auth, endpoint)
