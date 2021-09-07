@@ -1,5 +1,5 @@
 import jsonpickle
-from flask import Flask, jsonify, Response
+from flask import Flask, jsonify, Response, send_file
 from node import Node
 import logging
 from startNode import NodesRunner
@@ -53,6 +53,10 @@ def get_info():
         info.node_states.append(node.get_state())
 
     return info.to_json_response()
+
+@app.route("/charts")
+def charts():
+    return app.send_static_file("charts.html")
 
 
 if __name__ == '__main__':
