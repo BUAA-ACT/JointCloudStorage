@@ -8,7 +8,7 @@ from node import NodeState
 
 
 logging.basicConfig(level=logging.DEBUG)
-RUNNER = NodesRunner()
+RUNNER = NodesRunner(is_test=True)
 
 app = Flask(__name__)
 
@@ -35,9 +35,10 @@ def start_run():
     global RUNNER
     if RUNNER.state == "running":
         return hello_world()
-    background_process = multiprocessing.Process(name="nodes", target=RUNNER.start_nodes, args=(False,))
-    background_process.daemon = True
-    background_process.start()
+    # background_process = multiprocessing.Process(name="nodes", target=RUNNER.start_nodes, args=(False,))
+    # background_process.daemon = True
+    # background_process.start()
+    RUNNER.start()
     return hello_world()
 
 
@@ -49,7 +50,7 @@ def get_info():
 
     info = Info(RUNNER.state, [])
     for node in RUNNER.nodes:
-        info.node_states.append(node.state)
+        info.node_states.append(node.get_state())
 
     return info.to_json_response()
 

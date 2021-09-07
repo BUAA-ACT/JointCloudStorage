@@ -1,11 +1,18 @@
+import threading
+
 from node import Node
 
-class NodesRunner(object):
+class NodesRunner(threading.Thread):
 
-    def __init__(self):
+    def __init__(self, is_test = False):
+        threading.Thread.__init__(self)
         self.nodes = []
         self.nodes_num = 0
         self.state = "ready"
+        self.is_test = is_test
+
+    def run(self):
+        self.start_nodes(self.is_test)
 
     def start_nodes(self, is_test=False):
         self.state = "running"
@@ -26,8 +33,6 @@ class NodesRunner(object):
 
         # 初始化 呼和浩特 节点，用于文件上传
         upload_node = Node("send", ak, sk, endpoint_hohhot, 1.0, "local", dict1, fallback_endpoint)
-        upload_node.clear_all()
-        upload_node.start()
 
         if is_test:
             print("测试环境运行")
@@ -37,17 +42,20 @@ class NodesRunner(object):
             colorize_node = Node("test", ak, sk, endpoint_qingdao, 1.0, dict1, dict2, fallback_endpoint)
         else:
             colorize_node = Node("colorize", ak, sk, endpoint_qingdao, 1.0, dict1, dict2, fallback_endpoint)
-        colorize_node.start()
 
         # 初始化 杭州 节点，图像增强
         if is_test:
             contrast_node = Node("test", ak, sk, endpoint_qingdao, 1.0, dict2, dict3, fallback_endpoint)
         else:
             contrast_node = Node("lar_en", ak, sk, endpoint_hangzhou, 1.0, dict2, dict3, fallback_endpoint)
-        contrast_node.start()
         # large_node = Node("lar_en", ak, sk, endpoint, 1.0)
         # large_node.start()
         self.nodes = [upload_node, colorize_node, contrast_node]
         self.nodes_num = 3
+
+        upload_node.clear_all()
+        upload_node.start()
+        colorize_node.start()
+        contrast_node.start()
 
 
