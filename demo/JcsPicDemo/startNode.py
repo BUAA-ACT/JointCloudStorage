@@ -17,8 +17,8 @@ class NodesRunner(threading.Thread):
 
     def start_nodes(self, is_test=False):
         self.state = "running"
-        ak = "b5d2504ba5804a5690c2a57b4660b4ea"
-        sk = "9d83480b5d07431e97f49a8fce67ce23"
+        ak = "13f798eb5ff84c2a9b62b40460e06042"
+        sk = "cba149e6b1974a60af83a1139aefe8eb"
         endpoint_hohhot = "http://jsi-aliyun-hohhot.jointcloudstorage.cn/"
         endpoint_qingdao = "http://jsi-aliyun-qingdao.jointcloudstorage.cn/"
         endpoint_hangzhou = "http://jsi-aliyun-hangzhou.jointcloudstorage.cn/"
@@ -64,7 +64,7 @@ class NodesRunner(threading.Thread):
         self.nodes = [upload_node, colorize_node, contrast_node]
         self.nodes_num = 3
 
-        upload_node.clear_all()
+        # upload_node.clear_all()
         upload_node.start()
         colorize_node.start()
         contrast_node.start()

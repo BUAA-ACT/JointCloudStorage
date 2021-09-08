@@ -11,84 +11,121 @@ var data = [[[now, 0]], [[now, 0]], [[now, 0]]];
 // }
 
 option = {
-  xAxis: {
-    type: 'time',
-    boundaryGap: false,
-    minInterval: 2,
-    min: 'dataMin',
-    axisLabel: {
-      interval: 2
+    xAxis: {
+        type: 'time',
+        boundaryGap: false,
+        minInterval: 2,
+        min: 'dataMin',
+        axisLabel: {
+            interval: 2
+        }
+        //data: date
+    },
+    yAxis: {
+        boundaryGap: [0, '50%'],
+        type: 'value',
+        min: 'dataMin',
+    },
+    series: [
+        {
+            name: '成功',
+            type: 'line',
+            smooth: false,
+            symbol: 'none',
+            stack: 'a',
+            areaStyle: {
+                normal: {}
+            },
+            data: data,
+        }
+    ],
+    grid: {
+        x: 30,
+        y: 30,
+        x2: 30,
+        y2: 30
     }
-    //data: date
-  },
-  yAxis: {
-    boundaryGap: [0, '50%'],
-    type: 'value',
-    min: 'dataMin',
-  },
-  series: [
-    {
-      name: '成功',
-      type: 'line',
-      smooth: false,
-      symbol: 'none',
-      stack: 'a',
-      areaStyle: {
-        normal: {}
-      },
-      data: data,
-    }
-  ],
-  grid: {
-    x: 30,
-    y: 30,
-    x2: 30,
-    y2: 30
-  }
 };
 
 setInterval(function () {
-  axios.get("/info").then(
-    resp => {
-      for (let i = 0; i < 3; i++) {
-        now = new Date()
-        data[i].push([now, resp.data.node_states[i].finish_num]);
-        if (data[i].length > 30) {
-          data[i].shift();
+    axios.get("/info").then(
+        resp => {
+            let drawData = [[], [], []]
+            let fails = [[], [], []]
+            let start;
+            for (let i = 0; i < 3; i++) {
+                now = new Date()
+                if (resp.data.node_states[i].state !== "ERROR") {
+                    data[i].push([now, resp.data.node_states[i].finish_num, true]);
+                } else {
+                    data[i].push([now, resp.data.node_states[i].finish_num, false]);
+                }
+
+                if (data[i].length > 30) {
+                    data[i].shift();
+                }
+
+                start = -1
+                for (let j = 0; j < data[i].length; j++) {
+                    d = data[i][j]
+                    drawData[i].push(d.slice(0, 2))
+                    if (d[2] === false && start === -1) {
+                        start = j
+                    }
+                    if (d[2] === true && start !== -1) {
+                        fails[i].push([data[i][start][0], data[i][j][0]])
+                        start = -1
+                    }
+                }
+                if (start !== -1) {
+                    fails[i].push([data[i][start][0], data[data[i].length][0]])
+                }
+            }
+            chart1.setOption({
+                xAxis: {
+                    //data: date
+                },
+                series: [{
+                    name: '成功',
+                    data: drawData[0]
+                }]
+            });
+            chart2.setOption({
+                xAxis: {
+                    //data: date
+                },
+                series: [{
+                    name: '成功',
+                    data: drawData[1]
+                }]
+            });
+            chart3.setOption({
+                // xAxis: {
+                //     //data: date
+                // },
+                visualMap: {
+                    show: false,
+                    type: "piecewise",
+                    dimension: 0,
+                    seriesIndex: 0,
+                    pieces: fails[2].map((fail) => {
+                        console.log(fail[0], fail[1])
+                        return {
+                            gt: fail[0],
+                            lt: fail[1],
+                            color: 'red'
+                        }
+                    })
+                },
+                series: [{
+                    name: '成功',
+                    data: drawData[2]
+                }],
+            });
         }
-      }
-      console.log(data[2])
-      chart1.setOption({
-        xAxis: {
-          //data: date
-        },
-        series: [{
-          name: '成功',
-          data: data[0]
-        }]
-      });
-      chart2.setOption({
-        xAxis: {
-          //data: date
-        },
-        series: [{
-          name: '成功',
-          data: data[1]
-        }]
-      });
-      chart3.setOption({
-        xAxis: {
-          //data: date
-        },
-        series: [{
-          name: '成功',
-          data: data[2]
-        }]
-      });
-    }
-  ).catch(e =>
-    console.log(e)
-  )
+    ).catch(e =>
+        console.log(e)
+    )
 }, 500);
 
 option && chart1.setOption(option);
