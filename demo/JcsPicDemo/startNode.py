@@ -17,8 +17,8 @@ class NodesRunner(threading.Thread):
 
     def start_nodes(self, is_test=False):
         self.state = "running"
-        ak = "740683e700de4a61b8eb8e791eaa86e3"
-        sk = "54e6478f75df4ad79483b01de579cdb6"
+        ak = "b5d2504ba5804a5690c2a57b4660b4ea"
+        sk = "9d83480b5d07431e97f49a8fce67ce23"
         endpoint_hohhot = "http://jsi-aliyun-hohhot.jointcloudstorage.cn/"
         endpoint_qingdao = "http://jsi-aliyun-qingdao.jointcloudstorage.cn/"
         endpoint_hangzhou = "http://jsi-aliyun-hangzhou.jointcloudstorage.cn/"
@@ -47,18 +47,18 @@ class NodesRunner(threading.Thread):
 
         # 初始化 青岛 节点，图片彩色化
         if is_test:
-            colorize_node = Node("test", ak, sk, endpoint_qingdao, 1.0, dict1, dict2, fallback_endpoint,
+            colorize_node = Node("test", ak, sk, endpoint_qingdao, 0.2, dict1, dict2, fallback_endpoint,
                                  endpoint_name_dict)
         else:
-            colorize_node = Node("colorize", ak, sk, endpoint_qingdao, 1.0, dict1, dict2, fallback_endpoint,
+            colorize_node = Node("colorize", ak, sk, endpoint_qingdao, 0.2, dict1, dict2, fallback_endpoint,
                                  endpoint_name_dict)
 
         # 初始化 杭州 节点，图像增强
         if is_test:
-            contrast_node = Node("test", ak, sk, endpoint_hangzhou, 1.0, dict2, dict3, fallback_endpoint,
+            contrast_node = Node("test", ak, sk, endpoint_hangzhou, 0.2, dict2, dict3, fallback_endpoint,
                                  endpoint_name_dict)
         else:
-            contrast_node = Node("lar_en", ak, sk, endpoint_hangzhou, 1.0, dict2, dict3, fallback_endpoint, endpoint_name_dict)
+            contrast_node = Node("lar_en", ak, sk, endpoint_hangzhou, 0.2, dict2, dict3, fallback_endpoint, endpoint_name_dict)
         # large_node = Node("lar_en", ak, sk, endpoint, 1.0)
         # large_node.start()
         self.nodes = [upload_node, colorize_node, contrast_node]
