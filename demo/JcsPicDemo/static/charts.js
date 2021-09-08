@@ -6,24 +6,6 @@ var chart3 = echarts.init(document.getElementById('graph3'));
 var now = new Date();
 var data = [[[now, 0]], [[now, 0]], [[now, 0]]];
 
-
-function getInfo() {
-  return {
-    "node_states": [
-      {
-        "finish_num": data[0][data[0].length - 1][1] + 1
-      },
-      {
-        "finish_num": data[1][data[1].length - 1][1] + 1
-      },
-      {
-        "finish_num": data[2][data[2].length - 1][1] + 1
-      },
-    ]
-  }
-}
-
-
 // for (var i = 1; i < 30; i++) {
 //     addData();
 // }

@@ -1,17 +1,23 @@
 Vue.createApp({
   setup() {
-    let noData = Vue.ref(true);
+    let updateData = Vue.ref(true);
     let info = Vue.reactive({data: {}});
     Vue.watch(
       () => info.data,
-      (newVal) => {
+      (newVal, oldVal) => {
         const curStates = newVal.node_states;
-        if (curStates && curStates.length > 0 && noData.value) {
-          const chartScript = document.createElement('script');
+        let chartScript = document.getElementById('chart-js');
+        console.log(newVal.data, oldVal.data);
+        updateData.value = newVal.node_states === undefined || oldVal.node_states === undefined || newVal.node_states.length !== oldVal.node_states.length;
+        if (curStates && curStates.length && updateData.value) {
+          if (chartScript) {
+            chartScript.remove();
+          }
+          chartScript = document.createElement('script');
           chartScript.type = "text/javascript";
-          chartScript.src = "/static/charts.js"
+          chartScript.src = "/static/charts.js";
+          chartScript.id = "chart-js";
           document.body.appendChild(chartScript)
-          noData.value = false;
         }
       },
     )
@@ -37,7 +43,7 @@ Vue.createApp({
     <a href="/start"><button class="btn btn-primary shadow-lg" style="margin-top: 15vh; font-size: 36px">启动流水线</button></a>
   </div>
   <div v-else>
-    <div class="col-12 row" v-for="(state, index) in info.data.node_states" :key="state.endpoint_name">
+    <div class="col-12 row" v-for="(state, index) in info.data.node_states" :key="String(index)">
       <div class="card col-7">
         <div class="card-body">
           <div class="card-title" style="">
