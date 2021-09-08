@@ -65,12 +65,9 @@ func (l *Lock) Lock(path string) error {
 	// 查询未创建的node
 	var idx int
 	for idx = 0; idx < len(nodes); idx++ {
-		exist, stat, err := l.c.Exists(nodes[idx])
+		exist, _, err := l.c.Exists(nodes[idx])
 		if err != nil {
 			return err
-		}
-		if exist && stat.NumChildren == 0 {
-			return ErrLocked
 		}
 		if !exist {
 			break
