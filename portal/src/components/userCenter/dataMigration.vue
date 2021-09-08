@@ -88,6 +88,7 @@ export default {
       this.curPercent = Number(data.Progress.toFixed(2));
       if (data.TaskState === "FINISH") {
         this.status = "success";
+        this.getNewAdvice();
       }
     },
     closeConnection() {
