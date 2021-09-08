@@ -88,7 +88,9 @@ export default {
       this.curPercent = Number(data.Progress.toFixed(2));
       if (data.TaskState === "FINISH") {
         this.status = "success";
-        setTimeout(this.reload, 100);
+        // eslint-disable-next-line no-restricted-globals
+        setTimeout(location.reload, 100);
+        this.closeConnection();
       }
     },
     closeConnection() {
