@@ -70,12 +70,12 @@ setInterval(function () {
     resp => {
       for (let i = 0; i < 3; i++) {
         now = new Date()
-        console.log(data[i])
         data[i].push([now, resp.data.node_states[i].finish_num]);
         if (data[i].length > 30) {
           data[i].shift();
         }
       }
+      console.log(data[2])
       chart1.setOption({
         xAxis: {
           //data: date
@@ -108,7 +108,6 @@ setInterval(function () {
     console.log(e)
   )
 }, 500);
-
 
 option && chart1.setOption(option);
 option && chart2.setOption(option);

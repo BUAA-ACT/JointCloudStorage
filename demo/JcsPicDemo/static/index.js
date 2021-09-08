@@ -23,7 +23,7 @@ Vue.createApp({
         ).catch(e =>
           console.log(e)
         )
-      , 100)
+      , 500)
     return {
       info
     }
@@ -55,9 +55,11 @@ Vue.createApp({
               <tbody>
                 <th class="success">成功</th>
                 <th :class="state.fail_num === 0 ? 'ignore' : 'fail'">失败</th>
+<!--                <th class="ignore">失败</th>-->
                 <tr>
                   <td class="success">{{ state.finish_num }}</td>
                   <td :class="state.fail_num === 0 ? 'ignore' : 'fail'">{{ state.fail_num }}</td>
+<!--                  <td class="ignore">{{ state.fail_num }}</td>-->
                 </tr>
               </tbody>
             </table>

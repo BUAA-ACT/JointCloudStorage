@@ -17,8 +17,8 @@ class NodesRunner(threading.Thread):
 
     def start_nodes(self, is_test=False):
         self.state = "running"
-        ak = "c4470e6c2b28433f88cff9642429684e"
-        sk = "adc52bedd6824fad83b9e8235b867b37"
+        ak = "740683e700de4a61b8eb8e791eaa86e3"
+        sk = "54e6478f75df4ad79483b01de579cdb6"
         endpoint_hohhot = "http://jsi-aliyun-hohhot.jointcloudstorage.cn/"
         endpoint_qingdao = "http://jsi-aliyun-qingdao.jointcloudstorage.cn/"
         endpoint_hangzhou = "http://jsi-aliyun-hangzhou.jointcloudstorage.cn/"

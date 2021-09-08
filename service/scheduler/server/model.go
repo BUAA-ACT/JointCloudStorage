@@ -207,8 +207,12 @@ func ReSchedule(interval time.Duration) {
 
 			// 计算新方案
 			plan := storagePlan(entity.GetStoragePlanParam(u.Preference), clouds).StoragePriceFirst
+			plan2 := storagePlan(entity.GetStoragePlanParam(u.Preference), clouds).TrafficPriceFirst
 
 			// 对比新旧方案
+			if plan.K != u.StoragePlan.K || plan.N != u.StoragePlan.N {
+				plan = plan2
+			}
 			if plan.K != u.StoragePlan.K || plan.N != u.StoragePlan.N {
 				continue
 			}
