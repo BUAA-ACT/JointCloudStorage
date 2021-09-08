@@ -34,6 +34,7 @@ class NodeState(object):
         self.endpoint_name = endpoint_name
         self.endpoint_address = endpoint_address
         self.file_processing = ""
+        self.state = state
 
 
 class Node(threading.Thread):
@@ -79,9 +80,11 @@ class Node(threading.Thread):
                     self.node_state.file_processing = f.name
                     if self.bucket.put_object(self.output_dict + "pic" + dt.strftime("%Y-%m-%d-%H-%M-%S") + ".jpg", f):
                         logger.warning(f" STEP 1 : 文件上传成功 file upload OK!")
+                        self.node_state.state = "OK"
                     else:
                         print("upload Fail!")
                         self.node_state.fail_num += 1
+                        self.node_state.state = "ERROR"
             send_index = (send_index + 1) % len(file_list)
             self.node_state.finish_num += 1
         except Exception as e:
@@ -89,7 +92,7 @@ class Node(threading.Thread):
             self.node_state.fail_num += 1
             if self.node_state.fail_num % 3 == 0:
                 self.fallback_index += 1
-                self.state = "ERROR"
+                self.node_state.state = "ERROR"
                 self.bucket = Bucket(self.auth, self.fallback_endpoint[self.fallback_index])
                 self.state = State(self.auth, self.fallback_endpoint[self.fallback_index])
                 self.node_state.endpoint_address = self.fallback_endpoint[self.fallback_index]
@@ -125,7 +128,7 @@ class Node(threading.Thread):
             self.node_state.fail_num += 1
             if self.node_state.fail_num % 3 == 0:
                 self.fallback_index += 1
-                self.state = "ERROR"
+                self.node_state.state = "ERROR"
                 self.bucket = Bucket(self.auth, self.fallback_endpoint[self.fallback_index])
                 self.state = State(self.auth, self.fallback_endpoint[self.fallback_index])
                 self.node_state.endpoint_address = self.fallback_endpoint[self.fallback_index]

@@ -40,7 +40,7 @@ class NodesRunner(threading.Thread):
         dict4 = "/step4/"
 
         # 初始化 呼和浩特 节点，用于文件上传
-        upload_node = Node("send", ak, sk, endpoint_hohhot, 10.0, "local", dict1, fallback_endpoint, endpoint_name_dict)
+        upload_node = Node("send", ak, sk, endpoint_hohhot, 1.0, "local", dict1, fallback_endpoint, endpoint_name_dict)
 
         if is_test:
             print("测试环境运行")
