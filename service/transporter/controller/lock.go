@@ -151,7 +151,7 @@ func (l *Lock) UnLock(path string) error {
 			logrus.Infof("unlock fail: %v", err)
 			return err
 		}
-		if stat.NumChildren > 1 {
+		if stat.NumChildren >= 1 {
 			break
 		}
 	}
