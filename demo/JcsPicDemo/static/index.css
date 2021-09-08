@@ -10,6 +10,11 @@
 
 .detail-table th {
     font-size: 24px;
+    width: 50%;
+}
+
+.detail-table td {
+    width: 50%;
 }
 
 .detail-table .success {
