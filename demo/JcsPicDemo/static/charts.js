@@ -82,6 +82,7 @@ setInterval(function () {
                 }
             }
             chart1.setOption({
+                color: '#5470c6',
                 xAxis: {
                     //data: date
                 },
@@ -91,6 +92,7 @@ setInterval(function () {
                 }]
             });
             chart2.setOption({
+                color: '#5470c6',
                 xAxis: {
                     //data: date
                 },
@@ -99,30 +101,23 @@ setInterval(function () {
                     data: drawData[1]
                 }]
             });
-            chart3.setOption({
-                // xAxis: {
-                //     //data: date
-                // },
-                // visualMap: {
-                //     show: false,
-                //     type: "piecewise",
-                //     dimension: 0,
-                //     seriesIndex: 0,
-                //     pieces: fails[2].map((fail) => {
-                //         console.log(fail[0], fail[1])
-                //         return {
-                //             gt: fail[0],
-                //             lt: fail[1],
-                //             color: 'red'
-                //         }
-                //     })
-                // },
-
-                series: [{
-                    name: '成功',
-                    data: drawData[2]
-                }],
-            });
+            if (resp.data.node_states[2].state !== "ERROR") {
+                chart3.setOption({
+                    color: '#5470c6',
+                    series: [{
+                        name: '成功',
+                        data: drawData[2]
+                    }],
+                });
+            } else {
+                chart3.setOption({
+                    color: 'red',
+                    series: [{
+                        name: '成功',
+                        data: drawData[2]
+                    }],
+                });
+            }
         }
     ).catch(e =>
         console.log(e)
