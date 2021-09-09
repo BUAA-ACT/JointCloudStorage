@@ -103,20 +103,21 @@ setInterval(function () {
                 // xAxis: {
                 //     //data: date
                 // },
-                visualMap: {
-                    show: false,
-                    type: "piecewise",
-                    dimension: 0,
-                    seriesIndex: 0,
-                    pieces: fails[2].map((fail) => {
-                        console.log(fail[0], fail[1])
-                        return {
-                            gt: fail[0],
-                            lt: fail[1],
-                            color: 'red'
-                        }
-                    })
-                },
+                // visualMap: {
+                //     show: false,
+                //     type: "piecewise",
+                //     dimension: 0,
+                //     seriesIndex: 0,
+                //     pieces: fails[2].map((fail) => {
+                //         console.log(fail[0], fail[1])
+                //         return {
+                //             gt: fail[0],
+                //             lt: fail[1],
+                //             color: 'red'
+                //         }
+                //     })
+                // },
+
                 series: [{
                     name: '成功',
                     data: drawData[2]
