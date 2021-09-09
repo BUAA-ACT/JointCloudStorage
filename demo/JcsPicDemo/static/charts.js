@@ -65,21 +65,12 @@ setInterval(function () {
                     data[i].shift();
                 }
 
-                start = -1
                 for (let j = 0; j < data[i].length; j++) {
                     d = data[i][j]
                     drawData[i].push(d.slice(0, 2))
-                    if (d[2] === false && start === -1) {
-                        start = j
-                    }
-                    if (d[2] === true && start !== -1) {
-                        fails[i].push([data[i][start][0], data[i][j][0]])
-                        start = -1
-                    }
+
                 }
-                if (start !== -1) {
-                    fails[i].push([data[i][start][0], data[data[i].length][0]])
-                }
+
             }
             chart1.setOption({
                 color: '#5470c6',
