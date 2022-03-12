@@ -1,4 +1,7 @@
-# Joint Cloud Storage 
+# Joint Cloud Storage 云际存储
+
+![GitHub repo size](https://img.shields.io/github/repo-size/BUAA-ACT/JointCloudStorage)
+![GitHub last commit](https://img.shields.io/github/last-commit/BUAA-ACT/JointCloudStorage)
 
 # 介绍
 
